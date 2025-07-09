@@ -1,17 +1,25 @@
-import {GlobalStyles, MyRoutes} from "./index"
-import styled from "styled-components";
+import {GlobalStyles, MyRoutes, Sidebar, useThemeStore} from "./index"
+import styled, {ThemeProvider} from "styled-components";
 import {Device} from "./styles/breakpoints";
+import { useState } from "react";
 
 function App() {
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const {themeStyle} = useThemeStore();
   return (
-    <Container>
-      <GlobalStyles />
-      <section className="contentSidebar">sidebar</section>
-      <section className="contentMenuambur">menuambur</section>
-      <section className="contentRouters"><MyRoutes/></section>
-
-    </Container>
+    <ThemeProvider theme={themeStyle}>
+      <Container>
+        <GlobalStyles />
+        <section className="contentSidebar">
+          <Sidebar state={sidebarOpen} setState = 
+          {() => setSidebarOpen(!sidebarOpen)}/>
+        </section>
+        <section className="contentMenuambur">menu ambur</section>
+        <section className="contentRouters">
+          <MyRoutes />
+        </section>
+      </Container>
+    </ThemeProvider>
   );
 }
 const Container = styled.main`
