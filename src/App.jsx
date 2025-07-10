@@ -11,8 +11,7 @@ function App() {
       <Container>
         <GlobalStyles />
         <section className="contentSidebar">
-          <Sidebar state={sidebarOpen} setState = 
-          {() => setSidebarOpen(!sidebarOpen)}/>
+          <Sidebar state={sidebarOpen} setState = {() => setSidebarOpen(!sidebarOpen)}/>
         </section>
         <section className="contentMenuambur">menu ambur</section>
         <section className="contentRouters">

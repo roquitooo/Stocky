@@ -6,6 +6,6 @@ import { Dark, Light } from "../styles/themes";
     setTheme: () => {
         const {theme} = get();
         set({theme: theme === "light" ? "dark" : "light"})
-        set({ ThemeStyle: theme === "light" ? Dark : Light });
+        set({ themeStyle: theme === "light" ? Dark : Light });
     }
 }));

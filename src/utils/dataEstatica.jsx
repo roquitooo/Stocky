@@ -1,4 +1,5 @@
 import { v } from "../styles/variables";
+import { RiBarcodeBoxLine } from "react-icons/ri";
 import {
   AiOutlineHome,
   AiOutlineSetting,
@@ -33,18 +34,23 @@ export const LinksArray = [
   },
   {
     label: "VENDER",
-    icon: "flat-color-icons:shop",
+    icon: "twemoji:shopping-cart",
     to: "/pos",
   },
   {
-    label: "Kardex",
+    label: "Proveedores",
     icon: "flat-ui:box",
-    to: "/kardex",
+    to: "/proveedores",
   },
   {
     label: "Reportes",
     icon: "flat-ui:graph",
     to: "/reportes",
+  },
+  {
+    label: "Codigo de barras",
+    icon: "bx-barcode",
+    to: "/codigobarras",
   },
  
 ];
