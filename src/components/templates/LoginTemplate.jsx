@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import {Btnsave, InputText2, Title} from "../../index"
+import {Btnsave, Footer, InputText2, Title} from "../../index"
 import { Linea } from "../atomos/Linea";
 import {v} from "../../styles/variables";
 import { Device } from "../../styles/breakpoints";
@@ -33,6 +33,7 @@ export function LoginTemplate() {
         <Btnsave titulo="Google" bgcolor="#fff" icono={<v.iconogoogle/>} />
         
     </div>
+    <Footer/>
     </Container>);
 }
 const Container = styled.div`
@@ -41,6 +42,8 @@ const Container = styled.div`
     justify-content: center;
     align-items: center;
     text-align: center;
+    flex-direction: column;
+
     .card {
         display: flex;
         flex-direction: column;
