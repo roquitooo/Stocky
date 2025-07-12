@@ -53,7 +53,7 @@ const Container = styled.button`
   }
   &:active {
     transform: translate(0, 0);
-    border-bottom: 2px solid rgba(50, 50, 50, 0.5);
+    border-bottom: 2px solid rgb(255, 174, 0);
   }
   &[disabled] {
     background-color: #646464;
