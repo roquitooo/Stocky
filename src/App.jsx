@@ -13,7 +13,7 @@ function App() {
         <section className="contentSidebar">
           <Sidebar state={sidebarOpen} setState = {() => setSidebarOpen(!sidebarOpen)}/>
         </section>
-        <section className="contentMenuambur">menu ambur</section>
+        <section className="contentMenuambur"></section>
         <section className="contentRouters">
           <MyRoutes />
         </section>
