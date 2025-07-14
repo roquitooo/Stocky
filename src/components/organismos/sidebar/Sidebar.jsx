@@ -21,7 +21,7 @@ export function Sidebar({ state, setState }) {
           <div className="imgcontent">
             <img src={v.logo} />
           </div>
-          <h2>Stocky</h2>
+          <h2>STOCKY</h2>
         </div>
         {LinksArray.map(({ icon, label, to }) => (
           <div
@@ -126,7 +126,7 @@ const Container = styled.div`
       }
     }
     h2 {
-      color: #f88533;
+      color: #e2ae04;
       display: ${({ $isopen }) => ($isopen === "true" ? `block` : `none`)};
     }
   }
