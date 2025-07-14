@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { useAuthStore } from "../../store/AuthStore";
+import { UserAuth } from "../../context/AuthContent";
 
 export function HomeTemplate() {
     const { cerrarSesion } = useAuthStore();
@@ -7,6 +8,7 @@ export function HomeTemplate() {
     return (<Container>
 <span>Home Template</span>
 <button onClick={cerrarSesion}>Cerrar Sesión</button>
+
     </Container>);
 }
 const Container = styled.div`
