@@ -2,12 +2,14 @@ import {GlobalStyles, MyRoutes, Sidebar, useThemeStore} from "./index"
 import styled, {ThemeProvider} from "styled-components";
 import {Device} from "./styles/breakpoints";
 import { useState } from "react";
+import { AuthContextProvider } from "./context/AuthContent";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const {themeStyle} = useThemeStore();
   return (
     <ThemeProvider theme={themeStyle}>
+      <AuthContextProvider>
       <Container className={sidebarOpen ? "active" : ""}>
         <GlobalStyles />
         <section className="contentSidebar">
@@ -18,6 +20,7 @@ function App() {
           <MyRoutes />
         </section>
       </Container>
+    </AuthContextProvider>
     </ThemeProvider>
   );
 }
