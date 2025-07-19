@@ -45,6 +45,8 @@ const Container = styled.div`
     align-items: center;
     text-align: center;
     flex-direction: column;
+    padding: 0 10px;
+    color: ${({ theme }) => theme.text};
 
     .card {
         display: flex;
