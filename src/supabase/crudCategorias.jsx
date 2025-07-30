@@ -3,7 +3,7 @@ import { supabase } from '../index';
 const tabla = 'categorias';
 
 export async function InsertarCategorias(p, file) {
-    const { error, data } = await supabase.rpc('insertarcategoria', p);
+    const { error, data } = await supabase.rpc('insertarcategorias', p);
     if (error) {
         Swal.fire({
             icon: "error",
@@ -27,11 +27,11 @@ export async function InsertarCategorias(p, file) {
 async function subirImagen(idcategoria, file){
     const ruta = "categorias/" + idcategoria;
     const { data, error } = await supabase.storage
-    .from('imagenes')
-    .upload("public/avatar1.png", file, {
+        .from('imagenes')
+        .upload(ruta, file, {
         cacheControl: '0',
         upsert: true,
-    });
+        });
     if (error) {
         Swal.fire({
             icon: "error",
@@ -47,7 +47,7 @@ async function subirImagen(idcategoria, file){
     }
 }
 async function EditarIconoCategorias(p) {
-    const {error} = await supabase.from('categorias').update
+    const {error} = await supabase.from(tabla).update
     (p).eq('id', p.id);
     if (error) {
         Swal.fire({
@@ -60,7 +60,7 @@ async function EditarIconoCategorias(p) {
 }
 
 export async function MostrarCategorias(p) {
-    const {data} = await supabase.from(tabla).select().eq("id_empresa ", p.id_empresa).order("id", { ascending: false });
+    const {data} = await supabase.from(tabla).select().eq("id_empresa", p.id_empresa).order("id", { ascending: false });
     return data;
 }
 
