@@ -84,7 +84,7 @@ export const TemasData = [
 export const DataModulosConfiguracion =[
   {
     title:"Productos",
-    subtitle:"registra tus productos",
+    subtitle:"Registrar tus productos",
     icono:"https://i.ibb.co/85zJ6yG/caja-del-paquete.png",
     link:"/configurar/productos",
    
