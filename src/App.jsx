@@ -4,6 +4,7 @@ import {Device} from "./styles/breakpoints";
 import { useState } from "react";
 import { AuthContextProvider } from "./context/AuthContent";
 import { useLocation } from "react-router-dom";
+import {ReactQueryDevtools} from '@tanstack/react-query-devtools';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -22,8 +23,11 @@ function App() {
         <section className="contentRouters">
           <MyRoutes />
         </section>
-      </Container>):(<Login/>)
+      </Container>
+      ) : (
+        <Login/>)
         }
+        <ReactQueryDevtools initialIsOpen={true} />
     </AuthContextProvider>
     </ThemeProvider>
   );
