@@ -31,7 +31,7 @@ export function ConfiguracionesTemplate() {
         {DataModulosConfiguracion.map((item, index) => {
           return (
             <Link
-              to=""
+              to={item.link}
               className={item.state ? "card" : "card false"}
               key={index}
             >
