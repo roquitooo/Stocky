@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { Icono } from "../../index";
-export function Btnsave({
+export function Btn1({
   funcion,
   titulo,
   bgcolor,
@@ -47,13 +47,14 @@ const Container = styled.button`
   align-items: center;
   justify-content: center;
  width:${(props)=>props.$width};
+
   .content {
     display: flex;
     gap: 12px;
   }
   &:active {
     transform: translate(0, 0);
-    border-bottom: 2px solid rgb(255, 174, 0);
+    border-bottom: 2px solid rgba(50, 50, 50, 0.2);
   }
   &[disabled] {
     background-color: #646464;
