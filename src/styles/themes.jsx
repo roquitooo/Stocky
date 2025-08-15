@@ -38,7 +38,7 @@ export const Light = {
   colortitlecard: "#363637",
   colorsubtitlecard: "#080808",
   color1: "#1cb0f6",
-  color2:"#E5E5E5"
+  color2:"#61605f"
 };
 export const Dark = {
   colortitlecard: "#8C9298",
@@ -80,5 +80,5 @@ export const Dark = {
   colorSubtitle: "#b7b7b7",
   colorScroll: "#434343",
   color1: "#1cb0f6",
-  color2:"#37464F"
+  color2:"#E5E5E5"
 };

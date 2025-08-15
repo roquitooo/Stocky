@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { Btn1, Title } from "../../index";
+import { Btn1, Buscador, Title } from "../../index";
 import { v } from "../../styles/variables";
 export function CategoriasTemplate() {
     return (<Container>
@@ -7,16 +7,21 @@ export function CategoriasTemplate() {
 <Btn1 bgcolor={v.colorPrincipal} titulo="nuevo" icono={<v.iconoagregar/>}/>
 </section>
 
+<section className="area2">
+<Buscador/>
+</section>
+
 <section className="main">main</section>
     </Container>);
 }
 
 const Container = styled.div`
-    height: 100vh;
+    height: calc(100vh - 30px);
     padding: 15px;
     display: grid;
     grid-template:
-    "area1" 100px
+    "area1" 60px
+    "area2" 60px
     "main" auto;
     .area1 {
         grid-area: area1;
@@ -26,8 +31,15 @@ const Container = styled.div`
         align-items: center;
         gap: 15px;
         padding: 0 15px;
-
     }
+    .area2 {
+        grid-area: area2;
+        background-color: rgb(236, 184, 105);
+        display: flex;
+        justify-content: end;
+        align-items: center;
+    }
+
     .main {
         grid-area: main;
         background-color: rgb(146, 96, 21);
