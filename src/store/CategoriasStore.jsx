@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { InsertarCategorias, MostrarCategorias } from "../index";
+import { InsertarCategorias, mostrarCategorias } from "../index";
 
 export const useCategoriasStore = create((set, get) => ({
     buscador: "",
@@ -21,9 +21,25 @@ export const useCategoriasStore = create((set, get) => ({
     },
     insertarCategorias: async (p, file) => {
         await InsertarCategorias(p, file);
-        const {MostrarCategorias} = get();
+        const {mostrarCategorias} = get();
         const {parametros} = get();
         set(mostrarCategorias(parametros));
     },
-    eliminar
+    eliminarCategoria: async (p) => {
+        await EliminarCategoria(p);
+        const {mostrarCategorias} = get();
+        const {parametros} = get();
+        set(mostrarCategorias(parametros));
+    },
+    editarCategoria: async (p,fileold,filenew) => {
+        await EditarCategoria(p,fileold,filenew);
+        const {mostrarCategorias} = get();
+        const {parametros} = get();
+        set(mostrarCategorias(parametros));
+    },
+    buscarCategorias:async(p)=>{
+        const reponse = await BuscarCategorias(p)
+        set({datacategorias: reponse});
+        return response;
+    }
 }));
