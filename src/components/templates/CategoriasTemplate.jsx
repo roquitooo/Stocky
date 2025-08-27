@@ -1,7 +1,9 @@
 import styled from "styled-components";
-import { Btn1, Buscador, Title } from "../../index";
+import { Btn1, Buscador, TablaCategorias, Title, useCategoriasStore } from "../../index";
 import { v } from "../../styles/variables";
 export function CategoriasTemplate() {
+    const {datacategorias} = useCategoriasStore()
+
     return (<Container>
 <section className="area1"><Title>Categorias</Title>
 <Btn1 bgcolor={v.colorPrincipal} titulo="nuevo" icono={<v.iconoagregar/>}/>
@@ -11,7 +13,7 @@ export function CategoriasTemplate() {
 <Buscador/>
 </section>
 
-<section className="main">main</section>
+<section className="main"><TablaCategorias data={datacategorias}/></section>
     </Container>);
 }
 

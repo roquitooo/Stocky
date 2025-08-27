@@ -11,7 +11,6 @@ export function Categorias() {
     useCategoriasStore();
   const { dataempresa } = useEmpresaStore();
   const { isLoading, error } = useQuery({
-    // chunk-SO42POYP.js?v=9e4f1a13:721 As of v4, queryKey needs to be an Array. If you are using a string like 'repoData', please change it to an Array, e.g. ['repoData']
     queryKey: ["mostrar categorias", dataempresa?.id],
     queryFn: () => mostrarCategorias({ id_empresa: dataempresa?.id }),
     enabled: !!dataempresa,
