@@ -37,8 +37,8 @@ const Container = styled.button`
   padding: 10px 25px;
   border-radius: 16px;
   background-color: ${(props) => props.$bgcolor};
-  border: 2px solid rgba(50, 50, 50, 0.2);
-  border-bottom: 5px solid rgba(50, 50, 50, 0.2);
+  border: 2px solid #ffbd59;
+  border-bottom: 5px solid #ffbd59;
   transform: translate(0, -3px);
   cursor: pointer;
   transition: 0.2s;
@@ -54,10 +54,10 @@ const Container = styled.button`
   }
   &:active {
     transform: translate(0, 0);
-    border-bottom: 2px solid rgba(50, 50, 50, 0.2);
+    border-bottom: 2px solid #ffbd59;
   }
   &[disabled] {
-    background-color: #646464;
+    background-color: #ffbd59;
     cursor: no-drop;
     box-shadow: none;
   }

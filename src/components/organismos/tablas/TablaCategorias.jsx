@@ -33,19 +33,19 @@ export function TablaCategorias({
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: "Este registro no se permite modificar ya que es valor por defecto.",
+        text: "Esta categoria no se permite modificar ya que es valor por defecto.",
         footer: '<a href="">...</a>',
       });
       return;
     }
     Swal.fire({
-      title: "¿Estás seguro(a)(e)?",
-      text: "Una vez eliminado, ¡no podrá recuperar este registro!",
+      title: "¿Estás seguro/a?",
+      text: "¡No podras recuperar esta categoria!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Si, eliminar",
+      confirmButtonColor: "#ff0000",
+      cancelButtonColor: "#f8a100",
+      confirmButtonText: "Eliminar",
     }).then(async (result) => {
       if (result.isConfirmed) {
         await eliminarCategoria({ id: p.id });
@@ -57,7 +57,7 @@ export function TablaCategorias({
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: "Este registro no se permite modificar ya que es valor por defecto.",
+        text: "Esta categoria no se permite modificar ya que es valor por defecto.",
         footer: '<a href="">...</a>',
       });
       return;
@@ -78,7 +78,6 @@ export function TablaCategorias({
               {<v.iconoimagenvacia/>}
             </Icono>)
           }
-    
         </td>
       ),
 
