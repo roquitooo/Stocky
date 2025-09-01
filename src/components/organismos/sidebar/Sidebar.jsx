@@ -64,9 +64,9 @@ export function Sidebar({ state, setState }) {
           <div className="Links">
             <section className={state ? "content open" : "content"}>
               <Icon
-                color="#CE82FF"
+                color="#ffbd59"
                 className="Linkicon"
-                icon="heroicons:ellipsis-horizontal-circle-solid"
+                icon="majesticons:door-exit-line"
               />
               <span className={state ? "label_ver" : "label_oculto"}>MÁS</span>
             </section>

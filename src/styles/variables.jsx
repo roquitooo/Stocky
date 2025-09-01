@@ -82,7 +82,7 @@ export const v = {
   colorGastos: `#fe6156`,
   colorbgGastos: `#fbcbc9`,
   colorError: `#F54E41`,
-  colorExito: `#9046FF`,
+  colorExito: `#000000`,
   bpmaggie: `15em`,
   bplisa: `30em`,
   bpbart: `48em`,

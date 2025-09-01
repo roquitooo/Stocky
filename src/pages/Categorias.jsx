@@ -17,7 +17,6 @@ export function Categorias() {
     refetchOnWindowFocus: false,
   });
   //buscar categorias
-  console.log(dataempresa.id)
   const {  } = useQuery({
     queryKey: ["buscar categorias", buscador],
     queryFn: () =>

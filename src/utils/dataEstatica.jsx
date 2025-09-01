@@ -29,38 +29,27 @@ export const DesplegableUser = [
 export const LinksArray = [
   {
     label: "Home",
-    icon: "noto-v1:house",
+    icon: "tdesign:home-filled",
     to: "/",
   },
   {
-    label: "VENDER",
-    icon: "twemoji:shopping-cart",
-    to: "/pos",
+    label: "Vender",
+    icon: "tdesign:cart-filled",
+    to: "/vender",
   },
   {
-    label: "Proveedores",
-    icon: "flat-ui:box",
-    to: "/proveedores",
+    label: "Inventario",
+    icon: "fluent:box-16-filled",
+    to: "/inventario",
   },
-  {
-    label: "Reportes",
-    icon: "flat-ui:graph",
-    to: "/reportes",
-  },
-  {
-    label: "Codigo de barras",
-    icon: "bx-barcode",
-    to: "/codigobarras",
-  },
- 
+
 ];
 export const SecondarylinksArray = [
  
   {
     label: "Configuración",
-    icon:"icon-park:setting-two",
+    icon:"ic:round-settings",
     to: "/configuracion",
-    color:"#CE82FF"
   },
   
   
