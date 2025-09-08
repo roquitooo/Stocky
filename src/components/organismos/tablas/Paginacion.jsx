@@ -28,6 +28,7 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   gap: 15px;
+  color: #9c9c9c
 
  
 `;

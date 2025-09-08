@@ -2,16 +2,16 @@ import styled from "styled-components";
 import {
   Btn1,
   Buscador,
-  RegistrarCategorias,
+  RegistrarMarca,
+  TablaMarca,
   Title,
-  useCategoriasStore,
+  useMarcaStore,
 } from "../../index";
 import { v } from "../../styles/variables";
-import { TablaCategorias } from "../organismos/tablas/TablaCategorias";
 import { useState } from "react";
-export function CategoriasTemplate() {
+export function MarcaTemplate() {
   const [openRegistro, SetopenRegistro] = useState(false);
-  const { datacategorias,setBuscador } = useCategoriasStore();
+  const { datamarca,setBuscador } = useMarcaStore();
   const [accion, setAccion] = useState("");
   const [dataSelect, setdataSelect] = useState([]);
   const [isExploding, setIsExploding] = useState(false);
@@ -24,14 +24,14 @@ export function CategoriasTemplate() {
   return (
     <Container>
       {openRegistro && (
-        <RegistrarCategorias setIsExploding={setIsExploding}
+        <RegistrarMarca setIsExploding={setIsExploding}
           onClose={() => SetopenRegistro(!openRegistro)}
           dataSelect={dataSelect}
           accion={accion}
         />
       )}
       <section className="area1">
-        <Title>Categorias</Title>
+        <Title>Marcas</Title>
         <Btn1
           funcion={nuevoRegistro}
           bgcolor={v.colorPrincipal}
@@ -45,7 +45,7 @@ export function CategoriasTemplate() {
 
       <section className="main">
         {isExploding}
-        <TablaCategorias setdataSelect={setdataSelect} setAccion={setAccion} SetopenRegistro={SetopenRegistro} data={datacategorias} />
+        <TablaMarca setdataSelect={setdataSelect} setAccion={setAccion} SetopenRegistro={SetopenRegistro} data={datamarca} />
       </section>
     </Container>
   );

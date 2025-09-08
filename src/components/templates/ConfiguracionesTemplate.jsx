@@ -156,7 +156,7 @@ align-items: flex-start;
   h4,
   span {
     color: ${({ theme }) => theme.colorsubtitlecard};
-    font-family: "Rubik", sans-serif;
+    font-family: "Poppins", sans-serif;
     font-weight: 600;
     margin: 0px;
   }

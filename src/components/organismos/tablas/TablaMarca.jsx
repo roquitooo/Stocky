@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import {
   ContentAccionesTabla,
-  useCategoriasStore,
+  useMarcaStore,
   Paginacion,ImagenContent, Icono
 } from "../../../index";
 import Swal from "sweetalert2";
@@ -16,7 +16,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { FaArrowsAltV } from "react-icons/fa";
-export function TablaCategorias({
+export function TablaMarca({
   data,
   SetopenRegistro,
   setdataSelect,
@@ -27,20 +27,20 @@ export function TablaCategorias({
   const [datas, setData] = useState(data);
   const [columnFilters, setColumnFilters] = useState([]);
 
-  const { eliminarCategoria } = useCategoriasStore();
+  const { eliminarMarca } = useMarcaStore();
   function eliminar(p) {
     if (p.nombre === "General") {
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: "Este registro no se permite modificar ya que es valor por defecto.",
+        text: "Esta marca no se permite modificar ya que es valor por defecto.",
         footer: '<a href="">...</a>',
       });
       return;
     }
     Swal.fire({
       title: "¿Estás seguro(a)(e)?",
-      text: "Una vez eliminado, ¡no podrá recuperar este registro!",
+      text: "Una vez eliminado, ¡no podrá recuperar esta marca!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
@@ -48,7 +48,7 @@ export function TablaCategorias({
       confirmButtonText: "Si, eliminar",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await eliminarCategoria({ id: p.id });
+        await eliminarMarca({ id: p.id });
       }
     });
   }
@@ -57,7 +57,7 @@ export function TablaCategorias({
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: "Este registro no se permite modificar ya que es valor por defecto.",
+        text: "Esta marca no se permite modificar ya que es valor por defecto.",
         footer: '<a href="">...</a>',
       });
       return;
@@ -68,32 +68,11 @@ export function TablaCategorias({
   }
   const columns = [
     {
-      accessorKey: "icono",
-      header: "Icono", 
-      enableSorting: false,
-      cell: (info) => (
-        <td data-title="Color" className="ContentCell">
-          {
-            info.getValue()!="-"?(   <ImagenContent imagen={info.getValue()}/>):(<Icono>
-              {<v.iconoimagenvacia/>}
-            </Icono>)
-          }
-    
-        </td>
-      ),
-
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterStatuses) => {
-        if (filterStatuses.length === 0) return true;
-        const status = row.getValue(columnId);
-        return filterStatuses.includes(status?.id);
-      },
-    },
-   
-    {
       accessorKey: "nombre",
       header: "Descripcion",
-      cell: (info) => <span>{info.getValue()}</span>,
+      cell: (info) => <td data-title="Descripcion" className="ContentCell"> 
+        <span>{info.getValue()}</span>
+        </td>,
       enableColumnFilter: true,
       filterFn: (row, columnId, filterStatuses) => {
         if (filterStatuses.length === 0) return true;
@@ -102,26 +81,9 @@ export function TablaCategorias({
       },
     },
 
-    {
-      accessorKey: "color",
-      header: "Color",
-      enableSorting: false,
-      cell: (info) => (
-        <td data-title="Color" className="ContentCell">
-          <Colorcontent color={info.getValue()} $alto="25px" $ancho="25px" />
-        </td>
-      ),
-
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterStatuses) => {
-        if (filterStatuses.length === 0) return true;
-        const status = row.getValue(columnId);
-        return filterStatuses.includes(status?.id);
-      },
-    },
     {
       accessorKey: "acciones",
-      header: "",
+      header: "Acciones",
       enableSorting: false,
       cell: (info) => (
         <td data-title="Acciones" className="ContentCell">
@@ -370,6 +332,7 @@ const Container = styled.div`
         content: attr(data-title);
         float: left;
         font-size: 0.8em;
+        font-weight: 700;
         @media (min-width: ${v.bplisa}) {
           font-size: 0.9em;
         }
@@ -379,13 +342,4 @@ const Container = styled.div`
       }
     }
   }
-`;
-const Colorcontent = styled.div`
-  justify-content: center;
-  min-height: ${(props) => props.$alto};
-  width: ${(props) => props.$ancho};
-  display: flex;
-  background-color: ${(props) => props.color};
-  border-radius: 50%;
-  text-align: center;
 `;

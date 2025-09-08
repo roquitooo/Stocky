@@ -4,6 +4,7 @@ import {
   Configuraciones,
   Home,
   Login,
+  Marca,
   ProtectedRoute,
   Spinner1,
   UserAuth,
@@ -37,6 +38,7 @@ export function MyRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/configuracion" element={<Configuraciones />} />
         <Route path="/configuracion/categorias" element={<Categorias />} />
+        <Route path="/configuracion/marca" element={<Marca />} />
       </Route>
       <Route path="/login" element={<Login />} />
     </Routes>
