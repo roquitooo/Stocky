@@ -66,8 +66,8 @@ export function RegistrarMarca({
             <section>
               <h1>
                 {accion == "Editar"
-                  ? "Editar marca"
-                  : "Registrar nueva marca"}
+                  ? "Editar producto"
+                  : "Registrar nuevo producto"}
               </h1>
             </section>
 
@@ -84,12 +84,12 @@ export function RegistrarMarca({
                     className="form__field"
                     defaultValue={dataSelect.nombre}
                     type="text"
-                    placeholder="marca"
-                    {...register("marca", {
+                    placeholder="producto"
+                    {...register("producto", {
                       required: true,
                     })}
                   />
-                  <label className="form__label">Nombre de la marca</label>
+                  <label className="form__label">Nombre del producto</label>
                   {errors.descripcion?.type === "required" && (
                     <p>Campo requerido</p>
                   )}

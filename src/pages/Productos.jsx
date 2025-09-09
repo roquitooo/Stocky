@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  MarcaTemplate,
+  ProductosTemplate,
   Spinner1,
   useMarcaStore,
   useEmpresaStore,
 } from "../index";
 
-export function Marca() {
+export function Productos() {
   const { mostrarmarca, buscarmarca, buscador } =
     useMarcaStore();
   const { dataempresa } = useEmpresaStore();
@@ -31,5 +31,5 @@ export function Marca() {
   if (error) {
     return <span>error...</span>;
   }
-  return <MarcaTemplate />;
+  return <ProductosTemplate />;
 }

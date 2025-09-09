@@ -9,7 +9,7 @@ import {
 } from "../../index";
 import { v } from "../../styles/variables";
 import { useState } from "react";
-export function MarcaTemplate() {
+export function ProductosTemplate() {
   const [openRegistro, SetopenRegistro] = useState(false);
   const { datamarca,setBuscador } = useMarcaStore();
   const [accion, setAccion] = useState("");
@@ -31,7 +31,7 @@ export function MarcaTemplate() {
         />
       )}
       <section className="area1">
-        <Title>Marcas</Title>
+        <Title>Productos</Title>
         <Btn1
           funcion={nuevoRegistro}
           bgcolor={v.colorPrincipal}

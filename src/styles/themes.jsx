@@ -70,7 +70,7 @@ export const Dark = {
   bg4: "#4E4E50",
   bg5: "#84d8ff",
   bg6:"rgba(132, 216, 255, 0.1)",
-  bgtotal: "#131F24",
+  bgtotal: "#1a1f2e",
   colorToggle: "rgb(52, 131, 235)",
   translateToggle: "26px",
 

@@ -8,18 +8,18 @@ export async function InsertarEmpresa(p) {
     .select()
     .maybeSingle();
   if (error) {
-     Swal.fire({
-       icon: "error",
-       title: "Oops...",
-       text: error.message,
-     });
+    // Swal.fire({
+    //   icon: "error",
+    //   title: "Oops...",
+    //   text: error.message,
+    // });
     return;
   }
   return data;
 }
 
-export async function mostrarempresaxiduser(p) {
+export async function MostrarEmpresaXidsuario(p) {
   const { data } = await supabase.rpc("mostrarempresaxiduser", p).maybeSingle();
-    return data;
+  return data;
 }
 
