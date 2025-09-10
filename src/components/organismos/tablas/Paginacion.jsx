@@ -8,16 +8,16 @@ export const Paginacion = ({ table }) => {
   return (
     <Container >
    
-      <Btn1 disabled={!table.getCanPreviousPage()} funcion={() => table.setPageIndex(0)} bgcolor="#ffbd59" icono={<v.iconotodos />} />
+      <Btn1 disabled={!table.getCanPreviousPage()} funcion={() => table.setPageIndex(0)} bgcolor="#F3D20C" icono={<v.iconotodos />} />
 
-      <Btn1  disabled={!table.getCanPreviousPage()} funcion={() => table.previousPage()} bgcolor="#ffbd59" icono={<v.iconoflechaizquierda />} />
+      <Btn1  disabled={!table.getCanPreviousPage()} funcion={() => table.previousPage()} bgcolor="#F3D20C" icono={<v.iconoflechaizquierda />} />
 
 
     
       <span>{table.getState().pagination.pageIndex + 1}</span>
       <p> de {table.getPageCount()} </p>
 
-      <Btn1  disabled={!table.getCanNextPage()} funcion={() => table.nextPage()} bgcolor="#ffbd59" icono={<v.iconoflechaderecha />} />
+      <Btn1  disabled={!table.getCanNextPage()} funcion={() => table.nextPage()} bgcolor="#F3D20C" icono={<v.iconoflechaderecha />} />
       
     </Container>
   );
@@ -28,7 +28,6 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   gap: 15px;
-  color: #9c9c9c
 
  
 `;

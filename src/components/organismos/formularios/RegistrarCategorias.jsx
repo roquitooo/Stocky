@@ -117,10 +117,10 @@ export function RegistrarCategorias({
 
             <Btn1
               funcion={abrirImagenes}
-              titulo="Agregar imagen (opcional)"
+              titulo="+imagen(opcional)"
               color="#5f5f5f"
               bgcolor="rgb(183, 183, 182)"
-              icono={<v.iconoagregar />}
+              icono={<v.iconosupabase />}
             />
             <input
               type="file"
@@ -141,7 +141,7 @@ export function RegistrarCategorias({
                       required: true,
                     })}
                   />
-                  <label className="form__label">Nombre de la categoria</label>
+                  <label className="form__label">categoria</label>
                   {errors.descripcion?.type === "required" && (
                     <p>Campo requerido</p>
                   )}
@@ -161,7 +161,7 @@ export function RegistrarCategorias({
               <Btn1
                 icono={<v.iconoguardar />}
                 titulo="Guardar"
-                bgcolor="#ffbd59"
+                bgcolor="#F9D70B"
               />
             </section>
           </form>
@@ -246,7 +246,7 @@ const PictureContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: start;
-  border: 2px dashed #ffbd59;
+  border: 2px dashed #f9d70b;
   border-radius: 5px;
   background-color: rgba(249, 215, 11, 0.1);
   padding: 8px;

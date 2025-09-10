@@ -287,7 +287,6 @@ const Container = styled.div`
       padding: 0;
       text-align: left;
       white-space: normal;
-    
     }
     tr {
       
@@ -301,7 +300,6 @@ const Container = styled.div`
       
       padding: 0.5em;
       vertical-align: middle;
-      color: #9c9c9c;;
       @media (min-width: ${v.bplisa}) {
         padding: 0.75em 0.5em;
       }
@@ -362,7 +360,7 @@ const Container = styled.div`
       td {
         text-align: right;
         @media (min-width: ${v.bpbart}) {
-         border-bottom: 1px solid rgba(161, 161, 161, 0.32); 
+          /* border-bottom: 1px solid rgba(161, 161, 161, 0.32); */
           text-align: center;
         }
       }

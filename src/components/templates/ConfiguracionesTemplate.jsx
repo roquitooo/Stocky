@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import Logofondo from "../../assets/Logofondo.svg";
+import Logofondo from "./../../assets/logofondo.svg";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { useModulosStore } from "../../index";
@@ -11,16 +11,13 @@ export function ConfiguracionesTemplate() {
         const rect = card.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-
         card.style.setProperty("--mouse-x", `${x}px`);
         card.style.setProperty("--mouse-y", `${y}px`);
       });
     };
-
     const cardsContainer = document.getElementById("cards");
     if (cardsContainer) {
       cardsContainer.addEventListener("mousemove", handleMouseMove);
-
       return () => {
         cardsContainer.removeEventListener("mousemove", handleMouseMove);
       };
@@ -59,8 +56,6 @@ export function ConfiguracionesTemplate() {
   );
 }
 const Container = styled.div`
-  --bg-color: rgb(20, 20, 20);
-  --card-color: rgb(23, 23, 23);
   background-image: url(${Logofondo});
   background-size: contain;
   background-position: center;
@@ -70,8 +65,8 @@ const Container = styled.div`
   display: flex;
   height: 100vh;
   justify-content: center;
-width:100%;
-align-items: flex-start;
+  width: 100%;
+  align-items: flex-start;
   #cards {
     display: flex;
     flex-wrap: wrap;
@@ -156,7 +151,7 @@ align-items: flex-start;
   h4,
   span {
     color: ${({ theme }) => theme.colorsubtitlecard};
-    font-family: "Poppins", sans-serif;
+    font-family: "Rubik", sans-serif;
     font-weight: 600;
     margin: 0px;
   }
@@ -230,8 +225,6 @@ align-items: flex-start;
     z-index: 1;
   }
 
-
-
   @media (max-width: 1000px) {
     align-items: flex-start;
     overflow: auto;
@@ -276,6 +269,4 @@ align-items: flex-start;
       margin-top: 4px;
     }
   }
-
- 
 `;

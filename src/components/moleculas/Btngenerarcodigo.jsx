@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { Icono } from "../../index";
-export function Btn1({
+export function Btngenerarcodigo({
   funcion,
   titulo,
   bgcolor,
@@ -11,9 +11,9 @@ export function Btn1({
 }) {
   return (
     <Container $width={width}
-      disabled={disabled}
+     
       $color={color}
-      type="submit"
+      
       $bgcolor={bgcolor}
       onClick={funcion} 
     >
@@ -21,7 +21,7 @@ export function Btn1({
         <Icono $color={color}>{icono}</Icono>
         {titulo && (
           <span className="btn">
-            <a href={url} target="_blank">
+            <a >
               {titulo}
             </a>
           </span>
@@ -30,7 +30,7 @@ export function Btn1({
     </Container>
   );
 }
-const Container = styled.button`
+const Container = styled.div`
   font-weight: 700;
   display: flex;
   font-size: 15px;

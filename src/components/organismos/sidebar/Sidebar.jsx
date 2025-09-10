@@ -21,7 +21,7 @@ export function Sidebar({ state, setState }) {
           <div className="imgcontent">
             <img src={v.logo} />
           </div>
-          <h2>STOCKY</h2>
+          <h2>Ada369 3.0</h2>
         </div>
         {LinksArray.map(({ icon, label, to }) => (
           <div
@@ -61,12 +61,12 @@ export function Sidebar({ state, setState }) {
           </div>
         ))}
         <div className={state ? "LinkContainer active" : "LinkContainer"}>
-          <div className="Links">
+          <div className="Links" onClick={()=>SetstateDesplegableLinks(!stateDesplegableLinks)}>
             <section className={state ? "content open" : "content"}>
               <Icon
-                color="#ffbd59"
+                color="#CE82FF"
                 className="Linkicon"
-                icon="majesticons:door-exit-line"
+                icon="heroicons:ellipsis-horizontal-circle-solid"
               />
               <span className={state ? "label_ver" : "label_oculto"}>MÁS</span>
             </section>
@@ -126,7 +126,7 @@ const Container = styled.div`
       }
     }
     h2 {
-      color: #e2ae04;
+      color: #f88533;
       display: ${({ $isopen }) => ($isopen === "true" ? `block` : `none`)};
     }
   }

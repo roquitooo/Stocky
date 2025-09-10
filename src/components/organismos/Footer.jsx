@@ -4,9 +4,19 @@ export function Footer() {
   return (
     <Container>
       <section className="lock">
-        <span>Todos los derechos reservados |</span>
+        <GiPadlock />
+        <span>
+          Esta es una página segura de codigo369. Si tienes dudas sobre la
+          autenticidad de la web, comunícate con
+          <br /> nosotros al 311-9898 o a través de nuestros medios digitales.
+        </span>
+      </section>
+      <section className="derechos">
+        <span>Ada369 S.A - RUC: 20100047218</span>
         <div className="separador"></div>
-        <span>© 2025 STOCKY</span>
+        <span>Todos los derechos reservados</span>
+        <div className="separador"></div>
+        <span>© 2023 codigo369.com</span>
       </section>
     </Container>
   );
@@ -40,4 +50,3 @@ const Container = styled.div`
     }
   }
 `;
-

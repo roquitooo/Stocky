@@ -22,4 +22,3 @@ export async function MostrarEmpresaXidsuario(p) {
   const { data } = await supabase.rpc("mostrarempresaxiduser", p).maybeSingle();
   return data;
 }
-

@@ -1,8 +1,9 @@
 import styled from "styled-components";
 import {
+  Checkbox1,
   ContentAccionesTabla,
-  useMarcaStore,
-  Paginacion,ImagenContent, Icono
+  Paginacion,
+  useProductosStore,
 } from "../../../index";
 import Swal from "sweetalert2";
 import { v } from "../../../styles/variables";
@@ -16,31 +17,31 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { FaArrowsAltV } from "react-icons/fa";
-export function TablaMarca({
+export function TablaProductos({
   data,
   SetopenRegistro,
   setdataSelect,
   setAccion,
 }) {
-  if (data==null) return;
+  if (data == null) return;
   const [pagina, setPagina] = useState(1);
   const [datas, setData] = useState(data);
   const [columnFilters, setColumnFilters] = useState([]);
 
-  const { eliminarMarca } = useMarcaStore();
+  const { eliminarProductos } = useProductosStore();
   function eliminar(p) {
     if (p.nombre === "General") {
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: "Esta marca no se permite modificar ya que es valor por defecto.",
+        text: "Este registro no se permite modificar ya que es valor por defecto.",
         footer: '<a href="">...</a>',
       });
       return;
     }
     Swal.fire({
       title: "¿Estás seguro(a)(e)?",
-      text: "Una vez eliminado, ¡no podrá recuperar esta marca!",
+      text: "Una vez eliminado, ¡no podrá recuperar este registro!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
@@ -48,20 +49,12 @@ export function TablaMarca({
       confirmButtonText: "Si, eliminar",
     }).then(async (result) => {
       if (result.isConfirmed) {
-        await eliminarMarca({ id: p.id });
+        await eliminarProductos({ id: p.id });
       }
     });
   }
   function editar(data) {
-    if (data.nombre === "General") {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "Esta marca no se permite modificar ya que es valor por defecto.",
-        footer: '<a href="">...</a>',
-      });
-      return;
-    }
+  
     SetopenRegistro(true);
     setdataSelect(data);
     setAccion("Editar");
@@ -70,9 +63,71 @@ export function TablaMarca({
     {
       accessorKey: "nombre",
       header: "Descripcion",
-      cell: (info) => <td data-title="Descripcion" className="ContentCell"> 
-        <span>{info.getValue()}</span>
-        </td>,
+      cell: (info) => (
+        <td data-title="DESCRIPCION" className="ContentCell">
+          <span>{info.getValue()}</span>
+        </td>
+      ),
+      enableColumnFilter: true,
+      filterFn: (row, columnId, filterStatuses) => {
+        if (filterStatuses.length === 0) return true;
+        const status = row.getValue(columnId);
+        return filterStatuses.includes(status?.id);
+      },
+    },
+    {
+      accessorKey: "p_venta",
+      header: "P. venta",
+      cell: (info) => (
+        <td data-title="P. venta" className="ContentCell">
+          <span>{info.getValue()}</span>
+        </td>
+      ),
+      enableColumnFilter: true,
+      filterFn: (row, columnId, filterStatuses) => {
+        if (filterStatuses.length === 0) return true;
+        const status = row.getValue(columnId);
+        return filterStatuses.includes(status?.id);
+      },
+    },
+    {
+      accessorKey: "p_compra",
+      header: "P. compra",
+      cell: (info) => (
+        <td data-title="P. compra" className="ContentCell">
+          <span>{info.getValue()}</span>
+        </td>
+      ),
+      enableColumnFilter: true,
+      filterFn: (row, columnId, filterStatuses) => {
+        if (filterStatuses.length === 0) return true;
+        const status = row.getValue(columnId);
+        return filterStatuses.includes(status?.id);
+      },
+    },
+    {
+      accessorKey: "sevende_por",
+      header: "Se vende por",
+      cell: (info) => (
+        <td data-title="Se vende por" className="ContentCell">
+          <span>{info.getValue()}</span>
+        </td>
+      ),
+      enableColumnFilter: true,
+      filterFn: (row, columnId, filterStatuses) => {
+        if (filterStatuses.length === 0) return true;
+        const status = row.getValue(columnId);
+        return filterStatuses.includes(status?.id);
+      },
+    },
+    {
+      accessorKey: "maneja_inventarios",
+      header: "Inventarios",
+      cell: (info) => (
+        <td data-title="Inventarios" className="ContentCell">
+          <Checkbox1 isChecked={info.getValue()}/>
+        </td>
+      ),
       enableColumnFilter: true,
       filterFn: (row, columnId, filterStatuses) => {
         if (filterStatuses.length === 0) return true;
@@ -83,15 +138,15 @@ export function TablaMarca({
 
     {
       accessorKey: "acciones",
-      header: "Acciones",
+      header: "",
       enableSorting: false,
       cell: (info) => (
-        <td data-title="Acciones" className="ContentCell">
+        <div data-title="Acciones" className="ContentCell">
           <ContentAccionesTabla
             funcionEditar={() => editar(info.row.original)}
             funcionEliminar={() => eliminar(info.row.original)}
           />
-        </td>
+        </div>
       ),
       enableColumnFilter: true,
       filterFn: (row, columnId, filterStatuses) => {
@@ -163,21 +218,14 @@ export function TablaMarca({
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map(item=>(
-              
-                <tr key={item.id}>
-                  {item.getVisibleCells().map(cell => (
-                  
-                      <td key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    
-                  ))}
-                </tr>
-             
+            {table.getRowModel().rows.map((item) => (
+              <tr key={item.id}>
+                {item.getVisibleCells().map((cell) => (
+                  <td key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
             ))}
           </tbody>
         </table>
@@ -214,7 +262,6 @@ const Container = styled.div`
       font-size: 1em;
     }
     thead {
-      
       position: absolute;
 
       padding: 0;
@@ -222,7 +269,7 @@ const Container = styled.div`
       height: 1px;
       width: 1px;
       overflow: hidden;
-      
+
       @media (min-width: ${v.bpbart}) {
         position: relative;
         height: auto;
@@ -230,9 +277,8 @@ const Container = styled.div`
         overflow: auto;
       }
       th {
-        
-        border-bottom: 2px solid ${({theme})=>theme.color2};
-        font-weight:700;
+        border-bottom: 2px solid ${({ theme }) => theme.color2};
+        font-weight: 700;
         text-align: center;
         color: ${({ theme }) => theme.text};
         &:first-of-type {
@@ -244,15 +290,12 @@ const Container = styled.div`
     tr,
     th,
     td {
-      
       display: block;
       padding: 0;
       text-align: left;
       white-space: normal;
-    
     }
     tr {
-      
       @media (min-width: ${v.bpbart}) {
         display: table-row;
       }
@@ -260,10 +303,8 @@ const Container = styled.div`
 
     th,
     td {
-      
       padding: 0.5em;
       vertical-align: middle;
-      color: #9c9c9c;;
       @media (min-width: ${v.bplisa}) {
         padding: 0.75em 0.5em;
       }
@@ -293,12 +334,10 @@ const Container = styled.div`
         }
         &:nth-of-type(even) {
           @media (min-width: ${v.bpbart}) {
-           
           }
         }
       }
       th[scope="row"] {
-        
         @media (min-width: ${v.bplisa}) {
           border-bottom: 1px solid rgba(161, 161, 161, 0.32);
         }
@@ -314,6 +353,7 @@ const Container = styled.div`
         justify-content: space-between;
         align-items: center;
         height: 50px;
+        
 
         border-bottom: 1px solid rgba(161, 161, 161, 0.32);
         @media (min-width: ${v.bpbart}) {
@@ -324,7 +364,7 @@ const Container = styled.div`
       td {
         text-align: right;
         @media (min-width: ${v.bpbart}) {
-         border-bottom: 1px solid rgba(161, 161, 161, 0.32); 
+          /* border-bottom: 1px solid rgba(161, 161, 161, 0.32); */
           text-align: center;
         }
       }
@@ -332,7 +372,7 @@ const Container = styled.div`
         content: attr(data-title);
         float: left;
         font-size: 0.8em;
-        font-weight: 700;
+        font-weight:700;
         @media (min-width: ${v.bplisa}) {
           font-size: 0.9em;
         }

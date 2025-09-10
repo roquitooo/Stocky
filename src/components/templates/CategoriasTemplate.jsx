@@ -35,7 +35,7 @@ export function CategoriasTemplate() {
         <Btn1
           funcion={nuevoRegistro}
           bgcolor={v.colorPrincipal}
-          titulo="Agregar"
+          titulo="nuevo"
           icono={<v.iconoagregar />}
         />
       </section>
@@ -75,7 +75,6 @@ const Container = styled.div`
   }
   .main {
     grid-area: main;
-    
     /* background-color: rgba(237, 7, 221, 0.14); */
   }
 `;
