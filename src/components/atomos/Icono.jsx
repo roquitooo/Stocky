@@ -5,4 +5,6 @@ export const Icono = styled.span`
    text-align:center;
     font-size:20px;
     color:${(props)=>props.$color};
+  
+  
 `
