@@ -42,7 +42,7 @@ export function RegistrarProductos({
     } else {
       setIsChecked1(false);
       setIsChecked2(true);
-      setSevendepor("GRANEL");
+      setSevendepor("Gramos");
     }
   };
   //
@@ -163,7 +163,7 @@ export function RegistrarProductos({
         if (stateInventarios) {
           Swal.fire({
             title: "¿Estás seguro(a)?",
-            text: "Si desactiva esta opción se eliminara el stock!",
+            text: "Si desactivas esta opción se elimina el stock!",
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
@@ -292,7 +292,7 @@ export function RegistrarProductos({
                       required: true,
                     })}
                   />
-                  <label className="form__label">nombre</label>
+                  <label className="form__label">Nombre</label>
                   {errors.nombre?.type === "required" && <p>Campo requerido</p>}
                 </InputText>
               </article>
@@ -306,7 +306,7 @@ export function RegistrarProductos({
                     placeholder="precio venta"
                     {...register("precio_venta")}
                   />
-                  <label className="form__label">precio venta</label>
+                  <label className="form__label">Precio venta</label>
                 </InputText>
               </article>
               <article>
@@ -319,7 +319,7 @@ export function RegistrarProductos({
                     placeholder="precio compra"
                     {...register("precio_compra")}
                   />
-                  <label className="form__label">precio compra</label>
+                  <label className="form__label">Precio compra</label>
                 </InputText>
               </article>
               <article className="contentPadregenerar">
@@ -331,7 +331,7 @@ export function RegistrarProductos({
                     type="text"
                     placeholder="codigo de barras"
                   />
-                  <label className="form__label">codigo de barras</label>
+                  <label className="form__label">Codigo de barras</label>
                 </InputText>
                 <ContainerBtngenerar>
                   <Btngenerarcodigo
@@ -350,7 +350,7 @@ export function RegistrarProductos({
                     placeholder="codigo interno"
                     // {...register("codigo_interno")}
                   />
-                  <label className="form__label">codigo interno</label>
+                  <label className="form__label">Codigo interno</label>
                 </InputText>
                 <ContainerBtngenerar>
                   <Btngenerarcodigo
@@ -368,7 +368,7 @@ export function RegistrarProductos({
                   isChecked={isChecked1}
                   onChange={() => handleCheckboxChange(1)}
                 />
-                <label>GRANEL(decimales) </label>
+                <label>Gramos</label>
                 <Checkbox1
                   isChecked={isChecked2}
                   onChange={() => handleCheckboxChange(2)}
@@ -382,7 +382,7 @@ export function RegistrarProductos({
                   funcion={() => setStateCategoriasLista(!stateCategoriasLista)}
                   texto1="🏬"
                   texto2={categoriaItemSelect?.nombre}
-                  color="#fc6027"
+                  color="##ffbd59"
                 />
                 <ListaDesplegable
                   funcion={selectCategoria}
@@ -412,7 +412,7 @@ export function RegistrarProductos({
                       }
                       texto1="🏬"
                       texto2={sucursalesItemSelect?.nombre}
-                      color="#fc6027"
+                      color="#ffbd59"
                     />
 
                     <ListaDesplegable
@@ -429,7 +429,7 @@ export function RegistrarProductos({
                   {stateEnabledStock && (
                     <ContainerMensajeStock>
                       <span>
-                        💀 para editar el stock vaya al módulo de kardex
+                         Para editar el stock vaya al módulo de "manejar inventario"
                       </span>
                     </ContainerMensajeStock>
                   )}
@@ -445,7 +445,7 @@ export function RegistrarProductos({
                         placeholder="stock"
                         {...register("stock")}
                       />
-                      <label className="form__label">stock</label>
+                      <label className="form__label">Stock</label>
                     </InputText>
                   </article>
                   <article>
@@ -459,7 +459,7 @@ export function RegistrarProductos({
                         placeholder="stock minimo"
                         {...register("stock_minimo")}
                       />
-                      <label className="form__label">stock minimo</label>
+                      <label className="form__label">Stock minimo</label>
                     </InputText>
                   </article>
                 </ContainerStock>
@@ -469,7 +469,7 @@ export function RegistrarProductos({
             <Btn1
               icono={<v.iconoguardar />}
               titulo="Guardar"
-              bgcolor="#F9D70B"
+              bgcolor="#ffbd59"
             />
           </form>
         </div>
@@ -550,8 +550,8 @@ const ContainerBtngenerar = styled.div`
 `;
 const ContainerMensajeStock = styled.div`
   text-align: center;
-  color: #f9184c;
-  background-color: rgba(249, 24, 61, 0.2);
+  color: #ffbd59;
+  background-color: #6b2200;
   border-radius: 10px;
   padding: 5px;
   margin: 10px;

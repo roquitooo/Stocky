@@ -10,7 +10,7 @@ export function Checkbox1({isChecked,onChange}) {
   );
 }
 const Container = styled.label`
-  --input-focus: #2d8cf0;
+  --input-focus: #ffbd59;
   --input-out-of-focus: #ccc;
   --bg-color: #fff;
   --bg-color-alt: #666;
