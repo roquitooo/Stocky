@@ -58,6 +58,11 @@ const Container = styled.div`
         @media ${Device.tablet} {
             width: 400px;
         }
+        form{
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
     }
 `

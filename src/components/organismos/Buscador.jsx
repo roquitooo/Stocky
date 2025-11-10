@@ -8,7 +8,7 @@ function buscar (e){
   return (<Container>
 <section className="content">
 <v.iconobuscar className="icono"/>
-<input placeholder="...buscar" onChange={buscar}/>
+<input placeholder="Buscar..." onChange={buscar}/>
 </section>
   </Container>);
 }

@@ -35,7 +35,7 @@ export const LinksArray = [
   {
     label: "Vender",
     icon: "tdesign:cart-filled",
-    to: "/vender",
+    to: "/pos",
   },
   {
     label: "Inventario",

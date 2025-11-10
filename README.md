@@ -1,8 +1,10 @@
-# React + Vite
+Para todo usuario que este leyendo este codigo, aqui estan los pasos a seguir para desplegar este proyecto en localhost:
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+1- Descargar el .zip desde GitHub
+2- Instalar las dependencias (esto se hace con el comando: npm i)
+3- Tener en cuenta que se debe tener instalado en la computadora los siguientes:
+- Node: Dentro de la consola de PowerShell, escribimos: winget install OpenJS.NodeJS.LTS -s winget
+- npm.ps1: Si al querer iniciar el proyecto nos dice el siguiente error: npm : No se puede cargar el archivo C:\Program Files\nodejs\npm.ps1 porque la ejecución de scripts está deshabilitada en este sistema.
+En la consola de PowerShell, escribi: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser, esto habilita a tu usuario de forma permamente 
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Como recomendacion tambien instalar Git (desde la web)

@@ -68,7 +68,7 @@ export function Sidebar({ state, setState }) {
                 className="Linkicon"
                 icon="majesticons:door-exit"
               />
-              <span className={state ? "label_ver" : "label_oculto"}>MÁS</span>
+              <span className={state ? "label_ver" : "label_oculto"}>SALIR</span>
             </section>
           </div>
          

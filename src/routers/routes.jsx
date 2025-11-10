@@ -6,41 +6,80 @@ import {
   Login,
   Productos,
   ProtectedRoute,
-  Spinner1,
-  UserAuth,
-  useEmpresaStore,
-  useUsuariosStore,
+  POS,
+  Layout,
 } from "../index";
-import { useQuery } from "@tanstack/react-query";
-export function MyRoutes() {
-  const { user } = UserAuth();
-  const { datausuarios, mostrarusuarios } = useUsuariosStore();
-  const { mostrarempresa, dataempresa } = useEmpresaStore();
-  const { isLoading, error } = useQuery({
-    queryKey: "mostrar usuarios",
-    queryFn: mostrarusuarios,refetchOnWindowFocus:false
-  });
-  const {data:dtempresa} = useQuery({
-    queryKey: ["mostrar empresa",  datausuarios?.id ],
-    queryFn: () => mostrarempresa({_id_usuario: datausuarios?.id }),enabled:!!datausuarios,refetchOnWindowFocus:false
-  });
 
-  if (isLoading) {
-    return <Spinner1 />;
-  }
-  if (error) {
-    return <span>error...</span>;
-  }
+export function MyRoutes() {
+ 
 
   return (
     <Routes>
-      <Route element={<ProtectedRoute user={user} redirectTo="/login" />}>
-        <Route path="/" element={<Home />} />
+      <Route
+        path="/login"
+        element={
+          <ProtectedRoute accessBy="non-authenticated">
+            <Login />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute accessBy="authenticated">
+            <Layout>
+              <Home />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+       <Route
+        path="/configuracion"
+        element={
+          <ProtectedRoute accessBy="authenticated">
+            <Layout>
+              <Configuraciones />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/configuracion/categorias"
+        element={
+          <ProtectedRoute accessBy="authenticated">
+            <Layout>
+              <Categorias />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/configuracion/productos"
+        element={
+          <ProtectedRoute accessBy="authenticated">
+            <Layout>
+              <Productos />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+       <Route
+        path="/pos"
+        element={
+          <ProtectedRoute accessBy="authenticated">
+            <Layout>
+              <POS />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* <Route path="/" element={<Home />} />
         <Route path="/configuracion" element={<Configuraciones />} />
         <Route path="/configuracion/categorias" element={<Categorias />} />
         <Route path="/configuracion/productos" element={<Productos />} />
-      </Route>
-      <Route path="/login" element={<Login />} />
+        <Route path="/pos" element={<POS />} /> */}
     </Routes>
   );
 }
