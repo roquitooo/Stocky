@@ -8,3 +8,5 @@ Para todo usuario que este leyendo este codigo, aqui estan los pasos a seguir pa
 En la consola de PowerShell, escribi: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser, esto habilita a tu usuario de forma permamente 
 
 Como recomendacion tambien instalar Git (desde la web)
+
+Stocky

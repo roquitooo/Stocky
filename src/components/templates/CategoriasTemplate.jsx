@@ -9,6 +9,7 @@ import {
 import { v } from "../../styles/variables";
 import { TablaCategorias } from "../organismos/tablas/TablaCategorias";
 import { useState } from "react";
+import ConfettiExplosion from "react-confetti-explosion";
 export function CategoriasTemplate() {
   const [openRegistro, SetopenRegistro] = useState(false);
   const { datacategorias,setBuscador } = useCategoriasStore();
@@ -44,14 +45,16 @@ export function CategoriasTemplate() {
       </section>
 
       <section className="main">
-        {isExploding}
+        {isExploding && <ConfettiExplosion />}
         <TablaCategorias setdataSelect={setdataSelect} setAccion={setAccion} SetopenRegistro={SetopenRegistro} data={datacategorias} />
       </section>
     </Container>
   );
 }
 const Container = styled.div`
-  height: calc(100vh - 30px);
+  height: calc(100vh - 80px);
+  
+   margin-top:50px;
   padding: 15px;
   display: grid;
   grid-template:

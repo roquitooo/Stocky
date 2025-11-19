@@ -1,8 +1,8 @@
 import styled from "styled-components";
 
-export function InputText({ children, icono }) {
+export function InputText({ children, icono,textalign }) {
   return (
-    <Container>
+    <Container $textalign={textalign}>
       <span>{icono}</span>
 
       <div className="form__group field">{children}</div>
@@ -42,6 +42,7 @@ const Container = styled.div`
     padding: 7px 0;
     background: transparent;
     transition: border-color 0.2s;
+    text-align:${(props)=>props.$textalign};
     &.disabled{
       color: #696969;
       background: #2d2d2d;

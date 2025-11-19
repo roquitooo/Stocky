@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import Logofondo from "./../../assets/logofondo.svg";
+import fondocuadros from "../../assets/Logofondo.svg";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { useModulosStore } from "../../index";
@@ -56,17 +56,19 @@ export function ConfiguracionesTemplate() {
   );
 }
 const Container = styled.div`
-  background-image: url(${Logofondo});
+  background-image: url(${fondocuadros});
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat, repeat;
   align-items: center;
   background-color: ${({ theme }) => theme.bgtotal};
   display: flex;
-  height: 100vh;
+  height:calc(100vh - 50px);
+   margin-top:50px;
   justify-content: center;
   width: 100%;
   align-items: flex-start;
+ 
   #cards {
     display: flex;
     flex-wrap: wrap;

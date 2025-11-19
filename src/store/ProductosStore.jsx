@@ -10,18 +10,22 @@ export const useProductosStore = create((set, get) => ({
     set({ buscador: p });
   },
   dataProductos: [],
-  ProductosItemSelect: [],
+  productosItemSelect: {
+    id:1
+  },
   parametros: {},
   mostrarProductos: async (p) => {
     const response = await MostrarProductos(p);
     set({ parametros: p });
     set({ dataProductos: response });
-    set({ ProductosItemSelect: response[0] });
+    set({ productosItemSelect: response[0] });
     set({refetchs:p.refetchs})
     return response;
   },
   selectProductos: (p) => {
-    set({ ProductosItemSelect: p });
+   
+    set({ productosItemSelect: p });
+
   },
   insertarProductos: async (p) => {
   const response=  await InsertarProductos(p);

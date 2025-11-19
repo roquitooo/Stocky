@@ -5,7 +5,7 @@ export function Spinner1() {
 
     return (<Container>
         <ClimbingBoxLoader color="#e09d21" size={40} />
-        <span id="color">Esto puede tardar unos segundos...</span>
+        <span id="color">Cargando...</span>
         
     </Container>);
 }

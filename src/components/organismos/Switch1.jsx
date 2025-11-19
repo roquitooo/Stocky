@@ -12,7 +12,7 @@ export function Switch1({state,setState}) {
 }
 const Container = styled.div`
   .switch {
-    --input-focus: #ffbd59;
+    --input-focus: #2d8cf0;
     --font-color: #323232;
     --font-color-sub: #666;
     --bg-color: #fff;

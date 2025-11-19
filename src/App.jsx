@@ -1,11 +1,18 @@
-import { ThemeProvider } from "styled-components";
+import styled, { ThemeProvider } from "styled-components";
 import {
   AuthContextProvider,
   GlobalStyles,
   MyRoutes,
+
   useThemeStore,
+
+ 
 } from "./index";
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { Device } from "./styles/breakpoints";
+import { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
 function App() {
   const { themeStyle } = useThemeStore();
  
@@ -13,7 +20,7 @@ function App() {
     <ThemeProvider theme={themeStyle}>
       <AuthContextProvider>
         <GlobalStyles />
-       <MyRoutes/>
+        <MyRoutes />
 
         <ReactQueryDevtools initialIsOpen={true} />
       </AuthContextProvider>

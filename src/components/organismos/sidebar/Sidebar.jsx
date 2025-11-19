@@ -68,7 +68,7 @@ export function Sidebar({ state, setState }) {
                 className="Linkicon"
                 icon="majesticons:door-exit"
               />
-              <span className={state ? "label_ver" : "label_oculto"}>SALIR</span>
+              <span className={state ? "label_ver" : "label_oculto"}>MÁS</span>
             </section>
           </div>
          
@@ -91,7 +91,7 @@ const Container = styled.div`
   transition: 0.1s ease-in-out;
   overflow-y: auto;
   overflow-x: hidden;
-  border-right: 2px solid ${({ theme }) => theme.color2};
+  border-right: 1px solid ${({ theme }) => theme.color2};
   
   &::-webkit-scrollbar {
     width: 6px;
@@ -157,7 +157,7 @@ const Container = styled.div`
       .Linkicon {
         display: flex;
         font-size: 33px;
-
+filter:grayscale(100%);
         svg {
           font-size: 25px;
         }
@@ -189,6 +189,9 @@ const Container = styled.div`
       border: 2px solid ${(props) => props.theme.bg5};
       color: ${(props) => props.theme.color1};
       font-weight: 600;
+      .Linkicon{
+        filter: grayscale(0%);
+      }
     }
   }
 `;

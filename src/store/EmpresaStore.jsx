@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { InsertarEmpresa, MostrarEmpresaXidsuario } from "../index";
+import { EditarEmpresa, EditarMonedaEmpresa, InsertarEmpresa, MostrarEmpresaXidsuario } from "../index";
 export const useEmpresaStore = create((set) => ({
   dataempresa: [],
   mostrarempresa: async (p) => {
@@ -11,4 +11,11 @@ export const useEmpresaStore = create((set) => ({
     const response = await InsertarEmpresa(p);
     console.log("respuesta empresa", response);
   },
+  editarEmpresa:async(p,fileold,filenew)=>{
+    await EditarEmpresa(p,fileold,filenew)
+  },
+  editarMonedaEmpresa:async(p)=>{
+    await EditarMonedaEmpresa(p)
+  }
+
 }));

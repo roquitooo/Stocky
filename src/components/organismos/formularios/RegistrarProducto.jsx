@@ -3,7 +3,6 @@ import { v } from "../../../styles/variables";
 import {
   InputText,
   Btn1,
-  ConvertirCapitalize,
   useProductosStore,
   ContainerSelector,
   Switch1,

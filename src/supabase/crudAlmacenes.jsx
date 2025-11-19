@@ -6,7 +6,7 @@ export async function InsertarStockAlmacen(p) {
   if (error) {
     Swal.fire({
       icon: "error",
-      title: "Oops...",
+      title: "Oops...almacen",
       text: error.message,
     });
     return;
@@ -18,6 +18,15 @@ export async function MostrarStockAlmacenXSucursal(p) {
     .select()
     .eq("id_sucursal", p.id_sucursal)
     .eq("id_producto", p.id_producto)
+    .maybeSingle();
+  return data;
+}
+export async function MostrarAlmacenXSucursal(p) {
+  const { data } = await supabase
+    .from(tabla)
+    .select()
+    .eq("id_sucursal", p.id_sucursal)
+    
     .maybeSingle();
   return data;
 }

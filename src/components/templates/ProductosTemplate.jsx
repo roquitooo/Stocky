@@ -9,6 +9,7 @@ import {
 } from "../../index";
 import { v } from "../../styles/variables";
 import { useEffect, useState } from "react";
+import ConfettiExplosion from "react-confetti-explosion";
 export function ProductosTemplate() {
   const [openRegistro, SetopenRegistro] = useState(false);
   const { dataProductos,setBuscador,generarCodigo } = useProductosStore();
@@ -34,6 +35,7 @@ export function ProductosTemplate() {
         />
    }
        
+     
       <section className="area1">
         <Title>Productos</Title>
         <Btn1
@@ -48,7 +50,7 @@ export function ProductosTemplate() {
       </section>
 
       <section className="main">
-        {isExploding}
+        {isExploding && <ConfettiExplosion />}
         <TablaProductos setdataSelect={setdataSelect} setAccion={setAccion} SetopenRegistro={SetopenRegistro} data={dataProductos} />
       </section>
     
@@ -56,7 +58,9 @@ export function ProductosTemplate() {
   );
 }
 const Container = styled.div`
- 
+  height: calc(100vh - 80px);
+  
+  margin-top:50px;
   padding: 15px;
   display: grid;
   grid-template:

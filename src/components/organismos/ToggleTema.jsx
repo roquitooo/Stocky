@@ -19,7 +19,7 @@ export function ToggleTema() {
               width="30"
               height="30"
               viewBox="0 0 512 512"
-              id="moon"
+              id="moo n"
             >
               <g>
                 <path

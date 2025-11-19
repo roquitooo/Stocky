@@ -11,7 +11,7 @@ const Container = styled.div`
   position: relative;
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
+
   width: 100%;
 
   .form__group {
@@ -37,6 +37,7 @@ const Container = styled.div`
     background: inherit;
     transition: border-color 0.2s;
     width: 94%;
+    
     &.disabled {
       color: #696969;
       background: #2d2d2d;

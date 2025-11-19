@@ -6,7 +6,7 @@ export async function InsertarCategorias(p, file) {
   if (error) {
     Swal.fire({
       icon: "error",
-      title: "Oops...",
+      title: "Oops...categorias",
       text: error.message,
     });
     return;
@@ -57,6 +57,8 @@ async function EditarIconoCategorias(p) {
     return;
   }
 }
+
+
 export async function MostrarCategorias(p) {
   const { data } = await supabase
     .from(tabla)

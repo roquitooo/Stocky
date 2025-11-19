@@ -1,24 +1,22 @@
 import styled from "styled-components";
-export function SwitchHamburguesa() {
+export function SwitchHamburguesa({ state, setstate }) {
   return (
-    <Container>
-      <input type="checkbox" id="checkbox" />
-      <label for="checkbox" className="toggle">
-        <div className="bars" id="bar1"></div>
-        <div className="bars" id="bar2"></div>
-        <div className="bars" id="bar3"></div>
+    <Container onClick={setstate}>
+      <label className={state ? "toggle active" : "toggle"} onClick={setstate}>
+        <div className="bars" id="bar1" onClick={setstate}></div>
+        <div className="bars" id="bar2" onClick={setstate}></div>
+        <div className="bars" id="bar3" onClick={setstate}></div>
       </label>
     </Container>
   );
 }
 const Container = styled.div`
-  position: relative;
-  left: 8px;
-  top: 8px;
-  #checkbox {
-    display: none;
+position:fixed;
+  display: flex;
+  articule {
+    display: flex;
   }
-
+z-index:101;
   .toggle {
     position: relative;
     width: 40px;
@@ -31,6 +29,27 @@ const Container = styled.div`
     gap: 10px;
     transition-duration: 0.3s;
     transform: scale(0.55);
+    &.active {
+      .bars {
+        margin-left: 13px;
+      }
+      #bar2 {
+        transform: rotate(135deg);
+        margin-left: 0;
+        transform-origin: center;
+        transition-duration: 0.3s;
+      }
+      #bar1 {
+        transform: rotate(45deg);
+        transition-duration: 0.3s;
+        transform-origin: left center;
+      }
+      #bar3 {
+        transform: rotate(-45deg);
+        transition-duration: 0.3s;
+        transform-origin: left center;
+      }
+    }
   }
 
   .bars {
@@ -39,28 +58,5 @@ const Container = styled.div`
     background-color: ${({ theme }) => theme.text};
     border-radius: 5px;
     transition-duration: 0.3s;
-  }
-
-  #checkbox:checked + .toggle .bars {
-    margin-left: 13px;
-  }
-
-  #checkbox:checked + .toggle #bar2 {
-    transform: rotate(135deg);
-    margin-left: 0;
-    transform-origin: center;
-    transition-duration: 0.3s;
-  }
-
-  #checkbox:checked + .toggle #bar1 {
-    transform: rotate(45deg);
-    transition-duration: 0.3s;
-    transform-origin: left center;
-  }
-
-  #checkbox:checked + .toggle #bar3 {
-    transform: rotate(-45deg);
-    transition-duration: 0.3s;
-    transform-origin: left center;
   }
 `;

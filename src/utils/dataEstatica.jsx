@@ -1,5 +1,4 @@
 import { v } from "../styles/variables";
-import { RiBarcodeBoxLine } from "react-icons/ri";
 import {
   AiOutlineHome,
   AiOutlineSetting,
@@ -33,23 +32,24 @@ export const LinksArray = [
     to: "/",
   },
   {
-    label: "Vender",
+    label: "VENDER",
     icon: "tdesign:cart-filled",
     to: "/pos",
   },
   {
-    label: "Inventario",
+    label: "Kardex",
     icon: "fluent:box-16-filled",
-    to: "/inventario",
-  },
-
+    to: "/kardex",
+  }
+ 
 ];
 export const SecondarylinksArray = [
  
   {
     label: "Configuración",
-    icon:"ic:round-settings",
+    icon:"ion:settings-sharp",
     to: "/configuracion",
+    color:"#999999ff"
   },
   
   
@@ -73,14 +73,14 @@ export const TemasData = [
 export const DataModulosConfiguracion =[
   {
     title:"Productos",
-    subtitle:"Registrar tus productos",
+    subtitle:"registra tus productos",
     icono:"https://i.ibb.co/85zJ6yG/caja-del-paquete.png",
     link:"/configurar/productos",
    
   },
   {
     title:"Personal",
-    subtitle:"Ten el control de tu personal",
+    subtitle:"ten el control de tu personal",
     icono:"https://i.ibb.co/5vgZ0fX/hombre.png",
     link:"/configurar/usuarios",
    
@@ -88,25 +88,26 @@ export const DataModulosConfiguracion =[
 
   {
     title:"Tu empresa",
-    subtitle:"Configura tus opciones básicas",
+    subtitle:"configura tus opciones básicas",
     icono:"https://i.ibb.co/x7mHPgm/administracion-de-empresas.png",
     link:"/configurar/empresa",
     
   },
   {
     title:"Categoria de productos",
-    subtitle:"Asigna categorias a tus productos",
-    icono:"https://i.ibb.co/6J8mmnYm/image.png",
+    subtitle:"asigna categorias a tus productos",
+    icono:"https://i.ibb.co/VYbMRLZ/categoria.png",
     link:"/configuracion/categorias",
     
   },
   {
     title:"Marca de productos",
-    subtitle:"Gestiona tus marcas",
+    subtitle:"gestiona tus marcas",
     icono:"https://i.ibb.co/1qsbCRb/piensa-fuera-de-la-caja.png",
     link:"/configurar/marca",
    
   },
+  
 
 ]
 //tipo usuario

@@ -2,30 +2,60 @@ import styled from "styled-components";
 import { Btn1 } from "../../moleculas/Btn1";
 import { TotalPos } from "./TotalPos";
 import { Device } from "../../../styles/breakpoints";
+import { useVentasStore } from "../../../store/VentasStore";
+import { useCartVentasStore } from "../../../store/CartVentasStore";
+import { useEmpresaStore } from "../../../store/EmpresaStore";
+import { useMetodosPagoStore } from "../../../store/MetodosPagoStore";
+import { useQuery } from "@tanstack/react-query";
 export function AreaTecladoPos() {
+  const { setStatePantallaCobro,stateMetodosPago } = useCartVentasStore();
+  const { dataempresa } = useEmpresaStore();
+  const { dataMetodosPago: datametodospago } = useMetodosPagoStore();
+  // const { data: datametodospago } = useQuery({
+  //   queryKey: ["mostrar metodos de pago"],
+  //   queryFn: () => mostrarMetodosPago({ id_empresa: dataempresa?.id }),
+  //   enabled: !!dataempresa,
+  // });
+
   return (
-    <Container>
+    <Container stateMetodosPago={stateMetodosPago}>
+     
       <section className="areatipopago">
-        <article className="box">
-          <Btn1 bgcolor="#00aeff" titulo="EFECTIVO" border="0" height="70px" width="100%"/>
-        </article>
-        <article className="box">
-          <Btn1 bgcolor="#ffbd59" width="100%" titulo="TARJETA" border="0" height="70px" />
-        </article>
+        {datametodospago?.map((item, index) => {
+          return (
+            <article className="box" key={index}>
+              <Btn1
+                imagen={item.icono != "-" ? item.icono : null}
+                funcion={() =>
+                  setStatePantallaCobro({ tipocobro: item.nombre })
+                }
+                titulo={item.nombre}
+                border="0"
+                height="70px"
+                width="100%"
+              />
+            </article>
+          );
+        })}
+        
       </section>
       <section className="totales">
-        <div className="subtotal">
-            Sub total: <strong>$2000</strong>{" "}
-
-        </div>
+        {/* <div className="subtotal">
+          <span>
+            Sub total: <strong>$ 9.99</strong>{" "}
+          </span>
+          <span>IGV (18%): $ 0.00</span>
+          <span>
+            Sub total: <strong>$ 9.99</strong>{" "}
+          </span>
+        </div> */}
         <TotalPos />
       </section>
     </Container>
   );
 }
 const Container = styled.div`
-
-  border: 2px solid ${({ theme }) => theme.color2};
+  border: 1px solid ${({ theme }) => theme.color2};
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -35,26 +65,32 @@ const Container = styled.div`
   border-radius: 15px;
   @media ${Device.desktop} {
     position: relative;
-    width: auto;
+    width: 450px;
     bottom: initial;
   }
   .areatipopago {
-    display: none;
+    display: ${({ stateMetodosPago }) => (stateMetodosPago ? "flex" : "none")};
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
     @media ${Device.desktop} {
-      display: initial;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px;
     }
     .box {
+      flex: 1 1 40%;
       display: flex;
-      gap: 20px;
-      margin: 10px;
+      gap: 10px;
     }
   }
-  .totales{
+  .totales {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding:10px;
-    .subtotal{
+    padding: 10px;
+    .subtotal {
       display: none;
       flex-direction: column;
       justify-content: end;
@@ -65,6 +101,5 @@ const Container = styled.div`
         display: flex;
       }
     }
-
   }
 `;

@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { ConfiguracionesTemplate, Spinner1, useModulosStore } from "../index";
+import { ConfiguracionesTemplate, Spinner1 } from "../index";
+import {useModulosStore} from "../store/ModulosStore"
 export function Configuraciones() {
   const { mostrarModulos } = useModulosStore();
   const {  isLoading, error } = useQuery({
-    queryKey: "mostrar modulos",
+    queryKey: ["mostrar modulos"],
     queryFn: mostrarModulos,
   });
   if (isLoading) {
