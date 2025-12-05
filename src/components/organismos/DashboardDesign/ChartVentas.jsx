@@ -1,204 +1,92 @@
 import styled from "styled-components";
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
-import { useVentasStore } from "../../../store/VentasStore";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { useVentasStore } from "../../../store/VentasStore"; 
 import { useThemeStore } from "../../../store/ThemeStore";
+import { useQuery } from "@tanstack/react-query";
+import { useDashboardStore } from "../../../store/DashboardStore"; // 1. IMPORTAR ESTO
+
 export const ChartVentas = () => {
   const { dataempresa } = useEmpresaStore();
-  const { porcentajeCambio } = useVentasStore();
+  const { themeStyle } = useThemeStore();
+  const { mostrarVentasGrafico } = useVentasStore();
+  
+  // 2. EXTRAER LAS FECHAS DEL FILTRO
+  const { fechaInicio, fechaFin } = useDashboardStore();
 
-  const {themeStyle} = useThemeStore()
-  const isPositive = porcentajeCambio > 0;
-  const isNeutral = porcentajeCambio === 0;
+  const { data: dataGrafico, isLoading } = useQuery({
+    // 3. AGREGAR FECHAS A LA QUERY KEY (Para que recargue al cambiar)
+    queryKey: ["mostrar ventas grafico", { _id_empresa: dataempresa?.id, fechaInicio, fechaFin }],
+    
+    // 4. PASAR LAS FECHAS A LA FUNCIÓN
+    queryFn: () => mostrarVentasGrafico({ 
+        id_empresa: dataempresa?.id,
+        fechaInicio: fechaInicio,
+        fechaFin: fechaFin
+    }),
+    
+    // Solo ejecutar si hay empresa Y fechas definidas
+    enabled: !!dataempresa?.id && !!fechaInicio && !!fechaFin,
+    refetchOnWindowFocus: false,
+  });
 
-  const data = [
-    {
-      name: "Page A",
-      uv: 4000,
-      pv: 2400,
-      amt: 2400,
-    },
-    {
-      name: "Page B",
-      uv: 3000,
-      pv: 1398,
-      amt: 2210,
-    },
-    {
-      name: "Page C",
-      uv: 2000,
-      pv: 9800,
-      amt: 2290,
-    },
-    {
-      name: "Page D",
-      uv: 2780,
-      pv: 3908,
-      amt: 2000,
-    },
-    {
-      name: "Page E",
-      uv: 1890,
-      pv: 4800,
-      amt: 2181,
-    },
-    {
-      name: "Page F",
-      uv: 2390,
-      pv: 3800,
-      amt: 2500,
-    },
-    {
-      name: "Page G",
-      uv: 3490,
-      pv: 4300,
-      amt: 2100,
-    },
+  const data = dataGrafico && dataGrafico.length > 0 ? dataGrafico : [
+    { fecha: "Sin datos", total: 0 }
   ];
+
   return (
     <Container>
       <Header>
-        <Title>Total ventas</Title>
+        <Title>Tendencia de Ventas</Title>
+        {/* Opcional: Mostrar el rango seleccionado */}
+        {fechaInicio && <SubTitle>{fechaInicio} al {fechaFin}</SubTitle>}
       </Header>
-      <MainInfo>
-        <Revenue>
-          {FormatearNumeroDinero(1000, dataempresa?.currency, dataempresa?.iso)}
-        </Revenue>
-        <Change>
-          <Percentage>
-            <Icon  width="26"
-              height="26"
-              icon={
-                isNeutral
-                  ? "akar-icons:minus"
-                  : isPositive
-                  ? "iconamoon:arrow-up-2-fill"
-                  : "iconamoon:arrow-down-2-fill"
-              }
-            ></Icon>
-            56% al periodo anterior
-          </Percentage>
-        </Change>
-      </MainInfo>
-      <ResponsiveContainer width="100%" height={200}>
+      
+      <ResponsiveContainer width="100%" height={250}>
         <AreaChart
-          width={500}
-          height={400}
           data={data}
-          margin={{
-            top: 10,
-            right: 0,
-            left: 0,
-            bottom: 0,
-          }}
+          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
         >
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={themeStyle.text} stopOpacity={0.2} />
+              <stop offset="5%" stopColor={themeStyle.text} stopOpacity={0.3} />
               <stop offset="95%" stopColor={themeStyle.text} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeOpacity={0.2} vertical={false} />
-          <XAxis
-            dataKey="name"
-            axisLine={false}
-            tickLine={false}
-            tick={{ fontSize: 12, fill: "#9CA3AF" }}
-          />
+          <CartesianGrid strokeOpacity={0.1} vertical={false} />
+          <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#888" }} />
           <YAxis hide />
           <Tooltip content={<CustomTooltip />} />
-          <Area
-            strokeWidth={1.5}
-            type="monotone"
-            dataKey="uv"
-            stroke={themeStyle.text}
-            fill="url(#colorValue)"
-            activeDot={{ r: 6 }}
-            fillOpacity={1}
-          />
+          <Area type="monotone" dataKey="total" stroke={themeStyle.text} strokeWidth={2} fill="url(#colorValue)" activeDot={{ r: 6 }} />
         </AreaChart>
       </ResponsiveContainer>
     </Container>
   );
 };
+
 const CustomTooltip = ({ active, payload, label }) => {
   const { dataempresa } = useEmpresaStore();
   if (active && payload && payload.length) {
     return (
       <TooltipContainer>
-        <Date>{label} </Date>
-        <Value>
-          {FormatearNumeroDinero(
-            payload[0].value,
-            dataempresa?.currency,
-            dataempresa?.iso
-          )}
-        </Value>
+        <DateLabel>{label}</DateLabel>
+        <ValueLabel>
+          {FormatearNumeroDinero(payload[0].value, dataempresa?.currency, dataempresa?.iso)}
+        </ValueLabel>
       </TooltipContainer>
     );
   }
+  return null;
 };
-const Container = styled.div`
- 
-`;
-const TooltipContainer = styled.div`
-  background: ${({ theme }) => theme.bg};
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  box-shadow: ${({ theme }) => theme.boxshadow};
-`;
-const Date = styled.div`
-  font-size: 14px;
-`;
 
-const Value = styled.div`
-  font-size: 16px;
-  font-weight: bold;
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-left:20px;
-`;
-
-const Title = styled.h3`
-  font-size: 16px;
-  font-weight: bold;
-  color: ${({ theme }) => theme.text};
-`;
-const MainInfo = styled.div`
-  margin: 20px 0;
-  padding-left:20px;
-`;
-const Revenue = styled.div`
-  font-size: 24px;
-  font-weight: bold;
-  color: ${({ theme }) => theme.text};
-`;
-const Change = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 5px;
-`;
-const Percentage = styled.span`
-  display: flex;
-  text-align: center;
-  align-items: center;
-  font-size: 14px;
-  color: ${(props) =>
-    props.isNeutral ? "#6b7280" : props.isPositive ? "#12ca3a" : "#d32f5b"};
-`;
+// --- ESTILOS ---
+const Container = styled.div` padding: 15px; height: 100%; display: flex; flex-direction: column; `;
+const Header = styled.div` margin-bottom: 20px; padding-left: 5px; `;
+const Title = styled.h3` font-size: 18px; font-weight: 700; color: ${({ theme }) => theme.text}; margin: 0; `;
+const SubTitle = styled.span` font-size: 12px; color: #888; font-weight: 500; `; // Estilo para el subtitulo de fecha
+const TooltipContainer = styled.div` background: ${({ theme }) => theme.bg}; padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 1px solid ${({ theme }) => theme.bordercolorDash}; `;
+const DateLabel = styled.div` font-size: 12px; color: #888; margin-bottom: 4px; `;
+const ValueLabel = styled.div` font-size: 16px; font-weight: 800; color: ${({ theme }) => theme.text}; `;

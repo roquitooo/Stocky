@@ -36,11 +36,8 @@ export function PantallaCobro() {
           onClick={() => setStateVerticker(!stateVerticket)}
         >
           <span>{stateVerticket ? "ocultar" : "mostrar"} ticket</span>
-          {stateVerticket ? (
-            <Icon className="icono" icon="fluent-emoji:monkey-face" />
-          ) : (
-            <Icon className="icono" icon="fluent-emoji:see-no-evil-monkey" />
-          )}
+          {stateVerticket ? <Icon className="icono" icon="ep:arrow-down-bold" /> : <Icon className="icono" icon="ep:arrow-up-bold" />}
+      
         </article>
         <IngresoCobro ref={ingresoCobroRef} />
         <article className="contentverticket" onClick={setStatePantallaCobro}>

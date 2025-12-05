@@ -24,20 +24,20 @@ export const DesplegableUser = [
 
 
 
-//data SIDEBAR
+//data header y menu movil
 export const LinksArray = [
   {
-    label: "Home",
+    label: "Dashboard",
     icon: "tdesign:home-filled",
     to: "/",
   },
   {
-    label: "VENDER",
+    label: "Empezar a vender",
     icon: "tdesign:cart-filled",
     to: "/pos",
   },
   {
-    label: "Kardex",
+    label: "Inventario",
     icon: "fluent:box-16-filled",
     to: "/kardex",
   }

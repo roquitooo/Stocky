@@ -7,15 +7,16 @@ import {
   Productos,
   ProtectedRoute,
   POS,
-  Layout,
+  Layout, // <--- IMPORTANTE: Usamos el Layout que ya arreglamos
   PageNot,
   Empresa,
   ClientesProveedores,
 } from "../index";
 import { BasicosConfig } from "../components/organismos/EmpresaConfigDesign/BasicosConfig";
 import { MonedaConfig } from "../components/organismos/EmpresaConfigDesign/MonedaConfig";
-import {MetodosPago} from "../pages/MetodosPago"
-import {Dashboard} from "../pages/Dashboard"
+import { MetodosPago } from "../pages/MetodosPago";
+import { Dashboard } from "../pages/Dashboard";
+
 export function MyRoutes() {
   return (
     <Routes>
@@ -28,6 +29,17 @@ export function MyRoutes() {
         }
       />
 
+      {/* RUTAS PROTEGIDAS (Envueltas en el Layout que carga los datos) */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute accessBy="authenticated">
+            <Layout>
+              <Dashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/configuracion"
         element={
@@ -82,7 +94,7 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<PageNot />} />
+      
       <Route
         path="/configuracion/clientes"
         element={
@@ -103,7 +115,7 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-       <Route
+      <Route
         path="/configuracion/metodospago"
         element={
           <ProtectedRoute accessBy="authenticated">
@@ -113,16 +125,8 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-       <Route
-        path="/"
-        element={
-          <ProtectedRoute accessBy="authenticated">
-            <Layout>
-              <Dashboard />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
+      
+      <Route path="*" element={<PageNot />} />
     </Routes>
   );
 }

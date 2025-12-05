@@ -1,17 +1,20 @@
+import { AumentarPrecio } from './components/organismos/formularios/AumentarPrecio';
+
 export { default as App } from './App';
 export * from './components/atomos/ContainerSelector';
 export * from './components/atomos/Icono';
 export * from './components/atomos/Linea';
-export * from './components/atomos/Lottieanimacion';
 export * from './components/atomos/Title';
 export * from './components/moleculas/Btn1';
 export * from './components/moleculas/Btngenerarcodigo';
 export * from './components/moleculas/ImagenContent';
 export * from './components/moleculas/Spinner1';
 export * from './components/moleculas/SpinnerSecundario';
+export * from './components/atomos/ContentFiltros';
 export * from './components/moleculas/SwitchHamburguesa';
 export * from './components/organismos/Buscador';
 export * from './components/organismos/Checkbox1';
+
 export * from './components/organismos/EmpresaConfigDesign/BasicosConfig';
 export * from './components/organismos/EmpresaConfigDesign/MonedaConfig';
 export * from './components/organismos/Footer';
@@ -33,8 +36,8 @@ export * from './components/organismos/formularios/InputText2';
 export * from './components/organismos/formularios/RegistrarCategorias';
 export * from './components/organismos/formularios/RegistrarClientesProveedores';
 export * from './components/organismos/formularios/RegistrarProductos';
-export * from './components/organismos/sidebar/MenuMovil';
-export * from './components/organismos/sidebar/Sidebar';
+export * from './components/organismos/header/MenuMovil';
+export * from './components/organismos/header/Header';
 export * from './components/organismos/tablas/AccionesTabla';
 export * from './components/organismos/tablas/ContentAccionesTabla';
 export * from './components/organismos/tablas/Paginacion';

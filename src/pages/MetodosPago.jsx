@@ -10,7 +10,7 @@ export function MetodosPago() {
   const { isLoading, error } = useQuery({
     queryKey: ["mostrar metodos pago"],
     queryFn: () => mostrarMetodosPago({ id_empresa: dataempresa?.id }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
   if (isLoading) {

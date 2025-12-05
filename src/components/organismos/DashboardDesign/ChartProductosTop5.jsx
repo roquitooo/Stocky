@@ -4,28 +4,31 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
-import { FormatearNumeroDinero } from "../../../utils/Conversiones";
 import { useVentasStore } from "../../../store/VentasStore";
-import { Icon } from "@iconify/react/dist/iconify.js";
 import { useThemeStore } from "../../../store/ThemeStore";
 import { useDetalleVentasStore } from "../../../store/DetalleVentasStore";
 import { useQuery } from "@tanstack/react-query";
 import { BarLoader } from "react-spinners";
 import { useDashboardStore } from "../../../store/DashboardStore";
-import { Lottieanimacion } from "../../atomos/Lottieanimacion";
-import animacionvacio from "../../../assets/vacioanimacion.json"
+
+// 1. ELIMINAMOS LOS IMPORTS DE LA ANIMACIÓN (Ya no se usan)
+// import { Lottieanimacion } from "../../atomos/Lottieanimacion";
+// import animacionvacio from "../../../assets/vacioanimacion.json";
+
 export const ChartProductosTop5 = () => {
   const { dataempresa } = useEmpresaStore();
   const { porcentajeCambio } = useVentasStore();
   const { themeStyle } = useThemeStore();
   const { fechaInicio, fechaFin } = useDashboardStore();
-  const isPositive = porcentajeCambio > 0;
-  const isNeutral = porcentajeCambio === 0;
+  
+  // Variables no usadas (puedes borrarlas si quieres limpiar más)
+  // const isPositive = porcentajeCambio > 0;
+  // const isNeutral = porcentajeCambio === 0;
+
   const { mostrartop5productosmasvendidosxcantidad } = useDetalleVentasStore();
   const { data, isLoading, error } = useQuery({
     queryKey: [
@@ -42,70 +45,77 @@ export const ChartProductosTop5 = () => {
         _fecha_inicio: fechaInicio,
         _fecha_fin: fechaFin,
       }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
   });
+
   if (isLoading) return <BarLoader color="#6d6d6d" />;
   if (error) return <span>error...{error.message} </span>;
+
   return (
     <Container>
       <Header>
         <Title>TOP 5</Title>
         <Subtitle>Productos por cantidad vendida</Subtitle>
       </Header>
-      {
-        data && data.length >0 ?(<>
-        {data?.map((item, index) => {
-        return (
-          <Row key={index}>
-            <NameContent>
-              <Name>{item.nombre_producto} </Name>
-            </NameContent>
-            <Stats>
-              <Value>{item.total_vendido} </Value>
-              <Percentage>{item.porcentaje} %</Percentage>
-            </Stats>
-          </Row>
-        );
-      })}
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart
-          width={500}
-          height={400}
-          data={data}
-          margin={{
-            top: 10,
-            right: 0,
-            left: 0,
-            bottom: 0,
-          }}
-        >
-          <XAxis
-            dataKey="nombre_producto"
-            axisLine={false}
-            tickLine={false}
-            tick={{ fontSize: 12, fill: "#9CA3AF" }}
-          />
-          <YAxis hide />
-          <Tooltip content={<CustomTooltip />} />
-          <Bar
-            strokeWidth={6}
-            type="monotone"
-            dataKey="total_vendido"
-            fill={themeStyle.text}
-            activeDot={{ r: 6 }}
-            fillOpacity={1}
-            radius={[10, 10, 0, 0]}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-        </>):(<Lottieanimacion animacion={animacionvacio} alto="200" ancho="200"/>)
-      }
       
+      {data && data.length > 0 ? (
+        <>
+          {data?.map((item, index) => {
+            return (
+              <Row key={index}>
+                <NameContent>
+                  <Name>{item.nombre_producto} </Name>
+                </NameContent>
+                <Stats>
+                  <Value>{item.total_vendido} </Value>
+                  <Percentage>{item.porcentaje} %</Percentage>
+                </Stats>
+              </Row>
+            );
+          })}
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              width={500}
+              height={400}
+              data={data}
+              margin={{
+                top: 10,
+                right: 0,
+                left: 0,
+                bottom: 0,
+              }}
+            >
+              <XAxis
+                dataKey="nombre_producto"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#9CA3AF" }}
+              />
+              <YAxis hide />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar
+                strokeWidth={6}
+                type="monotone"
+                dataKey="total_vendido"
+                fill={themeStyle.text}
+                activeDot={{ r: 6 }}
+                fillOpacity={1}
+                radius={[10, 10, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </>
+      ) : (
+        /* 2. REEMPLAZAMOS LA ANIMACIÓN POR UN MENSAJE SIMPLE */
+        <EmptyState>
+          <span>sin data...</span>
+        </EmptyState>
+      )}
     </Container>
   );
 };
+
 const CustomTooltip = ({ active, payload, label }) => {
- 
   if (active && payload && payload.length) {
     return (
       <TooltipContainer>
@@ -115,6 +125,21 @@ const CustomTooltip = ({ active, payload, label }) => {
     );
   }
 };
+
+// --- STYLED COMPONENTS ---
+
+// Nuevo componente para el estado vacío (centra el texto)
+const EmptyState = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px; /* Misma altura que tenía la animación */
+  width: 100%;
+  color: ${({ theme }) => theme.text}; /* Usa el color de texto del tema */
+  opacity: 0.5; /* Un poco más suave */
+  font-size: 14px;
+`;
+
 const Stats = styled.div`
   display: flex;
   flex-direction: row;
@@ -179,18 +204,4 @@ const Title = styled.h3`
   font-weight: bold;
   color: ${({ theme }) => theme.text};
   margin: 0;
-`;
-const MainInfo = styled.div`
-  margin: 20px 0;
-`;
-const Revenue = styled.div`
-  font-size: 24px;
-  font-weight: bold;
-  color: ${({ theme }) => theme.text};
-`;
-const Change = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 5px;
-`;
+`;  

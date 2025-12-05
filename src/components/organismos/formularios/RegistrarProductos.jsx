@@ -3,7 +3,7 @@ import { v } from "../../../styles/variables";
 import {
   InputText,
   Btn1,
-  ConvertirCapitalize,
+  ConvertirMinusculas,
   useProductosStore,
   ContainerSelector,
   Switch1,
@@ -13,15 +13,15 @@ import {
   useCategoriasStore,
   Btngenerarcodigo,
   useAlmacenesStore,
-  ConvertirMinusculas,
 } from "../../../index";
 import { useForm } from "react-hook-form";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Device } from "../../../styles/breakpoints";
 import { useEffect, useRef, useState } from "react";
 import { Checkbox1 } from "../Checkbox1";
 import Swal from "sweetalert2";
+import { toast } from "sonner";
 
 export function RegistrarProductos({
   onClose,
@@ -30,11 +30,14 @@ export function RegistrarProductos({
   setIsExploding,
   state,
 }) {
-  if (!state) return;
-  //validar checkboxs
+  if (!state) return null;
+  
+  const queryClient = useQueryClient();
+
   const [isChecked1, setIsChecked1] = useState(true);
   const [isChecked2, setIsChecked2] = useState(false);
   const [sevendepor, setSevendepor] = useState("UNIDAD");
+  
   const handleCheckboxChange = (checkboxNumber) => {
     if (checkboxNumber === 1) {
       setIsChecked1(true);
@@ -46,7 +49,6 @@ export function RegistrarProductos({
       setSevendepor("GRANEL");
     }
   };
-  //
 
   const {
     insertarProductos,
@@ -61,26 +63,31 @@ export function RegistrarProductos({
     mostrarAlmacen,
     dataalmacen,
     eliminarAlmacen,
+    editarStock 
   } = useAlmacenesStore();
+
   const [stateInventarios, setStateInventarios] = useState(false);
   const [stateEnabledStock, setStateEnabledStock] = useState(false);
   const [stateSucursalesLista, setStateSucursalesLista] = useState(false);
   const [stateCategoriasLista, setStateCategoriasLista] = useState(false);
-  const inputcodigointerno = useRef();
-  const { sucursalesItemSelect, dataSucursales, selectSucursal } =
-    useSucursalesStore();
-  const { datacategorias, selectCategoria, categoriaItemSelect } =
-    useCategoriasStore();
+  const [randomCodeinterno, setRandomCodeinterno] = useState("");
+  const [randomCodebarras, setRandomCodebarras] = useState("");
+
+  const { sucursalesItemSelect, dataSucursales, selectSucursal } = useSucursalesStore();
+  const { datacategorias, selectCategoria, categoriaItemSelect } = useCategoriasStore();
+
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: [
       "mostrar stock almacen x sucursal",
-      { id_producto: dataSelect.id, id_sucursal: sucursalesItemSelect.id },
+      { id_producto: dataSelect?.id, id_sucursal: sucursalesItemSelect?.id },
     ],
     queryFn: () =>
       mostrarAlmacen({
         id_sucursal: sucursalesItemSelect.id,
         id_producto: dataSelect.id,
       }),
+    enabled: !!sucursalesItemSelect?.id && !!dataSelect?.id,
+    refetchOnWindowFocus: false, 
   });
 
   const {
@@ -88,21 +95,35 @@ export function RegistrarProductos({
     formState: { errors },
     handleSubmit,
   } = useForm();
+
   const { isPending, mutate: doInsertar } = useMutation({
     mutationFn: insertar,
     mutationKey: "insertar marca",
-    onError: (err) => console.log("El error", err.message),
-    onSuccess: () => cerrarFormulario(),
+    onError: (err) => toast.error("Error: " + err.message),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["mostrar stock almacen x sucursal"]);
+      if(refetchs) refetchs();
+      toast.success("Producto guardado correctamente");
+      cerrarFormulario();
+    },
   });
+
   const handlesub = (data) => {
     doInsertar(data);
   };
+
   const cerrarFormulario = () => {
     onClose();
     setIsExploding(true);
   };
+
   async function insertar(data) {
+    if (!dataempresa?.id) {
+        console.error("Falta ID empresa");
+        return;
+    }
     validarVacios(data);
+
     if (accion === "Editar") {
       const p = {
         _id: dataSelect.id,
@@ -116,8 +137,8 @@ export function RegistrarProductos({
         _sevende_por: sevendepor,
         _maneja_inventarios: stateInventarios,
       };
-      console.log(p);
       await editarProductos(p);
+
       if (stateInventarios) {
         if (dataalmacen == null) {
           const palmacenes = {
@@ -127,11 +148,18 @@ export function RegistrarProductos({
             stock_minimo: parseFloat(data.stock_minimo),
           };
           await insertarStockAlmacenes(palmacenes);
+        } else {
+          const palmacenes = {
+            _id: dataalmacen.id,
+            _stock: parseFloat(data.stock),
+            _stock_minimo: parseFloat(data.stock_minimo),
+          };
+          await editarStock(palmacenes);
         }
       }
     } else {
       const p = {
-        _nombre:ConvertirMinusculas( data.nombre),
+        _nombre: ConvertirMinusculas(data.nombre),
         _precio_venta: parseFloat(data.precio_venta),
         _precio_compra: parseFloat(data.precio_compra),
         _id_categoria: categoriaItemSelect.id,
@@ -151,13 +179,11 @@ export function RegistrarProductos({
           stock: parseFloat(data.stock),
           stock_minimo: parseFloat(data.stock_minimo),
         };
-
         await insertarStockAlmacenes(palmacenes);
       }
     }
   }
 
-  //#region validar check inventarios
   function checkUseInventarios() {
     if (accion === "Editar") {
       if (dataalmacen) {
@@ -186,36 +212,18 @@ export function RegistrarProductos({
       setStateInventarios(!stateInventarios);
     }
   }
-  //#endregion
-  //#region validar vacios
+
   function validarVacios(data) {
-    if (!randomCodeinterno) {
-      generarCodigoInterno();
-    }
-    if (!randomCodebarras) {
-      generarCodigoBarras();
-    }
-    if (data.precio_venta.trim() === "") {
-      data.precio_venta = 0;
-    }
-    if (data.precio_compra.trim() === "") {
-      data.precio_compra = 0;
-    }
+    if (!randomCodeinterno) generarCodigoInterno();
+    if (!randomCodebarras) generarCodigoBarras();
+    if (data.precio_venta.trim() === "") data.precio_venta = 0;
+    if (data.precio_compra.trim() === "") data.precio_compra = 0;
     if (stateInventarios) {
-      if (!dataalmacen) {
-        if (data.stock.trim() === "") {
-          data.stock = 0;
-        }
-        if (data.stock_minimo.trim() === "") {
-          data.stock_minimo = 0;
-        }
-      }
+        if (data.stock.toString().trim() === "") data.stock = 0;
+        if (data.stock_minimo.toString().trim() === "") data.stock_minimo = 0;
     }
   }
-  //#endregion
-  //#region generar codigo automatico
-  const [randomCodeinterno, setRandomCodeinterno] = useState("");
-  const [randomCodebarras, setRandomCodebarras] = useState("");
+
   function generarCodigoBarras() {
     generarCodigo();
     setRandomCodebarras(codigogenerado);
@@ -224,15 +232,8 @@ export function RegistrarProductos({
     generarCodigo();
     setRandomCodeinterno(codigogenerado);
   }
-  const handleChangeinterno = (event) => {
-    setRandomCodeinterno(event.target.value);
-  };
-  const handleChangebarras = (event) => {
-    setRandomCodebarras(event.target.value);
-  };
-  //#endregion
-
-  //#region validar_accion
+  const handleChangeinterno = (event) => setRandomCodeinterno(event.target.value);
+  const handleChangebarras = (event) => setRandomCodebarras(event.target.value);
 
   useEffect(() => {
     if (accion != "Editar") {
@@ -251,7 +252,6 @@ export function RegistrarProductos({
         : setStateEnabledStock(false);
     }
   }, []);
-  //#endregion validar_accion
 
   return (
     <Container>
@@ -261,22 +261,10 @@ export function RegistrarProductos({
         <div className="sub-contenedor">
           <div className="headers">
             <section>
-              <h1>
-                {accion == "Editar"
-                  ? "Editar productos"
-                  : "REGISTRAR NUEVO PRODUCTO"}
-              </h1>
+              <h1>{accion == "Editar" ? "Editar productos" : "REGISTRAR NUEVO PRODUCTO"}</h1>
             </section>
-
             <section>
-              <span
-                onClick={() => {
-                  refetchs();
-                  onClose();
-                }}
-              >
-                x
-              </span>
+              <span onClick={() => { if(refetchs) refetchs(); onClose(); }}>x</span>
             </section>
           </div>
 
@@ -284,161 +272,70 @@ export function RegistrarProductos({
             <section className="seccion1">
               <article>
                 <InputText icono={<v.iconoflechaderecha />}>
-                  <input
-                    className="form__field"
-                    defaultValue={dataSelect.nombre}
-                    type="text"
-                    placeholder="nombre"
-                    {...register("nombre", {
-                      required: true,
-                    })}
-                  />
-                  <label className="form__label">nombre</label>
+                  <input className="form__field" defaultValue={dataSelect.nombre} type="text" placeholder="nombre" {...register("nombre", { required: true })} />
+                  <label className="form__label">Nombre</label>
                   {errors.nombre?.type === "required" && <p>Campo requerido</p>}
                 </InputText>
               </article>
               <article>
                 <InputText icono={<v.iconoflechaderecha />}>
-                  <input
-                    step="0.01"
-                    className="form__field"
-                    defaultValue={dataSelect.precio_venta}
-                    type="number"
-                    placeholder="precio venta"
-                    {...register("precio_venta")}
-                  />
-                  <label className="form__label">precio venta</label>
+                  <input step="0.01" className="form__field" defaultValue={dataSelect.precio_venta} type="number" placeholder="precio venta" {...register("precio_venta")} />
+                  <label className="form__label">Precio venta</label>
                 </InputText>
               </article>
               <article>
                 <InputText icono={<v.iconoflechaderecha />}>
-                  <input
-                    step="0.01"
-                    className="form__field"
-                    defaultValue={dataSelect.precio_compra}
-                    type="number"
-                    placeholder="precio compra"
-                    {...register("precio_compra")}
-                  />
-                  <label className="form__label">precio compra</label>
+                  <input step="0.01" className="form__field" defaultValue={dataSelect.precio_compra} type="number" placeholder="precio compra" {...register("precio_compra")} />
+                  <label className="form__label">Precio compra</label>
                 </InputText>
               </article>
               <article className="contentPadregenerar">
                 <InputText icono={<v.iconoflechaderecha />}>
-                  <input
-                    className="form__field"
-                    value={randomCodebarras}
-                    onChange={handleChangebarras}
-                    type="text"
-                    placeholder="codigo de barras"
-                  />
-                  <label className="form__label">codigo de barras</label>
+                  <input className="form__field" value={randomCodebarras} onChange={handleChangebarras} type="text" placeholder="codigo de barras" />
+                  <label className="form__label">Codigo de barras</label>
                 </InputText>
-                <ContainerBtngenerar>
-                  <Btngenerarcodigo
-                    titulo="Generar"
-                    funcion={generarCodigoBarras}
-                  />
-                </ContainerBtngenerar>
+                <ContainerBtngenerar><Btngenerarcodigo titulo="Generar" funcion={generarCodigoBarras} /></ContainerBtngenerar>
               </article>
               <article className="contentPadregenerar">
                 <InputText icono={<v.iconoflechaderecha />}>
-                  <input
-                    className="form__field"
-                    value={randomCodeinterno}
-                    onChange={handleChangeinterno}
-                    type="text"
-                    placeholder="codigo interno"
-                    // {...register("codigo_interno")}
-                  />
-                  <label className="form__label">codigo interno</label>
+                  <input className="form__field" value={randomCodeinterno} onChange={handleChangeinterno} type="text" placeholder="codigo interno" />
+                  <label className="form__label">Codigo interno</label>
                 </InputText>
-                <ContainerBtngenerar>
-                  <Btngenerarcodigo
-                    titulo="Generar"
-                    funcion={generarCodigoInterno}
-                  />
-                </ContainerBtngenerar>
+                <ContainerBtngenerar><Btngenerarcodigo titulo="Generar" funcion={generarCodigoInterno} /></ContainerBtngenerar>
               </article>
             </section>
+
             <section className="seccion2">
               <label>Se vende por: </label>
               <ContainerSelector>
-                <label>UNIDAD </label>
-                <Checkbox1
-                  isChecked={isChecked1}
-                  onChange={() => handleCheckboxChange(1)}
-                />
-                <label>GRANEL(decimales) </label>
-                <Checkbox1
-                  isChecked={isChecked2}
-                  onChange={() => handleCheckboxChange(2)}
-                />
+                <label>UNIDAD </label> <Checkbox1 isChecked={isChecked1} onChange={() => handleCheckboxChange(1)} />
+                <label>Gramos</label> <Checkbox1 isChecked={isChecked2} onChange={() => handleCheckboxChange(2)} />
               </ContainerSelector>
 
               <ContainerSelector>
                 <label>Categoria: </label>
-                <Selector
-                  state={stateCategoriasLista}
-                  funcion={() => setStateCategoriasLista(!stateCategoriasLista)}
-                  texto1="🏬"
-                  texto2={categoriaItemSelect?.nombre}
-                  color="#fc6027"
-                />
-                <ListaDesplegable
-                  funcion={selectCategoria}
-                  state={stateCategoriasLista}
-                  data={datacategorias}
-                  top="4rem"
-                  setState={() =>
-                    setStateCategoriasLista(!stateCategoriasLista)
-                  }
-                />
+                <Selector state={stateCategoriasLista} funcion={() => setStateCategoriasLista(!stateCategoriasLista)} texto1="🏬" texto2={categoriaItemSelect?.nombre} color="#ffbd58" />
+                <ListaDesplegable funcion={selectCategoria} state={stateCategoriasLista} data={datacategorias} top="4rem" setState={() => setStateCategoriasLista(!stateCategoriasLista)} />
               </ContainerSelector>
+              
               <ContainerSelector>
                 <label>Controlar stock: </label>
-                <Switch1
-                  state={stateInventarios}
-                  setState={checkUseInventarios}
-                />
+                <Switch1 state={stateInventarios} setState={checkUseInventarios} />
               </ContainerSelector>
+
               {stateInventarios && (
                 <ContainerStock>
                   <ContainerSelector>
                     <label>Sucursal: </label>
-                    <Selector
-                      state={stateSucursalesLista}
-                      funcion={() =>
-                        setStateSucursalesLista(!stateSucursalesLista)
-                      }
-                      texto1="🏬"
-                      texto2={sucursalesItemSelect?.nombre}
-                      color="#fc6027"
-                    />
-
-                    <ListaDesplegable
-                      refetch={refetch}
-                      funcion={selectSucursal}
-                      state={stateSucursalesLista}
-                      data={dataSucursales}
-                      top="4rem"
-                      setState={() =>
-                        setStateSucursalesLista(!stateSucursalesLista)
-                      }
-                    />
+                    <Selector state={stateSucursalesLista} funcion={() => setStateSucursalesLista(!stateSucursalesLista)} texto1="🏬" texto2={sucursalesItemSelect?.nombre} color="#ffbd58" />
+                    <ListaDesplegable refetch={refetch} funcion={selectSucursal} state={stateSucursalesLista} data={dataSucursales} top="4rem" setState={() => setStateSucursalesLista(!stateSucursalesLista)} />
                   </ContainerSelector>
-                  {stateEnabledStock && (
-                    <ContainerMensajeStock>
-                      <span>
-                        💀 para editar el stock vaya al módulo de kardex
-                      </span>
-                    </ContainerMensajeStock>
-                  )}
-
+                  
+                  {/* YA NO HAY MENSAJE NARANJA */}
+                  
                   <article>
                     <InputText icono={<v.iconoflechaderecha />}>
                       <input
-                        disabled={stateEnabledStock}
                         className="form__field"
                         defaultValue={dataalmacen?.stock}
                         step="0.01"
@@ -446,13 +343,12 @@ export function RegistrarProductos({
                         placeholder="stock"
                         {...register("stock")}
                       />
-                      <label className="form__label">stock</label>
+                      <label className="form__label">Stock</label>
                     </InputText>
                   </article>
                   <article>
                     <InputText icono={<v.iconoflechaderecha />}>
                       <input
-                        disabled={stateEnabledStock}
                         className="form__field"
                         defaultValue={dataalmacen?.stock_minimo}
                         step="0.01"
@@ -460,101 +356,33 @@ export function RegistrarProductos({
                         placeholder="stock minimo"
                         {...register("stock_minimo")}
                       />
-                      <label className="form__label">stock minimo</label>
+                      <label className="form__label">Stock minimo</label>
                     </InputText>
                   </article>
                 </ContainerStock>
               )}
             </section>
 
-            <Btn1
-              icono={<v.iconoguardar />}
-              titulo="Guardar"
-              bgcolor="#F9D70B"
-            />
+            <Btn1 icono={<v.iconoguardar />} titulo="Guardar" bgcolor="#F9D70B" />
           </form>
         </div>
       )}
     </Container>
   );
 }
-const Container = styled.div`
-  transition: 0.5s;
-  top: 0;
-  left: 0;
-  position: fixed;
-  background-color: rgba(10, 9, 9, 0.5);
-  display: flex;
-  width: 100%;
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
 
-  .sub-contenedor {
-    position: relative;
-    width: 100%;
+// --- ESTILOS ACTUALIZADOS (Sin borde naranja) ---
+const Container = styled.div` transition: 0.5s; top: 0; left: 0; position: fixed; background-color: rgba(10, 9, 9, 0.5); display: flex; width: 100%; min-height: 100vh; align-items: center; justify-content: center; z-index: 1000; .sub-contenedor { position: relative; width: 100%; background: ${({ theme }) => theme.bgtotal}; box-shadow: -10px 15px 30px rgba(10, 9, 9, 0.4); padding: 13px 36px 13px 36px; z-index: 100; height: calc(100vh - 20px); overflow-y: auto; .headers { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; h1 { font-size: 20px; font-weight: 500; } span { font-size: 20px; cursor: pointer; } } .formulario { display: grid; grid-template-columns: 1fr; gap: 15px; @media ${Device.tablet} { grid-template-columns: repeat(2, 1fr); } .seccion1, .seccion2 { gap: 20px; display: flex; flex-direction: column; } .contentPadregenerar { position: relative; } } } `;
 
-    background: ${({ theme }) => theme.bgtotal};
-    box-shadow: -10px 15px 30px rgba(10, 9, 9, 0.4);
-    padding: 13px 36px 13px 36px;
-    z-index: 100;
-    height: calc(100vh - 20px);
-    overflow-y: auto;
+// CAMBIO AQUÍ: Eliminado el border naranja y el background
+const ContainerStock = styled.div` 
+  /* border: 1px solid #ffbd58; */ /* ELIMINADO */
+  display: flex; 
+  border-radius: 15px; 
+  padding: 12px; 
+  flex-direction: column; 
+  /* background-color: rgba(240, 127, 46, 0.05); */ /* ELIMINADO */
+  border: 1px solid ${({ theme }) => theme.color2}; /* Borde sutil del tema */
+`;
 
-    .headers {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-
-      h1 {
-        font-size: 20px;
-        font-weight: 500;
-      }
-      span {
-        font-size: 20px;
-        cursor: pointer;
-      }
-    }
-    .formulario {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 15px;
-      @media ${Device.tablet} {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .seccion1,
-      .seccion2 {
-        gap: 20px;
-        display: flex;
-        flex-direction: column;
-      }
-      .contentPadregenerar {
-        position: relative;
-      }
-    }
-  }
-`;
-const ContainerStock = styled.div`
-  border: 1px solid rgba(240, 104, 46, 0.9);
-  display: flex;
-  border-radius: 15px;
-  padding: 12px;
-  flex-direction: column;
-  background-color: rgba(240, 127, 46, 0.05);
-`;
-const ContainerBtngenerar = styled.div`
-  position: absolute;
-  right: 0;
-  top: 10%;
-`;
-const ContainerMensajeStock = styled.div`
-  text-align: center;
-  color: #f9184c;
-  background-color: rgba(249, 24, 61, 0.2);
-  border-radius: 10px;
-  padding: 5px;
-  margin: 10px;
-  font-weight: 600;
-`;
+const ContainerBtngenerar = styled.div` position: absolute; right: 0; top: 10%; `;

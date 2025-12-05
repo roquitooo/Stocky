@@ -13,7 +13,7 @@ export function Categorias() {
   const { isLoading, error } = useQuery({
     queryKey: ["mostrar categorias", dataempresa?.id],
     queryFn: () => mostrarCategorias({ id_empresa: dataempresa?.id }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
   //buscar categorias
@@ -21,7 +21,7 @@ export function Categorias() {
     queryKey: ["buscar categorias", buscador],
     queryFn: () =>
       buscarCategorias({ id_empresa: dataempresa?.id, descripcion: buscador }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
 

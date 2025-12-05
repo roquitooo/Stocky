@@ -15,14 +15,13 @@ export function FooterPos() {
           bgcolor="#f44141"
           color="#fff"
           funcion={resetState}
-          icono={<Icon icon="fluent-emoji-flat:skull" />}
           titulo="Eliminar venta"
         />
         <Btn1
           bgcolor="#fff"
           color="#2d2d2d"
           funcion={()=>setStateCierraCaja(true)}
-          icono={<Icon icon="emojione:card-file-box" />}
+          
           titulo="Cerrar caja"
         />
         <Btn1
@@ -32,7 +31,7 @@ export function FooterPos() {
             setStateIngresoSalida(true)
         setTipoRegistro("ingreso")
           } }
-          icono={<Icon icon="fluent-emoji:dollar-banknote" />}
+          
           titulo="Ingresar dinero"
         />
         <Btn1
@@ -42,7 +41,7 @@ export function FooterPos() {
             setStateIngresoSalida(true)
         setTipoRegistro("salida")
           } }
-          icono={<Icon icon="noto-v1:money-bag" />}
+          
           titulo="Retirar dinero"
         />
         {/* <Btn1

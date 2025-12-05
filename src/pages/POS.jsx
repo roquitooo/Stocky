@@ -26,7 +26,7 @@ export function POS() {
     queryKey: ["buscar productos", buscador],
     queryFn: () =>
       buscarProductos({ id_empresa: dataempresa?.id, buscador: buscador }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
 
@@ -40,7 +40,7 @@ export function POS() {
       mostrarAlmacenXsucursal({
         id_sucursal: sucursalesItemSelectAsignadas?.id_sucursal,
       }),
-    enabled: !!sucursalesItemSelectAsignadas,
+    enabled: !!sucursalesItemSelectAsignadas && !!dataempresa?.id,
   });
 
   // Consulta para mostrar cajas por sucursal
@@ -53,7 +53,7 @@ export function POS() {
       mostrarCajaXSucursal({
         id_sucursal: sucursalesItemSelectAsignadas?.id_sucursal,
       }),
-    enabled: !!sucursalesItemSelectAsignadas,
+    enabled: !!sucursalesItemSelectAsignadas && !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
 
@@ -65,12 +65,12 @@ export function POS() {
   } = useQuery({
     queryKey: ["mostrar cierre de caja", { id_caja: dataCaja?.id }],
     queryFn: () => mostrarCierreCaja({ id_caja: dataCaja?.id }),
-    enabled: !!dataCaja,
+    enabled: !!dataCaja && !!dataempresa?.id,
   });
   const { isLoading:isLoadingMetodosPago} = useQuery({
     queryKey: ["mostrar metodos de pago"],
     queryFn: () => mostrarMetodosPago({ id_empresa: dataempresa?.id }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
   });
    
   // Unificar los estados de carga

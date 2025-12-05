@@ -29,7 +29,7 @@ export function ClientesProveedores() {
             ? "cliente"
             : "proveedor",
       }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
 
@@ -55,7 +55,7 @@ export function ClientesProveedores() {
             : "proveedor",
         buscador: buscador,
       }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
 

@@ -4,12 +4,10 @@ import { v } from "../../../styles/variables";
 import {
   InputText,
   Btn1,
-  useCategoriasStore,
   Icono,
   ConvertirCapitalize,
 } from "../../../index";
 import { useForm } from "react-hook-form";
-import { CirclePicker } from "react-color";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMetodosPagoStore } from "../../../store/MetodosPagoStore";
@@ -23,7 +21,6 @@ export function RegistrarMetodosPago({
 }) {
   const { insertarMetodosPago, editarMetodosPago } = useMetodosPagoStore();
   const { dataempresa } = useEmpresaStore();
-  const [currentColor, setColor] = useState("#F44336");
   const [file, setFile] = useState([]);
   const ref = useRef(null);
   const [fileurl, setFileurl] = useState();
@@ -33,6 +30,7 @@ export function RegistrarMetodosPago({
     formState: { errors },
     handleSubmit,
   } = useForm();
+  
   const { isPending, mutate: doInsertar } = useMutation({
     mutationFn: insertar,
     mutationKey: "insertar metodos pago",
@@ -45,6 +43,7 @@ export function RegistrarMetodosPago({
       cerrarFormulario();
     },
   });
+
   const handlesub = (data) => {
     doInsertar(data);
   };
@@ -52,7 +51,14 @@ export function RegistrarMetodosPago({
     onClose();
     setIsExploding(true);
   };
+
   async function insertar(data) {
+     // 🛡️ PROTECCIÓN
+    if (!dataempresa?.id) {
+        toast.error("No se detectó la empresa. Recarga la página.");
+        return;
+    }
+
     if (accion === "Editar") {
       const p = {
         nombre: ConvertirCapitalize(data.nombre),
@@ -62,13 +68,14 @@ export function RegistrarMetodosPago({
     } else {
       const p = {
         nombre: ConvertirCapitalize(data.nombre),
-        id_empresa: dataempresa?.id,
+        id_empresa: dataempresa.id,
         delete_update: true,
       };
 
       await insertarMetodosPago(p, file);
     }
   }
+
   function abrirImagenes() {
     ref.current.click();
   }
@@ -86,10 +93,10 @@ export function RegistrarMetodosPago({
   }
   useEffect(() => {
     if (accion === "Editar") {
-      setColor(dataSelect.color);
       setFileurl(dataSelect.icono);
     }
   }, []);
+
   return (
     <Container>
       {isPending ? (
@@ -161,6 +168,7 @@ export function RegistrarMetodosPago({
     </Container>
   );
 }
+// ... Estilos (Container, ContentTitle, PictureContainer) se mantienen igual ...
 const Container = styled.div`
   transition: 0.5s;
   top: 0;
@@ -173,7 +181,6 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 1000;
-
   .sub-contenedor {
     position: relative;
     width: 500px;
@@ -183,76 +190,18 @@ const Container = styled.div`
     box-shadow: -10px 15px 30px rgba(10, 9, 9, 0.4);
     padding: 13px 36px 20px 36px;
     z-index: 100;
-
     .headers {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-
-      h1 {
-        font-size: 20px;
-        font-weight: 500;
-      }
-      span {
-        font-size: 20px;
-        cursor: pointer;
-      }
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+      h1 { font-size: 20px; font-weight: 500; }
+      span { font-size: 20px; cursor: pointer; }
     }
     .formulario {
       .form-subcontainer {
-        gap: 20px;
-        display: flex;
-        flex-direction: column;
-        .colorContainer {
-          .colorPickerContent {
-            padding-top: 15px;
-            min-height: 50px;
-          }
-        }
+        gap: 20px; display: flex; flex-direction: column;
+        .colorContainer { .colorPickerContent { padding-top: 15px; min-height: 50px; } }
       }
     }
   }
 `;
-
-const ContentTitle = styled.div`
-  display: flex;
-  justify-content: start;
-  align-items: center;
-  gap: 20px;
-
-  svg {
-    font-size: 25px;
-  }
-  input {
-    border: none;
-    outline: none;
-    background: transparent;
-    padding: 2px;
-    width: 40px;
-    font-size: 28px;
-  }
-`;
-const PictureContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: start;
-  border: 2px dashed #f9d70b;
-  border-radius: 5px;
-  background-color: rgba(249, 215, 11, 0.1);
-  padding: 8px;
-  position: relative;
-  gap: 3px;
-  margin-bottom: 8px;
-
-  .ContentImage {
-    overflow: hidden;
-    img {
-      width: 100%;
-      object-fit: contain;
-    }
-  }
-  input {
-    display: none;
-  }
-`;
+const ContentTitle = styled.div` display: flex; justify-content: start; align-items: center; gap: 20px; svg { font-size: 25px; } input { border: none; outline: none; background: transparent; padding: 2px; width: 40px; font-size: 28px; } `;
+const PictureContainer = styled.div` display: flex; align-items: center; justify-content: start; border: 2px dashed #f9d70b; border-radius: 5px; background-color: rgba(249, 215, 11, 0.1); padding: 8px; position: relative; gap: 3px; margin-bottom: 8px; .ContentImage { overflow: hidden; img { width: 100%; object-fit: contain; } } input { display: none; } `;

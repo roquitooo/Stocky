@@ -3,6 +3,7 @@ import { v } from "../../../styles/variables";
 import {
   InputText,
   Btn1,
+  ConvertirMinusculas,
   useProductosStore,
   ContainerSelector,
   Switch1,
@@ -28,7 +29,8 @@ export function RegistrarProductos({
   setIsExploding,
   state,
 }) {
-  if (!state) return;
+  if (!state) return null; // Corregido para retornar null si no está activo
+  
   //validar checkboxs
   const [isChecked1, setIsChecked1] = useState(true);
   const [isChecked2, setIsChecked2] = useState(false);
@@ -41,10 +43,9 @@ export function RegistrarProductos({
     } else {
       setIsChecked1(false);
       setIsChecked2(true);
-      setSevendepor("Gramos");
+      setSevendepor("GRANEL");
     }
   };
-  //
 
   const {
     insertarProductos,
@@ -69,16 +70,19 @@ export function RegistrarProductos({
     useSucursalesStore();
   const { datacategorias, selectCategoria, categoriaItemSelect } =
     useCategoriasStore();
+
+  // 🛡️ CORRECCIÓN: Agregado enabled para evitar el error 'undefined'
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: [
       "mostrar stock almacen x sucursal",
-      { id_producto: dataSelect.id, id_sucursal: sucursalesItemSelect.id },
+      { id_producto: dataSelect?.id, id_sucursal: sucursalesItemSelect?.id },
     ],
     queryFn: () =>
       mostrarAlmacen({
         id_sucursal: sucursalesItemSelect.id,
         id_producto: dataSelect.id,
       }),
+    enabled: !!sucursalesItemSelect?.id && !!dataSelect?.id,
   });
 
   const {
@@ -86,25 +90,33 @@ export function RegistrarProductos({
     formState: { errors },
     handleSubmit,
   } = useForm();
+  
   const { isPending, mutate: doInsertar } = useMutation({
     mutationFn: insertar,
     mutationKey: "insertar marca",
     onError: (err) => console.log("El error", err.message),
     onSuccess: () => cerrarFormulario(),
   });
+  
   const handlesub = (data) => {
     doInsertar(data);
   };
+  
   const cerrarFormulario = () => {
     onClose();
     setIsExploding(true);
   };
+
   async function insertar(data) {
+    if (!dataempresa?.id) {
+        console.error("Falta ID empresa");
+        return;
+    }
     validarVacios(data);
     if (accion === "Editar") {
       const p = {
         _id: dataSelect.id,
-        _nombre: data.nombre,
+        _nombre: ConvertirMinusculas(data.nombre),
         _precio_venta: parseFloat(data.precio_venta),
         _precio_compra: parseFloat(data.precio_compra),
         _id_categoria: categoriaItemSelect.id,
@@ -114,7 +126,6 @@ export function RegistrarProductos({
         _sevende_por: sevendepor,
         _maneja_inventarios: stateInventarios,
       };
-      console.log(p);
       await editarProductos(p);
       if (stateInventarios) {
         if (dataalmacen == null) {
@@ -129,7 +140,7 @@ export function RegistrarProductos({
       }
     } else {
       const p = {
-        _nombre: data.nombre,
+        _nombre: ConvertirMinusculas(data.nombre),
         _precio_venta: parseFloat(data.precio_venta),
         _precio_compra: parseFloat(data.precio_compra),
         _id_categoria: categoriaItemSelect.id,
@@ -161,11 +172,11 @@ export function RegistrarProductos({
       if (dataalmacen) {
         if (stateInventarios) {
           Swal.fire({
-            title: "¿Estás seguro(a)?",
-            text: "Si desactivas esta opción se elimina el stock!",
+            title: "¿Estás seguro/a?",
+            text: "Si desactiva esta opción se eliminara el stock!",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#3085d6",
+            confirmButtonColor: "#ffbd58",
             cancelButtonColor: "#d33",
             confirmButtonText: "Si, eliminar",
           }).then(async (result) => {
@@ -286,7 +297,7 @@ export function RegistrarProductos({
                     className="form__field"
                     defaultValue={dataSelect.nombre}
                     type="text"
-                    placeholder="nombre"
+                    placeholder="Nombre"
                     {...register("nombre", {
                       required: true,
                     })}
@@ -318,7 +329,7 @@ export function RegistrarProductos({
                     placeholder="precio compra"
                     {...register("precio_compra")}
                   />
-                  <label className="form__label">Precio compra</label>
+                  <label className="form__label">precio compra</label>
                 </InputText>
               </article>
               <article className="contentPadregenerar">
@@ -330,7 +341,7 @@ export function RegistrarProductos({
                     type="text"
                     placeholder="codigo de barras"
                   />
-                  <label className="form__label">Codigo de barras</label>
+                  <label className="form__label">codigo de barras</label>
                 </InputText>
                 <ContainerBtngenerar>
                   <Btngenerarcodigo
@@ -347,9 +358,8 @@ export function RegistrarProductos({
                     onChange={handleChangeinterno}
                     type="text"
                     placeholder="codigo interno"
-                    // {...register("codigo_interno")}
                   />
-                  <label className="form__label">Codigo interno</label>
+                  <label className="form__label">codigo interno</label>
                 </InputText>
                 <ContainerBtngenerar>
                   <Btngenerarcodigo
@@ -367,7 +377,7 @@ export function RegistrarProductos({
                   isChecked={isChecked1}
                   onChange={() => handleCheckboxChange(1)}
                 />
-                <label>Gramos</label>
+                <label>GRAMOS</label>
                 <Checkbox1
                   isChecked={isChecked2}
                   onChange={() => handleCheckboxChange(2)}
@@ -381,7 +391,7 @@ export function RegistrarProductos({
                   funcion={() => setStateCategoriasLista(!stateCategoriasLista)}
                   texto1="🏬"
                   texto2={categoriaItemSelect?.nombre}
-                  color="##ffbd59"
+                  color="#ffbd59"
                 />
                 <ListaDesplegable
                   funcion={selectCategoria}
@@ -411,7 +421,7 @@ export function RegistrarProductos({
                       }
                       texto1="🏬"
                       texto2={sucursalesItemSelect?.nombre}
-                      color="#ffbd59"
+                      color="#fc6027"
                     />
 
                     <ListaDesplegable
@@ -428,7 +438,7 @@ export function RegistrarProductos({
                   {stateEnabledStock && (
                     <ContainerMensajeStock>
                       <span>
-                         Para editar el stock vaya al módulo de "manejar inventario"
+                        Para editar el stock vaya al módulo de inventario!
                       </span>
                     </ContainerMensajeStock>
                   )}
@@ -444,7 +454,7 @@ export function RegistrarProductos({
                         placeholder="stock"
                         {...register("stock")}
                       />
-                      <label className="form__label">Stock</label>
+                      <label className="form__label">stock</label>
                     </InputText>
                   </article>
                   <article>
@@ -458,7 +468,7 @@ export function RegistrarProductos({
                         placeholder="stock minimo"
                         {...register("stock_minimo")}
                       />
-                      <label className="form__label">Stock minimo</label>
+                      <label className="form__label">stock minimo</label>
                     </InputText>
                   </article>
                 </ContainerStock>
@@ -468,7 +478,7 @@ export function RegistrarProductos({
             <Btn1
               icono={<v.iconoguardar />}
               titulo="Guardar"
-              bgcolor="#ffbd59"
+              bgcolor="#F9D70B"
             />
           </form>
         </div>
@@ -476,83 +486,8 @@ export function RegistrarProductos({
     </Container>
   );
 }
-const Container = styled.div`
-  transition: 0.5s;
-  top: 0;
-  left: 0;
-  position: fixed;
-  background-color: rgba(10, 9, 9, 0.5);
-  display: flex;
-  width: 100%;
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-
-  .sub-contenedor {
-    position: relative;
-    width: 100%;
-
-    background: ${({ theme }) => theme.bgtotal};
-    box-shadow: -10px 15px 30px rgba(10, 9, 9, 0.4);
-    padding: 13px 36px 13px 36px;
-    z-index: 100;
-    height: calc(100vh - 20px);
-    overflow-y: auto;
-
-    .headers {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-
-      h1 {
-        font-size: 20px;
-        font-weight: 500;
-      }
-      span {
-        font-size: 20px;
-        cursor: pointer;
-      }
-    }
-    .formulario {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 15px;
-      @media ${Device.tablet} {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .seccion1,
-      .seccion2 {
-        gap: 20px;
-        display: flex;
-        flex-direction: column;
-      }
-      .contentPadregenerar {
-        position: relative;
-      }
-    }
-  }
-`;
-const ContainerStock = styled.div`
-  border: 1px solid rgba(240, 104, 46, 0.9);
-  display: flex;
-  border-radius: 15px;
-  padding: 12px;
-  flex-direction: column;
-  background-color: rgba(240, 127, 46, 0.05);
-`;
-const ContainerBtngenerar = styled.div`
-  position: absolute;
-  right: 0;
-  top: 10%;
-`;
-const ContainerMensajeStock = styled.div`
-  text-align: center;
-  color: #ffbd59;
-  background-color: #6b2200;
-  border-radius: 10px;
-  padding: 5px;
-  margin: 10px;
-  font-weight: 600;
-`;
+// Estilos... (Los mismos que tenías)
+const Container = styled.div` transition: 0.5s; top: 0; left: 0; position: fixed; background-color: rgba(10, 9, 9, 0.5); display: flex; width: 100%; min-height: 100vh; align-items: center; justify-content: center; z-index: 1000; .sub-contenedor { position: relative; width: 100%; background: ${({ theme }) => theme.bgtotal}; box-shadow: -10px 15px 30px rgba(10, 9, 9, 0.4); padding: 13px 36px 13px 36px; z-index: 100; height: calc(100vh - 20px); overflow-y: auto; .headers { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; h1 { font-size: 20px; font-weight: 500; } span { font-size: 20px; cursor: pointer; } } .formulario { display: grid; grid-template-columns: 1fr; gap: 15px; @media ${Device.tablet} { grid-template-columns: repeat(2, 1fr); } .seccion1, .seccion2 { gap: 20px; display: flex; flex-direction: column; } .contentPadregenerar { position: relative; } } } `;
+const ContainerStock = styled.div` border: 1px solid rgba(240, 104, 46, 0.9); display: flex; border-radius: 15px; padding: 12px; flex-direction: column; background-color: rgba(240, 127, 46, 0.05); `;
+const ContainerBtngenerar = styled.div` position: absolute; right: 0; top: 10%; `;
+const ContainerMensajeStock = styled.div` text-align: center; color: #f9184c; background-color: rgba(249, 24, 61, 0.2); border-radius: 10px; padding: 5px; margin: 10px; font-weight: 600; `;

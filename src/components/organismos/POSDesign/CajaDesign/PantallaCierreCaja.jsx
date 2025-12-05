@@ -183,7 +183,7 @@ export function PantallaCierreCaja() {
         titulo={"CERRAR CAJA"}
         color="#ffffff"
         border="2px"
-        bgcolor="#e88018"
+        bgcolor="#ffbd59"
       />
 {
   stateConteoCaja && <PantallaConteoCaja/>

@@ -117,7 +117,7 @@ export const MonedaConfig = () => {
         </article>
       </Cardselect>
       {
-        mutate.onSuccess && <span>cambios guardados <Icon icon="emojione:pig" /></span>
+        mutate.onSuccess && <span>cambios guardados</span>
       }
     </Container>
   );

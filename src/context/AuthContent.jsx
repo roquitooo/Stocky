@@ -3,24 +3,19 @@ import { supabase } from "../supabase/supabase.config";
 import {
   MostrarUsuarios,
   InsertarEmpresa,
-  InsertarAdmin,
-  MostrarTipoDocumentos,
-  MostrarRolesXnombre,
 } from "../index";
-import Swal from "sweetalert2";
 
 const AuthContext = createContext();
+
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState([]);
-  
+
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session == null) {
         setUser(null);
-        
       } else {
         setUser(session?.user);
-        
         insertarDatos(session?.user.id, session?.user.email);
       }
     });
@@ -28,8 +23,9 @@ export const AuthContextProvider = ({ children }) => {
       data.subscription;
     };
   }, []);
+
   const insertarDatos = async (id_auth, correo) => {
-    const response = await MostrarUsuarios({ id_auth: id_auth }); 
+    const response = await MostrarUsuarios({ id_auth: id_auth });
     if (response) {
       return;
     } else {
@@ -37,10 +33,19 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
+  // --- AGREGAMOS ESTA FUNCIÓN ---
+  const cerrarSesion = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
-    <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
+    // --- PASAMOS LA FUNCIÓN EN EL VALUE ---
+    <AuthContext.Provider value={{ user, cerrarSesion }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
+
 export const UserAuth = () => {
   return useContext(AuthContext);
 };

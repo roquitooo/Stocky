@@ -12,139 +12,128 @@ import { useVentasStore } from "../../../store/VentasStore";
 import { useDetalleVentasStore } from "../../../store/DetalleVentasStore";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { PanelBuscador } from "./PanelBuscador";
+import { Switch1 } from "../../atomos/Switch1"; // Importamos el Switch
 import { useClientesProveedoresStore } from "../../../store/ClientesProveedoresStore";
 import { useMetodosPagoStore } from "../../../store/MetodosPagoStore";
 import { useCierreCajaStore } from "../../../store/CierreCajaStore";
 import { useMovCajaStore } from "../../../store/MovCajaStore";
 import { useFormattedDate } from "../../../hooks/useFormattedDate";
+
 export const IngresoCobro = forwardRef((props, ref) => {
-  const fechaActual = useFormattedDate()
-  const { tipocobro, total, items, setStatePantallaCobro, resetState } =
-    useCartVentasStore();
-  //Valores a calcular
-  const [stateBuscadorClientes, setStateBuscadorClientes] = useState(false);
-  const [precioVenta, setPrecioVenta] = useState(total);
+  const fechaActual = useFormattedDate();
+  
+  // TRAEMOS LOS ESTADOS NUEVOS DEL STORE (descuento, tipoDescuento, subtotal)
+  const { 
+      tipocobro, total, subtotal, items, 
+      setStatePantallaCobro, resetState, 
+      aplicarDescuento, descuento, tipoDescuento 
+  } = useCartVentasStore();
+  
   const [valoresPago, setValoresPago] = useState({});
-  const [valorTarjeta, setValorTarjeta] = useState(
-    tipocobro === "tarjeta" ? total : 0
-  );
-  const [valorEfectivo, setValorEfectivo] = useState(
-    tipocobro === "efectivo" ? total : 0
-  );
-  const [valorCredito, setValorCredito] = useState(
-    tipocobro === "credito" ? total : 0
-  );
-  //Valores a mostrar
   const [vuelto, setVuelto] = useState(0);
   const [restante, setRestante] = useState(0);
-  //datos de tipos de pago
+
+  // Estado local para el switch visual (true = %, false = $)
+  const [esPorcentaje, setEsPorcentaje] = useState(tipoDescuento === "porcentaje");
+
+  // Stores
   const { dataMetodosPago } = useMetodosPagoStore();
-  //datos de la store
   const { datausuarios } = useUsuariosStore();
   const { sucursalesItemSelectAsignadas } = useSucursalesStore();
   const { dataempresa } = useEmpresaStore();
   const { idventa, insertarVentas, resetearventas } = useVentasStore();
   const { insertarDetalleVentas } = useDetalleVentasStore();
-  //#region Clientes
-  const {
-    buscarCliPro,
-    setBuscador,
-    buscador,
-    selectCliPro,
-    cliproItemSelect,
-  } = useClientesProveedoresStore();
-  const { data: dataBuscadorcliente, isLoading: isloadingBuscadorCliente } =
-    useQuery({
-      queryKey: ["buscar cliente", [dataempresa?.id, "cliente", buscador]],
-      queryFn: () =>
-        buscarCliPro({
-          id_empresa: dataempresa?.id,
-          tipo: "cliente",
-          buscador: buscador,
-        }),
-      enabled: !!dataempresa,
-      refetchOnWindowFocus: false,
-    });
-  //#endregion
-  //Mostrar cierres de caja
   const { dataCierreCaja } = useCierreCajaStore();
-  // Función para calcular vuelto y restante
-  //Movientos de caja
   const { insertarMovCaja } = useMovCajaStore();
+  const { cliproItemSelect } = useClientesProveedoresStore();
+
+  // --- LÓGICA DE DESCUENTO ---
+  const handleDescuentoChange = (e) => {
+    const valor = e.target.value;
+    aplicarDescuento(valor, esPorcentaje ? "porcentaje" : "monto");
+  };
+
+  const toggleTipoDescuento = () => {
+    const nuevoTipo = !esPorcentaje;
+    setEsPorcentaje(nuevoTipo);
+    aplicarDescuento(descuento, nuevoTipo ? "porcentaje" : "monto");
+  };
+  // ---------------------------
+
   const calcularVueltoYRestante = () => {
     const totalPagado = Object.values(valoresPago).reduce(
-      (acc, curr) => acc + curr,
-      0
+      (acc, curr) => acc + curr, 0
     );
+    // Usamos 'total' que ya viene con descuento aplicado desde el store
+    const precioFinal = total; 
+    
     const totalSinEfectivo = totalPagado - (valoresPago["Efectivo"] || 0);
-    // Si el total sin efectivo excede el precio de venta, no permitir el exceso
-    if (totalSinEfectivo > precioVenta) {
+    
+    if (totalSinEfectivo > precioFinal) {
       setVuelto(0);
-      setRestante(precioVenta - totalSinEfectivo); //Restante negativo para indicar que se excede sin efectivo
+      setRestante(precioFinal - totalSinEfectivo); 
     } else {
-      // Permitir el exceso solo si es en efectivo
-      if (totalPagado >= precioVenta) {
-        const exceso = totalPagado - precioVenta;
+      if (totalPagado >= precioFinal) {
+        const exceso = totalPagado - precioFinal;
         setVuelto(valoresPago["Efectivo"] ? exceso : 0);
         setRestante(0);
       } else {
-        // Si el total pagado no cubre el precio de venta, calcular el restante
         setVuelto(0);
-        setRestante(precioVenta - totalPagado);
+        setRestante(precioFinal - totalPagado);
       }
     }
   };
-  //Manejadores de cambio
+
   const handleChangePago = (tipo, valor) => {
     setValoresPago((prev) => ({
       ...prev,
       [tipo]: parseFloat(valor) || 0,
     }));
-    console.log(valoresPago);
-    //{100,50,10}
   };
-  // Exponiendo la función mutation a través de ref
+
   useImperativeHandle(ref, () => ({
     mutateAsync: mutation.mutateAsync,
   }));
-  //Funcion para realizar la venta
+
   const mutation = useMutation({
     mutationKey: "insertar ventas",
     mutationFn: insertarventas,
     onSuccess: () => {
-      if (restante != 0) {
-        return;
-      }
+      if (restante > 0) return; // Pequeña corrección: si falta pagar, no cerrar
       setStatePantallaCobro({ tipocobro: "" });
       resetState();
       resetearventas();
-      toast.success("🎉 venta generada correctamente!!!");
+      toast.success("Venta generada!");
     },
   });
+
   async function insertarventas() {
-    if (restante === 0) {
+    if (restante <= 0) { // Aceptamos 0 o negativo (vuelto)
       const pventas = {
-        fecha:fechaActual,
+        fecha: fechaActual,
         id_cliente: cliproItemSelect?.id,
         id_usuario: datausuarios?.id,
         id_sucursal: sucursalesItemSelectAsignadas?.id_sucursal,
         id_empresa: dataempresa?.id,
         estado: "confirmada",
         vuelto: vuelto,
-        monto_total: total,
+        monto_total: total, // Guardamos el total final con descuento
         id_cierre_caja: dataCierreCaja?.id,
       };
+      
       if (idventa === 0) {
         const result = await insertarVentas(pventas);
-        items.forEach(async (item) => {
-          if (result?.id > 0) {
-            item._id_venta = result?.id;
-            await insertarDetalleVentas(item);
-          }
-        });
+        
+        // Guardamos detalles
+        for (const item of items) {
+             if (result?.id > 0) {
+                item._id_venta = result?.id;
+                await insertarDetalleVentas(item);
+             }
+        }
+
+        // Guardamos movimientos de caja
         if (result?.id > 0) {
-          // Insertar en MovCaja solo los métodos de pago con monto mayor a 0
           for (const [tipo, monto] of Object.entries(valoresPago)) {
             if (monto > 0) {
               const metodoPago = dataMetodosPago.find(
@@ -166,11 +155,12 @@ export const IngresoCobro = forwardRef((props, ref) => {
         }
       }
     } else {
-      toast.warning("Falta completar el pago, el restante tiene que ser 0");
+      toast.warning("Falta completar el pago");
     }
   }
-  //useEffect para recalcular cuando los valores cambian
+
   useEffect(() => {
+    // Si no es mixto, autocompletar con el total final
     if (tipocobro !== "Mixto" && valoresPago[tipocobro] != total) {
       setValoresPago((prev) => ({
         ...prev,
@@ -178,34 +168,64 @@ export const IngresoCobro = forwardRef((props, ref) => {
       }));
     }
   }, [tipocobro, total]);
+
   useEffect(() => {
     calcularVueltoYRestante();
-  }, [precioVenta, tipocobro, valoresPago]);
+  }, [total, tipocobro, valoresPago]);
+
   return (
     <Container>
       {mutation.isPending ? (
-        <span>guardando...🐖</span>
+        <span>Procesando venta...</span>
       ) : (
         <>
-          {mutation.isError && <span>error: {mutation.error.message}</span>}
+          {mutation.isError && <span>Error: {mutation.error.message}</span>}
+          
           <section className="area1">
             <span className="tipocobro">{tipocobro}</span>
-            <Icon
-              className="icono"
-              icon="fluent-emoji:smiling-face-with-sunglasses"
-            />
-
-            <span>cliente</span>
-            <EditButton
-              onClick={() => setStateBuscadorClientes(!stateBuscadorClientes)}
-            >
-              <Icon className=" icono" icon="lets-icons:edit-fill" />
-            </EditButton>
-            <span className="cliente">{cliproItemSelect?.nombres}</span>
+            {/* Cliente Fijo */}
+            <span className="cliente" style={{fontWeight: "800", fontSize: "18px", marginTop:"5px"}}>
+              CLIENTE GENERICO
+            </span>
           </section>
+
           <Linea />
+          
+          {/* --- SECCIÓN DESCUENTO NUEVA --- */}
+          <section className="area-descuento" style={{width:"100%", marginBottom:"10px"}}>
+             <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px", padding:"0 10px"}}>
+                 <span style={{fontSize:"14px", fontWeight:"bold"}}>Descuento:</span>
+                 <div style={{display:"flex", alignItems:"center", gap:"5px", fontSize:"12px"}}>
+                    <span>$</span>
+                    <Switch1 state={esPorcentaje} setState={toggleTipoDescuento} />
+                    <span>%</span>
+                 </div>
+             </div>
+             <div style={{padding:"0 10px"}}>
+                 <input 
+                    style={{
+                        width: "100%", 
+                        padding: "8px", 
+                        borderRadius: "8px", 
+                        border: "1px solid #ccc",
+                        textAlign: "center",
+                        fontWeight: "bold"
+                    }}
+                    type="number"
+                    value={descuento > 0 ? descuento : ""}
+                    onChange={handleDescuentoChange}
+                    placeholder={esPorcentaje ? "Ej: 10%" : "Ej: $500"}
+                 />
+             </div>
+          </section>
+          {/* ----------------------------- */}
+
+          <Linea />
+
           <section className="area2">
-            {dataMetodosPago?.map((item, index) => {
+            {dataMetodosPago
+              ?.filter((item) => item.nombre === "Efectivo" || item.nombre === "Tarjeta")
+              .map((item, index) => {
               return (tipocobro === "Mixto" && item.nombre !== "Mixto") ||
                 (tipocobro === item.nombre && item.nombre !== "Mixto") ? (
                 <InputText textalign="center" key={index}>
@@ -213,6 +233,7 @@ export const IngresoCobro = forwardRef((props, ref) => {
                     onChange={(e) =>
                       handleChangePago(item.nombre, e.target.value)
                     }
+                    // El input se llena con el total final (ya con descuento)
                     defaultValue={tipocobro === item.nombre ? total : ""}
                     className="form__field"
                     type="number"
@@ -227,64 +248,59 @@ export const IngresoCobro = forwardRef((props, ref) => {
               ) : null;
             })}
           </section>
+
           <Linea />
+
           <section className="area3">
             <article className="etiquetas">
-              <span className="total">Total: </span>
+              {/* Mostramos el Subtotal real si hay descuento */}
+              {descuento > 0 && <span style={{fontSize:"14px", color:"#888"}}>Subtotal: </span>}
+              <span className="total">Total a Pagar: </span>
               <span>Vuelto: </span>
               <span>Restante: </span>
             </article>
+            
             <article>
+              {/* Valor Subtotal */}
+              {descuento > 0 && (
+                 <span style={{fontSize:"14px", color:"#888", textDecoration:"line-through"}}>
+                   {FormatearNumeroDinero(subtotal, dataempresa?.currency, dataempresa?.iso)}
+                 </span>
+              )}
+
+              {/* Valor Total Final */}
               <span className="total">
-                {FormatearNumeroDinero(
-                  total,
-                  dataempresa?.currency,
-                  dataempresa?.iso
-                )}
+                {FormatearNumeroDinero(total, dataempresa?.currency, dataempresa?.iso)}
+              </span>
+              
+              <span>
+                {FormatearNumeroDinero(vuelto, dataempresa?.currency, dataempresa?.iso)}
               </span>
               <span>
-                {FormatearNumeroDinero(
-                  vuelto,
-                  dataempresa?.currency,
-                  dataempresa?.iso
-                )}
-              </span>
-              <span>
-                {FormatearNumeroDinero(
-                  restante,
-                  dataempresa?.currency,
-                  dataempresa?.iso
-                )}
+                {FormatearNumeroDinero(restante, dataempresa?.currency, dataempresa?.iso)}
               </span>
             </article>
           </section>
+
           <Linea />
+
           <section className="area4">
             <Btn1
               funcion={() => mutation.mutateAsync()}
               border="2px"
               titulo="COBRAR (enter)"
-              bgcolor="#0aca21"
+              bgcolor="#ffbd58"
               color="#ffffff"
               width="100%"
             />
           </section>
-          {stateBuscadorClientes && (
-            <PanelBuscador
-              selector={selectCliPro}
-              setBuscador={setBuscador}
-              displayField="nombres"
-              data={dataBuscadorcliente}
-              setStateBuscador={() =>
-                setStateBuscadorClientes(!stateBuscadorClientes)
-              }
-            />
-          )}
         </>
       )}
     </Container>
   );
 });
+
+// --- ESTILOS ---
 const Container = styled.div`
   position: relative;
   box-sizing: border-box;
@@ -292,7 +308,7 @@ const Container = styled.div`
   padding: 20px;
   border-radius: 10px;
   box-shadow: 2px 2px 15px 0px #e2e2e2;
-  gap: 12px;
+  gap: 10px; /* Reducido un poco para que quepa todo */
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
@@ -300,98 +316,39 @@ const Container = styled.div`
   min-height: 100%;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 20px; /* Ajustado tamaño fuente base */
 
   input {
     color: #000 !important;
     font-weight: 700;
   }
-  &:before,
-  &:after {
-    content: "";
-    position: absolute;
-    left: 5px;
-    height: 6px;
-    width: 380px;
-  }
-  &:before {
-    top: -5px;
-    background: radial-gradient(
-        circle,
-        transparent,
-        transparent 50%,
-        #fbfbfb 50%,
-        #fbfbfb 100%
-      ) -7px -8px / 16px 16px repeat-x;
-  }
-  &:after {
-    bottom: -5px;
-    background: radial-gradient(
-        circle,
-        transparent,
-        transparent 50%,
-        #fbfbfb 50%,
-        #fbfbfb 100%
-      ) -7px -2px / 16px 16px repeat-x;
-  }
+  /* ... (estilos de before/after ticket se mantienen) ... */
+  &:before, &:after { content: ""; position: absolute; left: 5px; height: 6px; width: 380px; }
+  &:before { top: -5px; background: radial-gradient(circle, transparent, transparent 50%, #fbfbfb 50%, #fbfbfb 100%) -7px -8px / 16px 16px repeat-x; }
+  &:after { bottom: -5px; background: radial-gradient(circle, transparent, transparent 50%, #fbfbfb 50%, #fbfbfb 100%) -7px -2px / 16px 16px repeat-x; }
+
   .area1 {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-bottom: 5px;
     .tipocobro {
-      position: absolute;
-      right: 6px;
-      top: 6px;
-      background-color: rgba(233, 6, 184, 0.2);
-      padding: 5px;
-      color: #e61eb1;
-      border-radius: 5px;
-      font-size: 15px;
-      font-weight: 650;
-    }
-    .cliente {
-      font-weight: 700;
+      position: absolute; right: 6px; top: 6px; background-color: rgba(233, 6, 184, 0.2); padding: 5px; color: #e61eb1; border-radius: 5px; font-size: 15px; font-weight: 650;
     }
   }
   .area2 {
-    input {
-      font-size: 40px;
-    }
+    input { font-size: 32px; } /* Un poco más chico para que no se corte */
   }
   .area3 {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-
-    article {
-      display: flex;
-      flex-direction: column;
-    }
-    .total {
-      font-weight: 700;
-    }
-    .etiquetas {
-      text-align: end;
-    }
+    display: flex; justify-content: space-between; width: 100%;
+    article { display: flex; flex-direction: column; }
+    .total { font-weight: 800; font-size: 24px; color: #000; }
+    .etiquetas { text-align: end; margin-right: 10px; }
   }
 `;
 
 const Linea = styled.span`
   width: 100%;
   border-bottom: dashed 1px #d4d4d4;
-`;
-const EditButton = styled.button`
-  background-color: #62c6f7;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: auto;
-  .icono {
-    font-size: 20px;
-  }
+  margin: 5px 0;
 `;

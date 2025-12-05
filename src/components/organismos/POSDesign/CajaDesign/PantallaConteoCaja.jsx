@@ -54,7 +54,7 @@ export function PantallaConteoCaja() {
     mutationKey: ["cerrar turno caja"],
     mutationFn: insertar,
     onSuccess: () => {
-      toast.success("🎉 Caja cerrada correctamente!!!");
+      toast.success("Caja cerrada!");
       setStateConteoCaja(false);
       setStateCierraCaja(false);
       reset();
@@ -74,8 +74,8 @@ export function PantallaConteoCaja() {
   // Define el mensaje y el color del anuncio basado en la diferencia
   const anuncioMensaje =
     diferencia === 0
-      ? "Genial, todo está perfecto"
-      : "La diferencia será registrada en su turno y se enviará a gerencia";
+      ? "¡El monto coincide perfectamente!"
+      : "La diferencia será registrada en su turno";
   const anuncioColor = diferencia === 0 ? "#09bc42" : "#ff3f56";
 
   return (
@@ -90,11 +90,11 @@ export function PantallaConteoCaja() {
         )}{" "}
       </span>
       {isPending ? (
-        <BarLoader color="#2af169" />
+        <BarLoader color="#ffbd59" />
       ) : (
         <form onSubmit={handleSubmit(handleSub)}>
           <section className="area1">
-            <span>¿Cuánto de EFECTIVO hay en caja física?</span>
+            <span>¿Cuánto EFECTIVO hay en la caja física?</span>
             <InputText2>
               <input
                 type="number"
@@ -121,7 +121,7 @@ export function PantallaConteoCaja() {
                 titulo="CERRAR TURNO"
                 color="#ffffff"
                 border="2px"
-                bgcolor="#1da939"
+                bgcolor="#ffbd59"
               />
             </article>
           </section>

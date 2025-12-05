@@ -1,15 +1,12 @@
 import styled from "styled-components";
-
 import { blur_in } from "../../../styles/keyframes";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
 import {
   Btn1,
   InputText2,
-  Lottieanimacion,
   useCartVentasStore,
   useEmpresaStore,
 } from "../../../index";
-import animacionvacio from "../../../assets/vacioanimacion.json";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { useState } from "react";
 import { Device } from "../../../styles/breakpoints";
@@ -50,8 +47,8 @@ export function AreaDetalleventaPos() {
               <article className="contentdescripcion">
                 <span className="descripcion">{item._descripcion}</span>
                 <span className="importe">
-                  <strong>precio unit:</strong>
-                  🪵
+                  <strong>Precio Unidad:  </strong>
+                  
                   {FormatearNumeroDinero(
                     item._precio_venta,
                     dataempresa?.currency,
@@ -108,15 +105,14 @@ export function AreaDetalleventaPos() {
                   </strong>
                 </span>
                 <span className="delete" onClick={() => removeItem(item)}>
-                  💀
                 </span>
               </article>
             </Itemventa>
           );
         })
       ) : (
-        <Lottieanimacion animacion={animacionvacio} alto="200" ancho="200" />
-      )}
+        <></>
+      )}  
     </AreaDetalleventa>
   );
 }

@@ -51,7 +51,7 @@ export function PantallaAperturaCaja() {
     mutationKey: ["aperturar caja"],
     mutationFn: insertar,
     onSuccess: () => {
-      toast.success("🎉 Caja aperturada correctamente!!!");
+      toast.success("Caja aperturada con éxito");
       queryClient.invalidateQueries("mostrar cierre de caja");
     },
     onError: (error) => {
@@ -85,7 +85,7 @@ export function PantallaAperturaCaja() {
             titulo="APERTURAR"
             color="#ffffff"
             border="2px"
-            bgcolor="#1da939"
+            bgcolor="#ffbd59"
             funcion={() => mutation.mutateAsync()}
           />
         </article>

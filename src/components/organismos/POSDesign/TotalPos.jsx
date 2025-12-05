@@ -1,56 +1,64 @@
 import styled from "styled-components";
 import { Btn1 } from "../../moleculas/Btn1";
 import { Device } from "../../../styles/breakpoints";
-import { Icon } from "@iconify/react";
-import { useCartVentasStore, useDetalleVentasStore, useEmpresaStore } from "../../..";
-import {FormatearNumeroDinero} from "../../../utils/Conversiones"
+import { useCartVentasStore, useEmpresaStore } from "../../..";
+import { FormatearNumeroDinero } from "../../../utils/Conversiones";
+
 export function TotalPos() {
-  const {total,setStatePantallaCobro,setStateMetodosPago} = useCartVentasStore()
-  const {dataempresa} = useEmpresaStore()
-  // const textLength = total.length;
-  // // Definir las clases CSS para diferentes longitudes de texto
-  // let textSizeClass = 'medium-text';
-  // if (textLength < 10) {
-  //   textSizeClass = 'large-text';
-  // } else if (textLength < 20) {
-  //   textSizeClass = 'medium-text';
-  // } else {
-  //   textSizeClass = 'small-text';
-  // }
+  const { total, setStateMetodosPago } = useCartVentasStore();
+  const { dataempresa } = useEmpresaStore();
+
   return (
     <Container>
-    <section className="imagen">
-        <img src="https://i.ibb.co/HdYgDdp/corazon-2.png" />
-      </section>
+      {/* Eliminamos o comentamos la sección imagen si no se usa para que no descuadre el centro */}
+      {/* <section className="imagen"></section> */}
+      
       <section className="contentTotal">
         <section className="contentTituloTotal">
-          <Btn1 border="2px"  bgcolor="#ffffff"   color="#207c33" funcion={setStateMetodosPago} titulo="COBRAR" icono={<Icon icon="fluent-emoji:money-with-wings" />} />
-         
+          <Btn1
+            border="2px"
+            bgcolor="#ffbd59"
+            color="#ffbd59"
+            funcion={setStateMetodosPago}
+            titulo="COBRAR"
+          />
         </section>
-        <span>{FormatearNumeroDinero(total,dataempresa?.currency,dataempresa?.iso)}</span>
-      
-      </section> 
+        <span>
+          {FormatearNumeroDinero(
+            total,
+            dataempresa?.currency,
+            dataempresa?.iso
+          )}
+        </span>
+      </section>
     </Container>
   );
 }
+
+// --- ESTILOS CORREGIDOS ---
 const Container = styled.div`
   display: flex;
   text-align: center;
-  justify-content: space-between;
+  /* CAMBIO 1: Centrar todo el contenido horizontal y verticalmente */
+  justify-content: center; 
+  align-items: center;
+  
   border-radius: 15px;
   font-weight: 700;
   font-size: 38px;
-  background-color: #3ff563;
+  background-color: #ffbd59;
   padding: 10px;
-  color: #207c33;
+  color: #ffffff;
   position: relative;
   overflow: hidden;
+  height: 100%; /* Asegura que ocupe el alto disponible si es necesario */
+
   &::after {
     content: "";
     display: block;
     width: 100px;
     height: 100px;
-    background-color: #7fff99;
+    background-color: rgba(255, 255, 255, 0.2); /* Un poco de transparencia para el efecto */
     position: absolute;
     border-radius: 50%;
     top: -20px;
@@ -67,29 +75,22 @@ const Container = styled.div`
     top: 5px;
     right: 5px;
   }
-  .imagen {
-    z-index: 1;
-    width: 55px;
-   
-    position: relative;
-    @media ${Device.desktop} {
-      bottom: initial;
-    }
-    img {
-      width: 100%;
-    }
-  }
+
   .contentTotal {
-    z-index:10;
-    margin-top: 10px;
+    z-index: 10;
     display: flex;
     flex-direction: column;
+    /* CAMBIO 2: Asegurar que el contenido interno también esté centrado */
+    align-items: center; 
+    justify-content: center;
+    width: 100%;
+
     .contentTituloTotal {
       display: flex;
       align-items: center;
       position: relative;
-      margin-top: 30px;
-     
+      margin-bottom: 5px; /* Pequeño margen si aparece el botón */
+      
       @media ${Device.desktop} {
         display: none;
       }

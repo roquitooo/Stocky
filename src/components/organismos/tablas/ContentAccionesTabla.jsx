@@ -5,8 +5,8 @@ import { Icon } from "@iconify/react";
 export function ContentAccionesTabla({funcionEditar, funcionEliminar}) {
   return (
     <Container>
-      <AccionTabla funcion = {funcionEditar} fontSize="20px" color="#ffbd59" icono={<v.iconeditarTabla/>} />
-      <AccionTabla funcion={funcionEliminar} fontSize="20px" color="#ff0000ff" icono={<Icon icon="gravity-ui:trash-bin" />} />
+      <AccionTabla funcion = {funcionEditar} fontSize="30px" color="#ffbd59" icono={<v.iconeditarTabla/>} />
+      <AccionTabla funcion={funcionEliminar} fontSize="30px" color="#ff0000ff" icono={<Icon icon="gravity-ui:trash-bin" />} />
     </Container>
   );
 }

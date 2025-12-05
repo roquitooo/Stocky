@@ -22,7 +22,7 @@ export function Productos() {
   } = useQuery({
     queryKey: ["mostrar productos", dataempresa?.id],
     queryFn: () => mostrarProductos({ id_empresa: dataempresa?.id, refetchs: refetch }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
   
@@ -30,7 +30,7 @@ export function Productos() {
   const { isLoading: isLoadingBuscarProductos } = useQuery({
     queryKey: ["buscar productos", buscador],
     queryFn: () => buscarProductos({ id_empresa: dataempresa?.id, buscador: buscador }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
   
@@ -38,7 +38,7 @@ export function Productos() {
   const { isLoading: isLoadingSucursales } = useQuery({
     queryKey: ["mostrar sucursales", dataempresa?.id],
     queryFn: () => mostrarSucursales({ id_empresa: dataempresa?.id }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
   
@@ -46,7 +46,7 @@ export function Productos() {
   const { isLoading: isLoadingCategorias } = useQuery({
     queryKey: ["mostrar categorias", dataempresa?.id],
     queryFn: () => mostrarCategorias({ id_empresa: dataempresa?.id }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
     refetchOnWindowFocus: false,
   });
   

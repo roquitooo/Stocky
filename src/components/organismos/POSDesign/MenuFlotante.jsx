@@ -28,23 +28,19 @@ export function MenuFlotante() {
         setStateIngresoSalida(true)
         setTipoRegistro("salida")
       }}>
-      <Icon icon="noto-v1:money-bag" />
         <Text>Retirar dinero</Text>
       </MenuItem>
       <MenuItem isOpen={isOpen} delay="0.2s" onClick={()=>{
          toggleMenu()
          setStateCierraCaja(true)
       }}>
-      <Icon icon="fxemoji:closedmailboxraised" />
         <Text>Cerrar caja</Text>
       </MenuItem>
 
       <MenuItem isOpen={isOpen} delay="0.4s">
-      <Icon icon="icon-park:preview-open" />
         <Text>Ver ventas del día</Text>
       </MenuItem>
       <MenuItem isOpen={isOpen} delay="0.3s"  onClick={toggleMenu}>
-      <Icon icon="flat-color-icons:delete-row"/>
         <Text>Eliminar venta</Text>
       </MenuItem>
     </MenuItems>

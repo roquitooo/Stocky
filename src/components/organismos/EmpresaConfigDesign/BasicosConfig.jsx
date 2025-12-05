@@ -5,20 +5,20 @@ import { InputText2 } from "../formularios/InputText2";
 import { Btn1 } from "../../moleculas/Btn1";
 import { useForm } from "react-hook-form";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
-import { slideBackground } from "../../../styles/keyframes";
-import { useMutation,useQueryClient } from "@tanstack/react-query";
+// import { slideBackground } from "../../../styles/keyframes"; // <-- LINEA ELIMINADA (Ya no se usa)
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
 export const BasicosConfig = () => {
   const [file, setFile] = useState([]);
   const ref = useRef(null);
   const [fileurl, setFileurl] = useState("-");
   const { dataempresa, editarEmpresa } = useEmpresaStore();
-  const queyClient = useQueryClient()
+  const queyClient = useQueryClient();
   const {
     register,
     formState: { errors },
     handleSubmit,
-    watch,
   } = useForm();
 
   function abrirImagenes() {
@@ -39,13 +39,13 @@ export const BasicosConfig = () => {
   const { mutate: doEditar, isPending } = useMutation({
     mutationKey: "editar empresa",
     mutationFn: editar,
-    onError:(error)=>{
-      toast.error("Ocurrio un error "+error.message)
+    onError: (error) => {
+      toast.error("Ocurrio un error " + error.message);
     },
-    onSuccess:()=>{
-      toast.success("Datos guardados")
-      queyClient.invalidateQueries("mostrar empresa")
-    }
+    onSuccess: () => {
+      toast.success("Datos guardados");
+      queyClient.invalidateQueries("mostrar empresa");
+    },
   });
   const llamadoafuncioneditar = (data) => {
     doEditar(data);
@@ -64,7 +64,7 @@ export const BasicosConfig = () => {
   return (
     <Container>
       {isPending ? (
-        <span>guardando...🐖</span>
+        <span>Guardando...</span>
       ) : (
         <>
           <Title>Básico</Title>
@@ -101,7 +101,7 @@ export const BasicosConfig = () => {
             <InputText2>
               <input
                 className="form__field"
-                placeholder="nombre"
+                placeholder="Nombre"
                 type="text"
                 defaultValue={dataempresa?.nombre}
                 {...register("nombre", {
@@ -115,7 +115,7 @@ export const BasicosConfig = () => {
               <input
                 defaultValue={dataempresa?.direccion_fiscal}
                 className="form__field"
-                placeholder="direccion"
+                placeholder="Direccion"
                 type="text"
                 {...register("direccion", {
                   required: true,
@@ -128,7 +128,7 @@ export const BasicosConfig = () => {
               <input
                 defaultValue={dataempresa?.impuesto}
                 className="form__field"
-                placeholder="impuesto"
+                placeholder="Impuesto"
                 type="text"
                 {...register("impuesto", {
                   required: true,
@@ -142,7 +142,7 @@ export const BasicosConfig = () => {
                 step="0.01"
                 defaultValue={dataempresa?.valor_impuesto}
                 className="form__field"
-                placeholder="valor impuesto"
+                placeholder="Valor impuesto"
                 type="number"
                 {...register("valor_impuesto", {
                   required: true,
@@ -153,20 +153,20 @@ export const BasicosConfig = () => {
               )}
             </InputText2>
             <br></br>
-            <Btn1 bgcolor="#0930bb" color="#fff" titulo="GUARDAR CAMBIOS" />
+            
+            <Btn1 
+                bgcolor="#ffbd59" 
+                color="#fff" 
+                titulo="GUARDAR CAMBIOS" 
+            />
           </form>
           <br></br>
-          <section className="advertencia">
-            <Icon className="icono" icon="meteocons:barometer" />
-            <span>
-              los cambios de logo se ven reflejados en el lapso de 10 segundos.
-            </span>
-          </section>
         </>
       )}
     </Container>
   );
 };
+
 const Container = styled.div`
   padding: 20px;
   border-radius: 10px;
@@ -175,21 +175,6 @@ const Container = styled.div`
   p {
     color: #f75510;
     font-weight: 700;
-  }
-  .advertencia {
-    background-color: rgba(237, 95, 6, 0.2);
-    border-radius: 10px;
-    padding: 10px;
-    margin-top: 10px;
-    margin: auto;
-    height: 70px;
-    display: flex;
-    color: #f75510;
-    width: 100%;
-    align-items: center;
-    .icono {
-      font-size: 100px;
-    }
   }
 `;
 
@@ -217,16 +202,17 @@ const Avatar = styled.div`
     bottom: 0;
     right: 10px;
     font-size: 25px;
-    overflow: hidden; /* Para asegurarse de que el contenido adicional esté oculto */
-    white-space: normal; /* Permite el salto de línea */
-    word-wrap: break-word; /* Rompe las palabras largas y las envuelve a la siguiente línea */
+    overflow: hidden;
+    white-space: normal;
+    word-wrap: break-word;
     color: #fff !important;
   }
-  background-color: #391ebb;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 120 120'%3E%3Cpolygon fill='%23000' fill-opacity='0.19' points='120 0 120 60 90 30 60 0 0 0 0 0 60 60 0 120 60 120 90 90 120 60 120 0'/%3E%3C/svg%3E");
+  
+  /* --- CAMBIO AQUÍ --- */
+  background-color: #ffbd59; /* Color Sólido Stocky */
+  /* Se eliminaron las líneas de background-image y animation */
+  /* ------------------- */
 
-  background-size: 60px 60px;
-  animation: ${slideBackground} 10s linear infinite;
   img {
     object-fit: cover;
   }
@@ -264,15 +250,4 @@ const EditButton = styled.button`
 const Label = styled.label`
   display: block;
   margin: 10px 0 5px;
-`;
-
-const Button = styled.button`
-  width: 100%;
-  padding: 10px;
-  margin-top: 20px;
-  border: none;
-  border-radius: 5px;
-  background-color: #00aaff;
-  color: #fff;
-  cursor: pointer;
 `;

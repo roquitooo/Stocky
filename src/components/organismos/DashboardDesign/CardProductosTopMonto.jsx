@@ -1,8 +1,5 @@
 import styled from "styled-components";
-import { LiveIndicator } from "../../moleculas/LiveIndicator";
-import { TablaMovimientosCajaLive } from "../tablas/TablaMovimientosCajaLive";
 import { useDetalleVentasStore, useEmpresaStore } from "../../..";
-import { useMovCajaStore } from "../../../store/MovCajaStore";
 import { useQuery } from "@tanstack/react-query";
 import { BarLoader } from "react-spinners";
 import { useDashboardStore } from "../../../store/DashboardStore";
@@ -22,7 +19,7 @@ export const CardProductosTopMonto = () => {
       _fecha_inicio: fechaInicio,
       _fecha_fin: fechaFin,
     }),
-    enabled: !!dataempresa,
+    enabled: !!dataempresa?.id,
   });
   if(isLoading) return <BarLoader color="#6d6d6d"/>
   if(error) return <span>error...{error.message} </span>

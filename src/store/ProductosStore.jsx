@@ -3,6 +3,8 @@ import {
   BuscarProductos,MostrarProductos,EliminarProductos,InsertarProductos,EditarProductos, Generarcodigo
 } from "../index";
 
+import { supabase } from "../supabase/supabase.config";
+
 export const useProductosStore = create((set, get) => ({
   refetchs:null,
   buscador: "",
@@ -55,7 +57,21 @@ export const useProductosStore = create((set, get) => ({
   generarCodigo:()=>{
   const response=  Generarcodigo({id:2})
   set({codigogenerado:response})
-  
- 
-  }
+  },
+  aumentarPrecioSeleccion: async (p) => {
+    const { error } = await supabase
+      .rpc("aumentar_precio_seleccion", { 
+        _ids: p.ids, 
+        _porcentaje: p.porcentaje 
+      });
+    
+    if (error) {
+      console.error("Error al actualizar precios:", error);
+      return false;
+    }
+    // Refrescamos la lista para ver los nuevos precios
+    const { mostrarProductos, parametros } = get();
+    set(mostrarProductos(parametros));
+    return true;
+  },
 }));
