@@ -3,12 +3,17 @@ import { supabase } from "./supabase.config";
 const tabla = "cierrecaja";
 const tabla2 = "ingresos_salidas_caja";
 export async function MostrarCierreCajaAperturada(p) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from(tabla)
     .select()
     .eq("id_caja", p.id_caja)
-    .eq("estado", 0)
+    .is("fechacierre", null) // <--- ESTA ES LA CLAVE: Solo buscamos los que no tienen fecha de cierre
     .maybeSingle();
+
+  if (error) {
+    console.error("🚨 Error crítico buscando caja abierta:", error);
+  }
+
   return data;
 }
 

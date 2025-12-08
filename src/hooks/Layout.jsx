@@ -7,6 +7,9 @@ import {
   useSucursalesStore,
 } from "../index";
 import { useQuery } from "@tanstack/react-query";
+// 1. IMPORTAMOS EL COMPONENTE DE ALERTA
+import { AlertaStock } from "../components/organismos/AlertaStock"; 
+
 
 export function Layout({ children }) {
   const { mostrarusuarios } = useUsuariosStore();
@@ -67,7 +70,7 @@ export function Layout({ children }) {
     );
   }
 
-  // Protección final: Si no hay empresa cargada, no mostramos el dashboard aún
+  // Protección final
   if (!dataEmpresa?.id) {
     return (
       <ContainerLoading>
@@ -76,16 +79,14 @@ export function Layout({ children }) {
     );
   }
 
+  
+
   return (
     <Container>
-      {/* El Header está en una sección fija visualmente gracias al Flexbox del Container.
-         No necesitas 'position: fixed' aquí si usas la estructura flex column de abajo.
-      */}
+      <AlertaStock />
       <section className="header-section">
         <Header />
       </section>
-
-      {/* El contenido hace scroll independiente debajo del header */}
       <ContainerBody>
         {children}
       </ContainerBody>
@@ -97,28 +98,27 @@ export function Layout({ children }) {
 
 const Container = styled.main`
   display: flex;
-  flex-direction: column; /* Apila los elementos: Header arriba, Body abajo */
-  height: 100vh;          /* Ocupa exactamente el 100% de la altura de la pantalla */
+  flex-direction: column; 
+  height: 100vh;         
   width: 100vw;
   background-color: ${({ theme }) => theme.bgtotal};
   color: ${({ theme }) => theme.text};
-  overflow: hidden;       /* IMPORTANTE: Evita que la página entera tenga scroll */
+  overflow: hidden;      
   transition: 0.1s ease-in-out;
   
   .header-section {
-    flex-shrink: 0; /* Evita que el header se aplaste */
-    z-index: 100;   /* Se asegura que esté por encima del contenido al hacer scroll */
+    flex-shrink: 0; 
+    z-index: 100;   
   }
 `;
 
 const ContainerBody = styled.section`
-  flex: 1;                /* Ocupa todo el espacio sobrante debajo del Header */
+  flex: 1;                
   width: 100%;
-  overflow-y: auto;       /* El scroll ocurre SOLO dentro de esta sección */
+  overflow-y: auto;      
   padding: 20px;
   position: relative;
 
-  /* Estilos personalizados para el scrollbar */
   &::-webkit-scrollbar {
     width: 8px;
     background: rgba(24, 24, 24, 0.1);

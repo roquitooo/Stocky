@@ -62,16 +62,20 @@ export const useProductosStore = create((set, get) => ({
     const { error } = await supabase
       .rpc("aumentar_precio_seleccion", { 
         _ids: p.ids, 
-        _porcentaje: p.porcentaje 
+        _valor: p.valor,            // Antes era 'porcentaje', ahora es 'valor' genérico
+        _es_porcentaje: p.esPorcentaje // Nuevo parámetro
       });
     
     if (error) {
       console.error("Error al actualizar precios:", error);
       return false;
     }
-    // Refrescamos la lista para ver los nuevos precios
+    
+    // Refrescar datos
     const { mostrarProductos, parametros } = get();
-    set(mostrarProductos(parametros));
+    if(parametros && parametros.id_empresa) {
+       set(mostrarProductos(parametros));
+    }
     return true;
   },
 }));

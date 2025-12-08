@@ -47,7 +47,7 @@ export const MonedaConfig = () => {
     mutationFn: editar,
     onSuccess: () => {
       queryClient.invalidateQueries('mostrar empresa');
-      toast.success("🎉 datos guardados");
+      toast.success("Datos guardados!");
     },
   });
  

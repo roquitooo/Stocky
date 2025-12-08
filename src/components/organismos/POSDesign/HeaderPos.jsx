@@ -45,6 +45,8 @@ export function HeaderPos() {
 
   async function funcion_insertarventas() {
     const productosItemSelect = useProductosStore.getState().productosItemSelect;
+    
+    // --- CORRECCIÓN: Agregar stock y maneja_inventarios ---
     const pDetalleVentas = {
       _id_venta: 1,
       _cantidad: parseFloat(cantidadInput)|| 1,
@@ -54,7 +56,13 @@ export function HeaderPos() {
       _id_producto: productosItemSelect.id,
       _precio_compra: productosItemSelect.precio_compra,
       _id_sucursal: sucursalesItemSelectAsignadas.id_sucursal,
+      
+      // NUEVOS DATOS VITALES PARA LA VALIDACIÓN:
+      stock: productosItemSelect.stock, 
+      maneja_inventarios: productosItemSelect.maneja_inventarios,
+      nombre: productosItemSelect.nombre // Aseguramos que el nombre esté accesible
     };
+    
     addItem(pDetalleVentas);
     setBuscador("");
     buscadorRef.current.focus();

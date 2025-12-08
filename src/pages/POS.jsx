@@ -21,16 +21,19 @@ export function POS() {
   const { mostrarCajaXSucursal } = useCajasStore();
   const { mostrarCierreCaja } = useCierreCajaStore();
   const { mostrarMetodosPago } = useMetodosPagoStore();
-  // Consulta para buscar productos
+
   useQuery({
-    queryKey: ["buscar productos", buscador],
+    queryKey: ["buscar productos", buscador, sucursalesItemSelectAsignadas?.id_sucursal],
     queryFn: () =>
-      buscarProductos({ id_empresa: dataempresa?.id, buscador: buscador }),
-    enabled: !!dataempresa?.id,
+      buscarProductos({ 
+        id_empresa: dataempresa?.id, 
+        buscador: buscador,
+        id_sucursal: sucursalesItemSelectAsignadas?.id_sucursal
+      }),
+    enabled: !!dataempresa?.id && !!sucursalesItemSelectAsignadas?.id_sucursal,
     refetchOnWindowFocus: false,
   });
 
-  // Consulta para mostrar almacén por sucursal
   const { isLoading: isLoadingAlmacen } = useQuery({
     queryKey: [
       "mostrar almacen por sucursal",
@@ -43,7 +46,6 @@ export function POS() {
     enabled: !!sucursalesItemSelectAsignadas && !!dataempresa?.id,
   });
 
-  // Consulta para mostrar cajas por sucursal
   const { data: dataCaja, isLoading: isLoadingCaja } = useQuery({
     queryKey: [
       "mostrar caja x sucursal",
@@ -57,7 +59,6 @@ export function POS() {
     refetchOnWindowFocus: false,
   });
 
-  // Consulta para mostrar cierres de caja
   const {
     data: dataCierreCaja,
     isLoading: isLoadingCierreCaja,
@@ -67,32 +68,32 @@ export function POS() {
     queryFn: () => mostrarCierreCaja({ id_caja: dataCaja?.id }),
     enabled: !!dataCaja && !!dataempresa?.id,
   });
-  const { isLoading:isLoadingMetodosPago} = useQuery({
+  
+  const { isLoading: isLoadingMetodosPago } = useQuery({
     queryKey: ["mostrar metodos de pago"],
     queryFn: () => mostrarMetodosPago({ id_empresa: dataempresa?.id }),
     enabled: !!dataempresa?.id,
   });
    
-  // Unificar los estados de carga
-  const isLoading = isLoadingAlmacen || isLoadingCaja || isLoadingCierreCaja ||isLoadingMetodosPago;
+  const isLoading = isLoadingAlmacen || isLoadingCaja || isLoadingCierreCaja || isLoadingMetodosPago;
 
-  // Mostrar spinner mientras alguna de las consultas está cargando
+  // --- DIAGNÓSTICO (MIRA LA CONSOLA DEL NAVEGADOR) ---
+  console.log("--- DEBUG POS ---");
+  console.log("1. Empresa ID:", dataempresa?.id);
+  console.log("2. Sucursal ID:", sucursalesItemSelectAsignadas?.id_sucursal);
+  console.log("3. Data Caja (ID Caja):", dataCaja);
+  console.log("4. ¿Query Cierre Caja habilitada?:", !!dataCaja && !!dataempresa?.id);
+  console.log("5. Data Cierre Caja (RESULTADO FINAL):", dataCierreCaja);
+  console.log("-----------------");
+  // ---------------------------------------------------
+
   if (isLoading) {
     return <SpinnerSecundario texto="Cargando datos..." />;
   }
 
-  // Manejar errores de la consulta de cierre de caja
   if (errorCierreCaja) {
     return <span>Error: {errorCierreCaja.message}</span>;
   }
 
-  // Mostrar AperturaCaja si no hay datos de cierre de caja
-  // if (!dataCierreCaja) {
-  //   return <PantallaAperturaCaja />;
-  // }
-
-  // // Mostrar POSTemplate si hay datos en dataCierreCaja
-  // return <POSTemplate />;
-   // Renderizado condicional claro basado en `dataCierreCaja`
-   return dataCierreCaja ? <POSTemplate /> : <PantallaAperturaCaja />;
+  return dataCierreCaja ? <POSTemplate /> : <PantallaAperturaCaja />;
 }

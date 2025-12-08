@@ -6,10 +6,13 @@ import { useUsuariosStore } from "../../../../store/UsuariosStore";
 import { useCajasStore } from "../../../../store/CajasStore";
 import { useCierreCajaStore } from "../../../../store/CierreCajaStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast, Toaster } from "sonner";
 import { useFormattedDate } from "../../../../hooks/useFormattedDate";
 import { useMetodosPagoStore } from "../../../../store/MetodosPagoStore";
 import { useMovCajaStore } from "../../../../store/MovCajaStore";
+import { toast } from "sonner"; // <--- FALTABA ESTA IMPORTACIÓN
+
+
+
 export function PantallaAperturaCaja() {
   const [montoEfectivo, setMontoEfectivo] = useState(0);
   const fechaActual = useFormattedDate();
@@ -19,14 +22,16 @@ export function PantallaAperturaCaja() {
   const { aperturarcaja } = useCierreCajaStore();
   const { dataMetodosPago } = useMetodosPagoStore();
   const { insertarMovCaja } = useMovCajaStore();
+
   const registrarMovCaja = async (p) => {
-    const id_metodo_pago = dataMetodosPago
-      .filter((item) => item.nombre === "Efectivo")
-      .map((item) => item.id)[0];
+    // Buscamos el ID del método efectivo de forma segura
+    const metodoEfectivo = dataMetodosPago.find((item) => item.nombre === "Efectivo");
+    const id_metodo_pago = metodoEfectivo ? metodoEfectivo.id : 0;
+
     const pmovcaja = {
       fecha_movimiento: fechaActual,
       tipo_movimiento: "apertura",
-      monto: montoEfectivo?montoEfectivo:0,
+      monto: montoEfectivo ? montoEfectivo : 0,
       id_metodo_pago: id_metodo_pago,
       descripcion: `Apertura de caja con`,
       id_usuario: datausuarios?.id,
@@ -35,35 +40,56 @@ export function PantallaAperturaCaja() {
 
     await insertarMovCaja(pmovcaja);
   };
+
   const insertar = async () => {
+    // Validaciones básicas
+    if (!dataCaja?.id) {
+        toast.error("No se detectó la caja seleccionada");
+        return;
+    }
+
     const p = {
       fechainicio: fechaActual,
-      fechacierre: fechaActual,
+      fechacierre: null, // <--- IMPORTANTE: Enviamos null para mantenerla abierta
       id_usuario: datausuarios?.id,
       id_caja: dataCaja.id,
     };
+    
+    // Guardamos la apertura
     const data = await aperturarcaja(p);
 
-    await registrarMovCaja({ id_cierre_caja: data?.id });
+    // Si se guardó bien, registramos el movimiento de dinero inicial
+    if(data?.id){
+        await registrarMovCaja({ id_cierre_caja: data.id });
+    }
+    
+    return data; // Retornamos data para usarla en onSuccess
   };
 
   const mutation = useMutation({
     mutationKey: ["aperturar caja"],
     mutationFn: insertar,
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Caja aperturada con éxito");
-      queryClient.invalidateQueries("mostrar cierre de caja");
+      
+      // Actualizamos manualmente el caché para que la UI responda de inmediato
+      if(data) {
+        queryClient.setQueryData(["mostrar cierre de caja"], data);
+      }
+      
+      // Invalidamos para asegurar consistencia en segundo plano
+      queryClient.invalidateQueries(["mostrar cierre de caja"]);
     },
     onError: (error) => {
       toast.error(`Error: ${error.message}`);
     },
   });
+
   return (
     <Container>
-      <Toaster richColors position="top-center" />
       <section className="area1">
         <span className="title">Aperturar caja con:</span>
-       
+
         <InputText2>
           <input
             className="form__field"
@@ -93,6 +119,7 @@ export function PantallaAperturaCaja() {
     </Container>
   );
 }
+
 const Container = styled.div`
   height: 100vh;
   width: 100%;

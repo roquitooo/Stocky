@@ -1,6 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
 import styled from "styled-components";
-import { Toaster } from "sonner";
 
 export const EmpresaTemplate = () => {
   // CONFIGURA TU WHATSAPP AQUÍ:
@@ -10,7 +9,6 @@ export const EmpresaTemplate = () => {
 
   return (
     <Main>
-      <Toaster richColors position="bottom-center" />
       <PageContainer>
         {/* Contenido dinámico */}
         <ContentArea>

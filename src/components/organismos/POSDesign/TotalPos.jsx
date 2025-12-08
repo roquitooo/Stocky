@@ -3,23 +3,36 @@ import { Btn1 } from "../../moleculas/Btn1";
 import { Device } from "../../../styles/breakpoints";
 import { useCartVentasStore, useEmpresaStore } from "../../..";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
+// 1. IMPORTAR VENTAS STORE
+import { useVentasStore } from "../../../store/VentasStore";
 
 export function TotalPos() {
-  const { total, setStateMetodosPago } = useCartVentasStore();
+  const { total, setStateMetodosPago, cart } = useCartVentasStore();
   const { dataempresa } = useEmpresaStore();
+  
+  // 2. EXTRAER FUNCIÓN VALIDADORA
+  const { validarStockCarrito } = useVentasStore();
+
+  // 3. FUNCIÓN INTERMEDIA DE COBRO
+  const handleCobrar = () => {
+    // Primero validamos stock
+    const esValido = validarStockCarrito(cart);
+    
+    // Solo avanzamos si es válido
+    if (esValido) {
+      setStateMetodosPago();
+    }
+  };
 
   return (
     <Container>
-      {/* Eliminamos o comentamos la sección imagen si no se usa para que no descuadre el centro */}
-      {/* <section className="imagen"></section> */}
-      
       <section className="contentTotal">
         <section className="contentTituloTotal">
           <Btn1
             border="2px"
             bgcolor="#ffbd59"
             color="#ffbd59"
-            funcion={setStateMetodosPago}
+            funcion={handleCobrar} // <--- USAR handleCobrar, NO setStateMetodosPago
             titulo="COBRAR"
           />
         </section>
@@ -35,14 +48,12 @@ export function TotalPos() {
   );
 }
 
-// --- ESTILOS CORREGIDOS ---
+// ... (Estilos iguales que antes) ...
 const Container = styled.div`
   display: flex;
   text-align: center;
-  /* CAMBIO 1: Centrar todo el contenido horizontal y verticalmente */
   justify-content: center; 
   align-items: center;
-  
   border-radius: 15px;
   font-weight: 700;
   font-size: 38px;
@@ -51,14 +62,14 @@ const Container = styled.div`
   color: #ffffff;
   position: relative;
   overflow: hidden;
-  height: 100%; /* Asegura que ocupe el alto disponible si es necesario */
+  height: 100%;
 
   &::after {
     content: "";
     display: block;
     width: 100px;
     height: 100px;
-    background-color: rgba(255, 255, 255, 0.2); /* Un poco de transparencia para el efecto */
+    background-color: rgba(255, 255, 255, 0.2);
     position: absolute;
     border-radius: 50%;
     top: -20px;
@@ -80,7 +91,6 @@ const Container = styled.div`
     z-index: 10;
     display: flex;
     flex-direction: column;
-    /* CAMBIO 2: Asegurar que el contenido interno también esté centrado */
     align-items: center; 
     justify-content: center;
     width: 100%;
@@ -89,8 +99,7 @@ const Container = styled.div`
       display: flex;
       align-items: center;
       position: relative;
-      margin-bottom: 5px; /* Pequeño margen si aparece el botón */
-      
+      margin-bottom: 5px;
       @media ${Device.desktop} {
         display: none;
       }

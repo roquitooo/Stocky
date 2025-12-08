@@ -37,22 +37,6 @@ export const useAlmacenesStore = create((set, get) => ({
     await supabase.rpc("editarstockalmacen", p);
   },
 
-  contarProductosBajoStock: async (p) => {
-    try {
-      const { data, error } = await supabase
-        .rpc("contarproductosbajostock", { _id_empresa: p.id_empresa });
-      
-      if (error) {
-        console.error("Error al contar bajo stock:", error);
-        return 0;
-      }
-      return data; 
-    } catch (err) {
-      console.error("Error en store almacenes:", err);
-      return 0;
-    }
-  },
-
   // 2. NUEVA FUNCIÓN PARA EL DASHBOARD (Bajo Stock)
   contarProductosBajoStock: async (p) => {
     try {

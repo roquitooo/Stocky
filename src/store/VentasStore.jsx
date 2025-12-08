@@ -4,10 +4,10 @@ import {
   EliminarVentasIncompletas,
   MostrarVentasXsucursal,
 } from "../index";
-// IMPORTANTE: Asegúrate de que la ruta a supabase sea la correcta
 import { supabase } from "../supabase/supabase.config"; 
+import Swal from "sweetalert2"; // <--- Necesitamos Swal aquí para la alerta
 
-export const useVentasStore = create((set) => ({
+export const useVentasStore = create((set, get) => ({ // <--- Agregamos 'get'
   porcentajeCambio: 0,
   dataventas: [],
   idventa: 0,
@@ -21,7 +21,7 @@ export const useVentasStore = create((set) => ({
   },
 
   eliminarventasIncompletas: async (p) => {
-    // await EliminarVentasIncompletas(p);
+    await EliminarVentasIncompletas(p);
   },
 
   mostrarventasxsucursal: async (p) => {
@@ -31,11 +31,112 @@ export const useVentasStore = create((set) => ({
     return response;
   },
 
-  // --- FUNCIÓN DE HISTORIAL ---
+  // --- NUEVA FUNCIÓN DE VALIDACIÓN (LA SOLUCIÓN) ---
+  validarStockCarrito: (carrito) => {
+    if (carrito.length === 0) {
+      Swal.fire({ icon: "warning", title: "Carrito vacío", text: "Agrega productos." });
+      return false;
+    }
+
+    let productosSinStock = [];
+
+    carrito.forEach((item) => {
+      // 1. CORRECCIÓN CLAVE: Leemos '_cantidad' (que es como viene del carrito)
+      // Si no existe, intentamos leer 'cantidad' por seguridad.
+      const cantidadSolicitada = parseFloat(item._cantidad || item.cantidad || 0);
+      
+      const stockActual = parseFloat(item.stock || 0);
+      
+      // Convertimos el booleano (a veces viene como string "true" o boolean true)
+      const manejaInventario = String(item.maneja_inventarios) === "true";
+
+      if (manejaInventario) {
+          // Log para depurar si lo necesitas
+          // console.log(`Validando: ${item.nombre} | Pide: ${cantidadSolicitada} | Hay: ${stockActual}`);
+          
+          if (cantidadSolicitada > stockActual) {
+            productosSinStock.push({
+              nombre: item.nombre || item._descripcion, // Aseguramos mostrar un nombre
+              falta: cantidadSolicitada - stockActual,
+              stock: stockActual
+            });
+          }
+      }
+    });
+
+    if (productosSinStock.length > 0) {
+      const listaErrores = productosSinStock
+        .map(p => `• ${p.nombre} (Pides: ${p.falta + p.stock} | Hay: ${p.stock})`)
+        .join("<br>");
+
+      Swal.fire({
+        icon: "error",
+        title: "Stock Insuficiente",
+        html: `<div style="text-align: left;">
+                No alcanza el stock para:<br><br>
+                ${listaErrores}
+               </div>`,
+      });
+      return false; // BLOQUEA LA VENTA
+    }
+
+    return true; // APRUEBA LA VENTA
+  },
+
+validarStockCarrito: (carrito) => {
+    if (carrito.length === 0) {
+      Swal.fire({ icon: "warning", title: "Carrito vacío", text: "Agrega productos." });
+      return false;
+    }
+
+    let productosSinStock = [];
+
+    carrito.forEach((item) => {
+      // 1. CORRECCIÓN CLAVE: Leemos '_cantidad' (que es como viene del carrito)
+      // Si no existe, intentamos leer 'cantidad' por seguridad.
+      const cantidadSolicitada = parseFloat(item._cantidad || item.cantidad || 0);
+      
+      const stockActual = parseFloat(item.stock || 0);
+      
+      // Convertimos el booleano (a veces viene como string "true" o boolean true)
+      const manejaInventario = String(item.maneja_inventarios) === "true";
+
+      if (manejaInventario) {
+          // Log para depurar si lo necesitas
+          // console.log(`Validando: ${item.nombre} | Pide: ${cantidadSolicitada} | Hay: ${stockActual}`);
+          
+          if (cantidadSolicitada > stockActual) {
+            productosSinStock.push({
+              nombre: item.nombre || item._descripcion, // Aseguramos mostrar un nombre
+              falta: cantidadSolicitada - stockActual,
+              stock: stockActual
+            });
+          }
+      }
+    });
+
+    if (productosSinStock.length > 0) {
+      const listaErrores = productosSinStock
+        .map(p => `• ${p.nombre} (Pides: ${p.falta + p.stock} | Hay: ${p.stock})`)
+        .join("<br>");
+
+      Swal.fire({
+        icon: "error",
+        title: "Stock Insuficiente",
+        html: `<div style="text-align: left;">
+                No alcanza el stock para:<br><br>
+                ${listaErrores}
+               </div>`,
+      });
+      return false; // BLOQUEA LA VENTA
+    }
+
+    return true; // APRUEBA LA VENTA
+  },
+  // ... (Resto de tus funciones: mostrarVentasRecientes, mostrarVentasGrafico, etc. siguen igual)
   mostrarVentasRecientes: async (p) => {
     const { data, error } = await supabase
-      .rpc("mostrarventasrecientes", { _id_empresa: p._id_empresa }); // Este sí lleva guion bajo porque viene del parametro mapeado si lo usaras asi, pero dejemoslo consistente.
-      // NOTA: Si esta función también falla, cambia p._id_empresa por p.id_empresa
+      .rpc("mostrarventasrecientes", { _id_empresa: p._id_empresa });
     if (error) return [];
     return data;
   },
@@ -45,37 +146,20 @@ export const useVentasStore = create((set) => ({
       const { data, error } = await supabase
         .rpc("mostrarventasgrafico", { 
             _id_empresa: p.id_empresa,
-            _fecha_inicio: p.fechaInicio,  // <--- Nuevo parámetro
-            _fecha_fin: p.fechaFin         // <--- Nuevo parámetro
+            _fecha_inicio: p.fechaInicio,
+            _fecha_fin: p.fechaFin
         });
-      
-      if (error) {
-        console.error("Error gráfico ventas:", error);
-        return [];
-      }
+      if (error) { return []; }
       return data;
-    } catch (err) {
-      console.error("Error store gráfico:", err);
-      return [];
-    }
+    } catch (err) { return []; }
   },
 
-  // --- CORRECCIÓN AQUÍ: SUMAR TOTALES ---
   totalVentas: async (p) => {
     try {
       const { data, error } = await supabase
-        .rpc("sumarventastotales", { 
-            _id_empresa: p.id_empresa // <--- AQUÍ ESTABA EL ERROR. Debe ser p.id_empresa
-        });
-      
-      if (error) {
-        console.error("Error sumando ventas:", error);
-        return 0;
-      }
+        .rpc("sumarventastotales", { _id_empresa: p.id_empresa });
+      if (error) { return 0; }
       return data;
-    } catch (err) {
-      console.error("Error store:", err);
-      return 0;
-    }
+    } catch (err) { return 0; }
   },
 }));

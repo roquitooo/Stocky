@@ -21,10 +21,13 @@ export async function MostrarProductos(p) {
 }
 
 export async function BuscarProductos(p) {
-  const { data } = await supabase.rpc("buscarproductos",{_id_empresa:p.id_empresa,buscador:p.buscador})
+  const { data } = await supabase.rpc("buscarproductos", {
+    _id_empresa: p.id_empresa,
+    _id_sucursal: p.id_sucursal || 0, // <--- EL FIX: Si es undefined o null, manda 0
+    buscador: p.buscador
+  });
   return data;
 }
-
 
 export async function EliminarProductos(p) {
   const { error } = await supabase.from(tabla).delete().eq("id", p.id);

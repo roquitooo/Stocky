@@ -12,6 +12,7 @@ import { Device } from "./styles/breakpoints";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Toaster } from "sonner";
 
 function App() {
   const { themeStyle } = useThemeStore();
@@ -20,6 +21,10 @@ function App() {
     <ThemeProvider theme={themeStyle}>
       <AuthContextProvider>
         <GlobalStyles />
+        <Toaster richColors position="top-center"
+  toastOptions={{
+    style: { marginTop: '50px' }
+  }} />
         <MyRoutes />
 
         <ReactQueryDevtools initialIsOpen={true} />

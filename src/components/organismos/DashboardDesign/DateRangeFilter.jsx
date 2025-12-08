@@ -29,7 +29,6 @@ export const DateRangeFilter = () => {
   };
 
   const handleDateChange = (val) => {
-    // 🛡️ CORRECCIÓN: Si val es null (limpiar), usamos null en vez de [] para evitar el crash
     setDates(val || null);
     if (val && val.length > 0) {
       setRangoFechas(val[0].format("YYYY-MM-DD"), val[1].format("YYYY-MM-DD"));
@@ -76,41 +75,44 @@ export const DateRangeFilter = () => {
       <ButtonGroup>
         <TimeRangeButton
           onClick={setSiempreRange}
-          isActive={activeRange === "Todo"}
+          $isActive={activeRange === "Todo"} 
         >
           Todo
         </TimeRangeButton>
         <TimeRangeButton
-          isActive={activeRange === "7 días"}
+          $isActive={activeRange === "7 días"}
           onClick={() => setPresetRange(7, "7 días")}
         >
           Últimos días 7 dias
         </TimeRangeButton>
         <TimeRangeButton
-          isActive={activeRange === "30 días"}
+          $isActive={activeRange === "30 días"}
           onClick={() => setPresetRange(30, "30 días")}
         >
           Últimos 30 días
         </TimeRangeButton>
         <TimeRangeButton
-          isActive={activeRange === "12 meses"}
+          $isActive={activeRange === "12 meses"}
           onClick={() => setPresetRange(365, "12 meses")}
         >
           Últimos 12 meses
         </TimeRangeButton>
-        <TimeRangeButton isActive={activeRange === "Hoy"} onClick={selectToday}>
+        <TimeRangeButton 
+            $isActive={activeRange === "Hoy"} 
+            onClick={selectToday}
+        >
           Hoy
         </TimeRangeButton>
         <TimeRangeButton
-          isActive={activeRange === "Por Día"}
+          $isActive={activeRange === "Por Día"}
           onClick={() => setActiveRange("Por Día")}
         >
           Por Día
         </TimeRangeButton>
         <TimeRangeButton
-          isActive={activeRange === "Limpiar"}
+          $isActive={activeRange === "Limpiar"}
           onClick={()=>{
-            setDates(null) // 🛡️ Usamos null
+            setDates(null)
             setSingleDate(null)
             limpiarFechas()
             setActiveRange("Rango")
@@ -141,9 +143,65 @@ export const DateRangeFilter = () => {
   );
 };
 
-// ... Estilos se mantienen igual ...
-const Container = styled.div` display: flex; flex-direction: column; gap: 15px; margin: 20px; `;
+// --- CAMBIOS EN LOS ESTILOS ---
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 20px;
+`;
 const ButtonGroup = styled.div``;
-const TimeRangeButton = styled.button` color: ${({ theme }) => theme.text}; background-color: ${({ isActive, theme }) => isActive ? theme.bg : "transparent"}; border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; cursor: pointer; `;
-const StyledRangePicker = styled(RangePicker)` background-color: ${({ theme }) => theme.bg}; border: 2px dashed ${({ theme }) => theme.body}; .ant-picker-input > input { color: ${({ theme }) => theme.text}; font-weight: bold; } .ant-picker-input input::placeholder { color: ${({ theme }) => theme.text}; } .ant-picker-suffix{ color: ${({ theme }) => theme.text}; } &:hover{ background-color: ${({ theme }) => theme.body}; } &:focus, &.ant-picker-focused { background-color: ${({ theme }) => theme.bg}; } `;
-const StyledDatePicker = styled(DatePicker)` background-color: ${({ theme }) => theme.bg}; border: 2px dashed ${({ theme }) => theme.body}; .ant-picker-input > input { color: ${({ theme }) => theme.text}; font-weight: bold; } .ant-picker-input input::placeholder { color: ${({ theme }) => theme.text}; } .ant-picker-suffix{ color: ${({ theme }) => theme.text}; } &:hover{ background-color: ${({ theme }) => theme.body}; } &:focus, &.ant-picker-focused { background-color: ${({ theme }) => theme.bg}; } `;
+
+// AQUÍ EL CAMBIO: Leemos $isActive en lugar de isActive
+const TimeRangeButton = styled.button`
+  color: ${({ theme }) => theme.text};
+  background-color: ${({ $isActive, theme }) => $isActive ? theme.bg : "transparent"};
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+`;
+
+const StyledRangePicker = styled(RangePicker)`
+  background-color: ${({ theme }) => theme.bg};
+  border: 2px dashed ${({ theme }) => theme.body};
+  .ant-picker-input > input {
+    color: ${({ theme }) => theme.text};
+    font-weight: bold;
+  }
+  .ant-picker-input input::placeholder {
+    color: ${({ theme }) => theme.text};
+  }
+  .ant-picker-suffix{
+    color: ${({ theme }) => theme.text};
+  }
+  &:hover{
+    background-color: ${({ theme }) => theme.body};
+  }
+  &:focus, &.ant-picker-focused {
+    background-color: ${({ theme }) => theme.bg};
+  }
+`;
+
+const StyledDatePicker = styled(DatePicker)`
+  background-color: ${({ theme }) => theme.bg};
+  border: 2px dashed ${({ theme }) => theme.body};
+  .ant-picker-input > input {
+    color: ${({ theme }) => theme.text};
+    font-weight: bold;
+  }
+  .ant-picker-input input::placeholder {
+    color: ${({ theme }) => theme.text};
+  }
+  .ant-picker-suffix{
+    color: ${({ theme }) => theme.text};
+  }
+  &:hover{
+    background-color: ${({ theme }) => theme.body};
+  }
+  &:focus, &.ant-picker-focused {
+    background-color: ${({ theme }) => theme.bg};
+  }
+`;

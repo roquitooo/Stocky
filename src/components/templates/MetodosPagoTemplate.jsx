@@ -12,7 +12,7 @@ import { useState } from "react";
 import ConfettiExplosion from "react-confetti-explosion";
 import { RegistrarMetodosPago } from "../organismos/formularios/RegistrarMetodosPago";
 import { TablaMetodosPago } from "../organismos/tablas/TablaMetodosPago";
-import { Toaster } from "sonner";
+
 import { useMetodosPagoStore } from "../../store/MetodosPagoStore";
 export function MetodosPagoTemplate() {
   const [openRegistro, SetopenRegistro] = useState(false);
@@ -28,7 +28,6 @@ export function MetodosPagoTemplate() {
   }
   return (
     <Container>
-      <Toaster richColors position="top-right"/>
       {openRegistro && (
         <RegistrarMetodosPago setIsExploding={setIsExploding}
           onClose={() => SetopenRegistro(!openRegistro)}

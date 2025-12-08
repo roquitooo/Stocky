@@ -127,8 +127,21 @@ export const IngresoCobro = forwardRef((props, ref) => {
         // Guardamos detalles
         for (const item of items) {
              if (result?.id > 0) {
-                item._id_venta = result?.id;
-                await insertarDetalleVentas(item);
+                // --- LIMPIEZA DE DATOS (EL FIX) ---
+                // Creamos un objeto nuevo SOLO con los datos que la BD espera.
+                // Eliminamos 'stock', 'maneja_inventarios', 'nombre' que causan el error 404.
+                const detalleLimpio = {
+                    _id_venta: result.id, // Usamos el ID de la venta recién creada
+                    _cantidad: item._cantidad,
+                    _precio_venta: item._precio_venta,
+                    _total: item._total,
+                    _descripcion: item._descripcion, // Ojo: item.nombre a veces no existe aquí, usa descripcion
+                    _id_producto: item._id_producto,
+                    _precio_compra: item._precio_compra,
+                    _id_sucursal: sucursalesItemSelectAsignadas?.id_sucursal // Aseguramos el ID Sucursal
+                };
+                
+                await insertarDetalleVentas(detalleLimpio);
              }
         }
 

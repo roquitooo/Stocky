@@ -37,14 +37,18 @@ export function ProductosTemplate() {
   return (
     <Container>
       {openRegistro && (
-        <RegistrarProductos
-          setIsExploding={setIsExploding}
-          onClose={() => SetopenRegistro(!openRegistro)}
-          dataSelect={dataSelect}
-          accion={accion}
-          state={openRegistro}
-        />
-      )}
+  <RegistrarProductos
+    // ✅ AGREGAMOS ESTA LÍNEA MÁGICA:
+    // Al cambiar el ID, React destruye el formulario viejo y crea uno nuevo y limpio.
+    key={dataSelect?.id || "nuevo"} 
+
+    setIsExploding={setIsExploding}
+    onClose={() => SetopenRegistro(!openRegistro)}
+    dataSelect={dataSelect}
+    accion={accion}
+    state={openRegistro}
+  />
+)}
 
       {/* --- MODAL DE AUMENTO --- */}
       {openAumento && (

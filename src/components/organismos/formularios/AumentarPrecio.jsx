@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { useForm } from "react-hook-form";
-import { Btn1, InputText2 } from "../../../index";
+import { useState } from "react";
+import { Btn1, InputText2, Switch1 } from "../../../index"; // Importamos Switch1
 import { useProductosStore } from "../../../store/ProductosStore";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,32 +10,33 @@ export function AumentarPrecio({ onClose, selectedIds, setIsExploding }) {
   const { aumentarPrecioSeleccion } = useProductosStore();
   const queryClient = useQueryClient();
   
+  // Estado para el switch: true = Porcentaje, false = Monto Fijo ($)
+  const [esPorcentaje, setEsPorcentaje] = useState(true);
+  
   const { register, handleSubmit, formState: { errors } } = useForm();
 
   const { isPending, mutate } = useMutation({
     mutationFn: async (data) => {
       const p = {
         ids: selectedIds, 
-        porcentaje: parseFloat(data.porcentaje)
+        valor: parseFloat(data.valor), // Enviamos el valor
+        esPorcentaje: esPorcentaje     // Enviamos el tipo de aumento
       };
-      
-      // --- AQUÍ ESTABA EL ERROR ---
-      // Antes solo hacías un log. Ahora llamamos a la función real:
+      console.log("Enviando:", p);
       return await aumentarPrecioSeleccion(p);
     },
     onSuccess: (exito) => {
       if(exito) {
-        toast.success(`Precios actualizados en ${selectedIds.length} productos`);
-        // Invalidamos para que la tabla se refresque con los nuevos precios
+        toast.success(`Precios actualizados correctamente`);
         queryClient.invalidateQueries(["mostrar productos"]); 
         if(setIsExploding) setIsExploding(true); 
         onClose();
       } else {
-        toast.error("Error en la base de datos. Revisa la consola.");
+        toast.error("Error al actualizar. Revisa la consola.");
       }
     },
     onError: (err) => {
-      toast.error("Error crítico: " + err.message);
+      toast.error("Error: " + err.message);
     }
   });
 
@@ -51,28 +53,37 @@ export function AumentarPrecio({ onClose, selectedIds, setIsExploding }) {
             <p className="subtitle">Se aplicará a {selectedIds.length} productos seleccionados</p>
           </section>
           <section>
-            <span onClick={onClose} className="close-btn">x</span>
+            <span onClick={onClose} className="close-btn">X</span>
           </section>
         </div>
 
-        {/* 1. Ponemos el evento en el formulario */}
         <form onSubmit={handleSubmit(onSubmit)}>
           <section className="form-subcontainer">
-            <label>Porcentaje de aumento (%)</label>
+            
+            {/* --- SWITCH DE TIPO DE AUMENTO --- */}
+            <div className="switch-container">
+                <span className={!esPorcentaje ? "active" : ""}>$ Monto</span>
+                <Switch1 state={esPorcentaje} setState={() => setEsPorcentaje(!esPorcentaje)} />
+                <span className={esPorcentaje ? "active" : ""}>% Porcentaje</span>
+            </div>
+
+            <label>
+                {esPorcentaje ? "Porcentaje de aumento (%)" : "Monto a aumentar ($)"}
+            </label>
+            
             <InputText2>
               <input
                 className="form__field"
                 type="number"
                 step="0.01"
-                placeholder="Ej: 10 (para 10%)"
+                placeholder={esPorcentaje ? "Ej: 10%" : "Ej: $500"}
                 autoFocus
-                {...register("porcentaje", { required: true, min: 0.01 })}
+                {...register("valor", { required: true, min: 0.01 })}
               />
             </InputText2>
-            {errors.porcentaje && <p className="error">Ingrese un porcentaje válido</p>}
+            {errors.valor && <p className="error">Ingrese un valor válido</p>}
 
             <div className="footer-btn">
-              {/* 2. El botón queda limpio, actuando como submit nativo */}
               <Btn1 
                 titulo={isPending ? "Aplicando..." : "Aplicar Aumento"} 
                 bgcolor="#F3D20C" 
@@ -100,13 +111,30 @@ const Container = styled.div`
     color: ${({ theme }) => theme.text};
     
     .headers {
-      display: flex; justify-content: space-between; margin-bottom: 20px;
+      display: flex; justify-content: space-between; margin-bottom: 15px;
       h1 { font-size: 20px; font-weight: 700; margin:0;}
       .subtitle { font-size: 13px; color: #888; margin-top: 5px;}
       .close-btn { cursor: pointer; font-size: 20px; font-weight: bold;}
     }
+    
     .form-subcontainer {
       display: flex; flex-direction: column; gap: 15px;
+      
+      .switch-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 5px;
+        font-size: 14px;
+        color: #888;
+        
+        .active {
+            color: ${({ theme }) => theme.text};
+            font-weight: bold;
+        }
+      }
+
       .error { color: #d32f5b; font-size: 12px; font-weight:bold; margin-top: -10px;}
     }
     .footer-btn { margin-top: 10px; }

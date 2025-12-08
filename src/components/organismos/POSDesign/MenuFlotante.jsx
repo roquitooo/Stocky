@@ -1,53 +1,75 @@
 import { useState } from "react";
-import styled,{keyframes} from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { useCierreCajaStore } from "../../../store/CierreCajaStore";
 import { Device } from "../../../styles/breakpoints";
 import { Icon } from "@iconify/react/dist/iconify.js";
+
 export function MenuFlotante() {
   const [isOpen, setIsOpen] = useState(false);
   const { setStateIngresoSalida, setTipoRegistro, setStateCierraCaja } =
     useCierreCajaStore();
 
-    const toggleMenu =()=>{
-        setIsOpen(!isOpen)
-    }
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+
   return (
     <Container>
-    {/* Menú flotante que se expande al hacer clic */}
-    <MenuItems isOpen={isOpen}>
-      <MenuItem isOpen={isOpen} delay="0s" onClick={()=>{
-        toggleMenu()
-        setStateIngresoSalida(true)
-        setTipoRegistro("ingreso")
-      }}>
-        <Icon icon="noto:money-with-wings" />
-        <Text>Ingresar dinero</Text>
-      </MenuItem>
-      <MenuItem isOpen={isOpen} delay="0.1s" onClick={()=>{
-        toggleMenu()
-        setStateIngresoSalida(true)
-        setTipoRegistro("salida")
-      }}>
-        <Text>Retirar dinero</Text>
-      </MenuItem>
-      <MenuItem isOpen={isOpen} delay="0.2s" onClick={()=>{
-         toggleMenu()
-         setStateCierraCaja(true)
-      }}>
-        <Text>Cerrar caja</Text>
-      </MenuItem>
+      {/* CORRECCIÓN 1: Usamos la variable 'isOpen' (sin $) como valor */}
+      <MenuItems $isOpen={isOpen}>
+        <MenuItem
+          $isOpen={isOpen} // <--- Corregido
+          delay="0s"
+          onClick={() => {
+            toggleMenu();
+            setStateIngresoSalida(true);
+            setTipoRegistro("ingreso");
+          }}
+        >
+          <Icon icon="noto:money-with-wings" />
+          <Text>Ingresar dinero</Text>
+        </MenuItem>
+        
+        <MenuItem
+          $isOpen={isOpen} // <--- Corregido
+          delay="0.1s"
+          onClick={() => {
+            toggleMenu();
+            setStateIngresoSalida(true);
+            setTipoRegistro("salida");
+          }}
+        >
+          <Text>Retirar dinero</Text>
+        </MenuItem>
+        
+        <MenuItem
+          $isOpen={isOpen} // <--- Corregido
+          delay="0.2s"
+          onClick={() => {
+            toggleMenu();
+            setStateCierraCaja(true);
+          }}
+        >
+          <Text>Cerrar caja</Text>
+        </MenuItem>
 
-      <MenuItem isOpen={isOpen} delay="0.4s">
-        <Text>Ver ventas del día</Text>
-      </MenuItem>
-      <MenuItem isOpen={isOpen} delay="0.3s"  onClick={toggleMenu}>
-        <Text>Eliminar venta</Text>
-      </MenuItem>
-    </MenuItems>
-    <FloatingButton onClick={toggleMenu}>
-      <Icon icon="mdi:menu-up-outline" fontSize={50} />
-    </FloatingButton>
-  </Container>
+        <MenuItem $isOpen={isOpen} delay="0.4s"> {/* <--- Corregido */}
+          <Text>Ver ventas del día</Text>
+        </MenuItem>
+        
+        <MenuItem 
+          $isOpen={isOpen} // <--- Corregido
+          delay="0.3s" 
+          onClick={toggleMenu}
+        >
+          <Text>Eliminar venta</Text>
+        </MenuItem>
+      </MenuItems>
+      
+      <FloatingButton onClick={toggleMenu}>
+        <Icon icon="mdi:menu-up-outline" fontSize={50} />
+      </FloatingButton>
+    </Container>
   );
 }
 
@@ -71,12 +93,10 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-
   gap: 10px;
-@media ${Device.desktop} {
-  display: none;
-}
-  /* background-color: ${({ theme }) => theme.text}; */
+  @media ${Device.desktop} {
+    display: none;
+  }
 `;
 
 const FloatingButton = styled.button`
@@ -96,16 +116,15 @@ const FloatingButton = styled.button`
   }
 `;
 
-
-
 const MenuItems = styled.div`
   margin-top: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 15px;
-  ${({ isOpen }) => !isOpen && "display: none;"}
-
+  
+  /* CORRECCIÓN 2: Leemos $isOpen en lugar de isOpen */
+  ${({ $isOpen }) => !$isOpen && "display: none;"}
 `;
 
 const MenuItem = styled.div`
@@ -120,15 +139,15 @@ const MenuItem = styled.div`
   cursor: pointer;
   transition: background-color 0.3s ease;
   opacity: 0;
-  animation: ${({ isOpen }) => (isOpen ? slideUp : "none")} 0.4s ease forwards;
+  
+  /* CORRECCIÓN 2: Leemos $isOpen en lugar de isOpen */
+  animation: ${({ $isOpen }) => ($isOpen ? slideUp : "none")} 0.4s ease forwards;
   animation-delay: ${({ delay }) => delay};
 
   &:hover {
     background-color: #c7c7c7;
   }
 `;
-
-
 
 const Text = styled.span`
   font-size: 16px;

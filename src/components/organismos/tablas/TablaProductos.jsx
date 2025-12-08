@@ -7,7 +7,7 @@ import {
 } from "../../../index";
 import Swal from "sweetalert2";
 import { v } from "../../../styles/variables";
-import { useState, useEffect, useMemo, useRef } from "react"; // 1. IMPORTAR useRef
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -16,7 +16,29 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { FaArrowsAltV } from "react-icons/fa";
+// Importamos íconos para indicar el orden
+import { FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
+
+// --- Componente Checkbox fuera para rendimiento ---
+function IndeterminateCheckbox({ indeterminate, className = "", ...rest }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (typeof indeterminate === "boolean" && ref.current) {
+      ref.current.indeterminate = !rest.checked && indeterminate;
+    }
+  }, [ref, indeterminate]);
+
+  return (
+    <input
+      type="checkbox"
+      ref={ref}
+      className={className}
+      {...rest}
+      style={{ width: "18px", height: "18px", accentColor: "#F3D20C", cursor: "pointer" }}
+    />
+  );
+}
 
 export function TablaProductos({
   data,
@@ -29,6 +51,10 @@ export function TablaProductos({
   if (data == null) return;
   const [pagina, setPagina] = useState(1);
   const [columnFilters, setColumnFilters] = useState([]);
+  
+  // 1. ESTADO DE ORDENAMIENTO (Por defecto: Nombre ASCendente)
+  const [sorting, setSorting] = useState([{ id: "nombre", desc: false }]);
+  
   const { eliminarProductos } = useProductosStore();
 
   function eliminar(p) {
@@ -61,28 +87,6 @@ export function TablaProductos({
     setAccion("Editar");
   }
 
-  // --- COMPONENTE CHECKBOX NATIVO CORREGIDO ---
-  function IndeterminateCheckbox({ indeterminate, className = "", ...rest }) {
-    // 2. USO DE useRef (CORRECCIÓN DEL ERROR ROJO)
-    const ref = useRef(null); 
-
-    useEffect(() => {
-      if (typeof indeterminate === "boolean" && ref.current) {
-        ref.current.indeterminate = !rest.checked && indeterminate;
-      }
-    }, [ref, indeterminate]);
-
-    return (
-      <input
-        type="checkbox"
-        ref={ref}
-        className={className}
-        {...rest}
-        style={{width:"18px", height:"18px", accentColor:"#F3D20C", cursor:"pointer"}}
-      />
-    );
-  }
-
   const columns = useMemo(() => [
     {
       id: "select",
@@ -108,57 +112,73 @@ export function TablaProductos({
         </div>
       ),
     },
+    // 3. CONFIGURAMOS LA COLUMNA NOMBRE PARA QUE SEA CLIQUEABLE
     {
       accessorKey: "nombre",
-      header: "Descripcion",
+      header: ({ column }) => {
+        return (
+          <div 
+            className="header-sortable" 
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+             <span>Descripcion</span>
+             {/* Lógica para mostrar el ícono correcto */}
+             <span className="icon">
+               {{
+                 asc: <FaSortUp />,
+                 desc: <FaSortDown />,
+               }[column.getIsSorted()] ?? <FaSort className="icon-default"/>}
+             </span>
+          </div>
+        )
+      },
       cell: (info) => (
-        <td data-title="DESCRIPCION" className="ContentCell">
+        <div className="ContentCell">
           <span>{info.getValue()}</span>
-        </td>
+        </div>
       ),
     },
     {
       accessorKey: "p_venta",
       header: "P. venta",
       cell: (info) => (
-        <td data-title="P. venta" className="ContentCell">
+        <div className="ContentCell">
           <span>{info.getValue()}</span>
-        </td>
+        </div>
       ),
     },
     {
       accessorKey: "p_compra",
       header: "P. compra",
       cell: (info) => (
-        <td data-title="P. compra" className="ContentCell">
+        <div className="ContentCell">
           <span>{info.getValue()}</span>
-        </td>
+        </div>
       ),
     },
     {
       accessorKey: "sevende_por",
       header: "Se vende por",
       cell: (info) => (
-        <td data-title="Se vende por" className="ContentCell">
+        <div className="ContentCell">
           <span>{info.getValue()}</span>
-        </td>
+        </div>
       ),
     },
     {
       accessorKey: "maneja_inventarios",
       header: "Inv.",
       cell: (info) => (
-        <td data-title="Inventarios" className="ContentCell">
-          {/* 3. CORRECCIÓN ERROR AMARILLO: Agregamos onChange vacío para evitar warning de read-only */}
-          <Checkbox1 isChecked={info.getValue()} onChange={()=>{}} />
-        </td>
+        <div className="ContentCell">
+          <Checkbox1 isChecked={info.getValue()} onChange={() => { }} />
+        </div>
       ),
     },
     {
       accessorKey: "acciones",
       header: "",
       cell: (info) => (
-        <div data-title="Acciones" className="ContentCell">
+        <div className="ContentCell">
           <ContentAccionesTabla
             funcionEditar={() => editar(info.row.original)}
             funcionEliminar={() => eliminar(info.row.original)}
@@ -174,13 +194,15 @@ export function TablaProductos({
     state: {
       columnFilters,
       rowSelection,
+      sorting, // <--- Pasamos el estado
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting, // <--- Pasamos la función para actualizar
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    getSortedRowModel: getSortedRowModel(), // <--- Importante para que ordene
     getRowId: (row) => row.id,
   });
 
@@ -209,7 +231,14 @@ export function TablaProductos({
           {table.getRowModel().rows.map((row) => (
             <tr key={row.id}>
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id}>
+                <td 
+                  key={cell.id} 
+                  data-title={
+                    typeof cell.column.columnDef.header === 'string' 
+                      ? cell.column.columnDef.header 
+                      : ""
+                  }
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
@@ -242,88 +271,65 @@ const Container = styled.div`
     margin-bottom: 1.5em;
     border-spacing: 0;
     font-size: 0.9em;
+    
     thead {
-      position: absolute;
-      padding: 0;
-      border: 0;
-      height: 1px;
-      width: 1px;
-      overflow: hidden;
-      @media (min-width: ${v.bpbart}) {
-        position: relative;
-        height: auto;
-        width: auto;
-        overflow: auto;
-      }
+      /* ... estilos previos ... */
       th {
         border-bottom: 2px solid ${({ theme }) => theme.color2};
         font-weight: 700;
         text-align: center;
         color: ${({ theme }) => theme.text};
         padding: 10px;
-        &:first-of-type {
-          text-align: center;
+        
+        /* ESTILO PARA EL HEADER CLIQUEABLE */
+        .header-sortable {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          cursor: pointer;
+          transition: 0.2s;
+          &:hover {
+             opacity: 0.8;
+          }
+          .icon {
+             display: flex;
+             align-items: center;
+             font-size: 12px;
+          }
+          .icon-default {
+             opacity: 0.3; /* Icono tenue si no está ordenado */
+          }
         }
       }
     }
-    tbody,
-    tr,
-    th,
-    td {
-      display: block;
-      padding: 0;
-      text-align: left;
-      white-space: normal;
-    }
-    tr {
-      @media (min-width: ${v.bpbart}) {
-        display: table-row;
-      }
-    }
-    th,
-    td {
-      padding: 0.5em;
-      vertical-align: middle;
-      @media (min-width: ${v.bpbart}) {
-        display: table-cell;
-        padding: 0.5em;
-      }
-    }
+
     tbody {
-      @media (min-width: ${v.bpbart}) {
-        display: table-row-group;
-      }
+      /* ... estilos previos se mantienen igual ... */
       tr {
         margin-bottom: 1em;
         @media (min-width: ${v.bpbart}) {
           display: table-row;
           border-width: 1px;
         }
-        &:last-of-type {
-          margin-bottom: 0;
-        }
         &:nth-of-type(even) {
           background-color: rgba(161, 161, 161, 0.05);
         }
       }
-      .ContentCell {
-        text-align: right;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        height: 50px;
-        border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-        @media (min-width: ${v.bpbart}) {
-          justify-content: center;
-          border-bottom: none;
-        }
-      }
+
       td {
+        display: block;
         text-align: right;
+        padding: 0.5em;
+        border-bottom: 1px solid rgba(161, 161, 161, 0.32);
+        
         @media (min-width: ${v.bpbart}) {
+          display: table-cell;
           text-align: center;
+          border-bottom: 1px solid rgba(161, 161, 161, 0.32);
         }
       }
+
       td[data-title]:before {
         content: attr(data-title);
         float: left;
@@ -331,6 +337,16 @@ const Container = styled.div`
         font-weight: 700;
         @media (min-width: ${v.bpbart}) {
           content: none;
+        }
+      }
+
+      .ContentCell {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        
+        @media (min-width: ${v.bpbart}) {
+          justify-content: center;
         }
       }
     }

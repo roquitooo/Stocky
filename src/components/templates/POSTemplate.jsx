@@ -14,7 +14,7 @@ import {
   useCartVentasStore,
 } from "../../index";
 import { PantallaCobro } from "../organismos/POSDesign/PantallaCobro";
-import { Toaster } from "sonner";
+
 import { PantallaIngresoSalidaDinero } from "../organismos/POSDesign/CajaDesign/PantallaIngresoSalidaDinero";
 import { useCierreCajaStore } from "../../store/CierreCajaStore";
 import { MenuFlotante } from "../organismos/POSDesign/MenuFlotante";
@@ -27,7 +27,7 @@ export function POSTemplate() {
 
       <HeaderPos />
       <Main>
-        <Toaster richColors position="top-center" />
+
         <AreaDetalleventaPos />
         <AreaTecladoPos />
       </Main>
