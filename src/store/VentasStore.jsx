@@ -111,10 +111,21 @@ export const useVentasStore = create((set, get) => ({
 
       return (data || []).map((venta) => {
         const detalle = Array.isArray(venta.detalle_venta) ? venta.detalle_venta : [];
-        const nombres = detalle
-          .map((d) => d?.descripcion || d?.productos?.nombre)
-          .filter(Boolean);
-        const productos = nombres.length ? [...new Set(nombres)].join(", ") : "Sin detalle";
+        const productosMap = new Map();
+        detalle.forEach((d) => {
+          const nombre = d?.descripcion || d?.productos?.nombre;
+          if (!nombre) return;
+          const cantidad = Number(d?.cantidad || 0);
+          productosMap.set(nombre, (productosMap.get(nombre) || 0) + cantidad);
+        });
+        const productos = productosMap.size
+          ? Array.from(productosMap.entries())
+              .map(([nombre, cantidad]) => {
+                const cant = Number.isInteger(cantidad) ? cantidad : Number(cantidad.toFixed(2));
+                return `${nombre} x${cant}`;
+              })
+              .join(", ")
+          : "Sin detalle";
         const cantidad_total = detalle.reduce(
           (acc, d) => acc + Number(d?.cantidad || 0),
           0
@@ -155,10 +166,55 @@ export const useVentasStore = create((set, get) => ({
 
   totalVentas: async (p) => {
     try {
-      const { data, error } = await supabase
-        .rpc("sumarventastotales", { _id_empresa: p.id_empresa });
-      if (error) { return 0; }
-      return data;
+      let query = supabase
+        .from("ventas")
+        .select("monto_total")
+        .eq("id_empresa", p.id_empresa)
+        .neq("estado", "nueva");
+
+      if (p?.fechaInicio) {
+        query = query.gte("fecha", `${p.fechaInicio} 00:00:00`);
+      }
+      if (p?.fechaFin) {
+        query = query.lte("fecha", `${p.fechaFin} 23:59:59`);
+      }
+
+      const { data, error } = await query;
+      if (error || !Array.isArray(data)) return 0;
+
+      return data.reduce((acc, item) => acc + Number(item?.monto_total || 0), 0);
     } catch (err) { return 0; }
+  },
+
+  totalGananciaNeta: async (p) => {
+    try {
+      let query = supabase
+        .from("detalle_venta")
+        .select("cantidad, precio_venta, precio_compra, ventas!inner(id_empresa, estado)")
+        .eq("ventas.id_empresa", p.id_empresa)
+        .neq("ventas.estado", "nueva");
+
+      if (p?.fechaInicio) {
+        query = query.gte("ventas.fecha", `${p.fechaInicio} 00:00:00`);
+      }
+      if (p?.fechaFin) {
+        query = query.lte("ventas.fecha", `${p.fechaFin} 23:59:59`);
+      }
+
+      const { data, error } = await query;
+
+      if (error || !Array.isArray(data)) return 0;
+
+      const total = data.reduce((acc, item) => {
+        const cantidad = Number(item?.cantidad || 0);
+        const precioVenta = Number(item?.precio_venta || 0);
+        const precioCompra = Number(item?.precio_compra || 0);
+        return acc + (precioVenta - precioCompra) * cantidad;
+      }, 0);
+
+      return Number.isFinite(total) ? total : 0;
+    } catch (err) {
+      return 0;
+    }
   },
 }));

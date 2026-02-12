@@ -1,94 +1,101 @@
-import { Icon } from "@iconify/react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+
 export function Reloj() {
-  const [hora, setHora] = useState("");
-  const [fecha, setFecha] = useState("");
+  const [horaPrincipal, setHoraPrincipal] = useState("");
+  const [segundos, setSegundos] = useState("");
+  const [fechaCorta, setFechaCorta] = useState("");
+
   useEffect(() => {
-    const mostrarReloj = () => {
-      const fechaActual = new Date();
-      const horaActual = fechaActual.getHours();
-      const minutosActual = fechaActual.getMinutes();
-      const segundosActual = fechaActual.getSeconds();
-      const mesActual = fechaActual.getMonth();
-      const diaActual = fechaActual.getDate();
-      const añoActual = fechaActual.getFullYear();
+    const actualizarReloj = () => {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      const ss = String(now.getSeconds()).padStart(2, "0");
 
-      const dias = [
-        "domingo",
-        "lunes",
-        "martes",
-        "miércoles",
-        "jueves",
-        "viernes",
-        "sábado",
-      ];
-      const meses = [
-        "enero",
-        "febrero",
-        "marzo",
-        "abril",
-        "mayo",
-        "junio",
-        "julio",
-        "agosto",
-        "septiembre",
-        "octubre",
-        "noviembre",
-        "diciembre",
-      ];
+      const dias = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
+      const meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
-      const mes = meses[mesActual];
-      const hr = horaActual > 12 ? horaActual - 12 : horaActual;
-      const am = horaActual < 12 ? "AM" : "PM";
-
-      const formattedHora = horaActual < 10 ? "0" + horaActual : horaActual;
-      const formattedMinutos =
-        minutosActual < 10 ? "0" + minutosActual : minutosActual;
-      const formattedSegundos =
-        segundosActual < 10 ? "0" + segundosActual : segundosActual;
-
-      setHora(`${hr}:${formattedMinutos}:${formattedSegundos}:${am}`);
-      setFecha(
-        `${dias[fechaActual.getDay()]} ${diaActual} ${mes} del ${añoActual}`
+      setHoraPrincipal(`${hh}:${mm}`);
+      setSegundos(`:${ss}`);
+      setFechaCorta(
+        `${dias[now.getDay()]} ${String(now.getDate()).padStart(2, "0")} ${meses[now.getMonth()]} ${now.getFullYear()}`
       );
     };
 
-    const intervalId = setInterval(mostrarReloj, 1000);
-
-    // Limpieza del intervalo cuando el componente se desmonta
+    actualizarReloj();
+    const intervalId = setInterval(actualizarReloj, 1000);
     return () => clearInterval(intervalId);
-  }, []); // El segundo argumento [] indica que este efecto se ejecuta solo al montar el componente
+  }, []);
 
   return (
     <Container>
-      <div class="cont-reloj">
-        <div class="reloj" id="reloj">
-         {<Icon icon="icon-park:alarm-clock" />} {hora}
+      <div className="clock-wrap">
+        <div className="time-row">
+          <div className="time-main">{horaPrincipal}</div>
+          <span className="chip chip-seconds">{segundos}</span>
         </div>
-        <div class="datos">
-          <span id="fec_Datos">{fecha}</span>
+        <div className="chips">
+          <span className="chip">{fechaCorta}</span>
         </div>
       </div>
     </Container>
   );
 }
+
 const Container = styled.div`
-  .cont-reloj {
+  width: 160px;
+  max-width: 160px;
+
+  .clock-wrap {
     display: flex;
-    justify-content: center;
-    align-items: center;
     flex-direction: column;
-    font-weight: bold;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background:
+      linear-gradient(${({ theme }) => theme.body}, ${({ theme }) => theme.body}) padding-box,
+      linear-gradient(135deg, #ffbd59 0%, #f48c06 100%) border-box;
+    border: 1px solid transparent;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   }
-  .reloj {
-    font-size: 1em;
-    align-items:center;
-    display:flex;
-    gap:5px;
+
+  .time-main {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.04em;
   }
-  .datos {
-    font-size: 1em;
-   
+
+  .time-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .chip {
+    font-size: 0.64rem;
+    font-weight: 700;
+    padding: 3px 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 189, 89, 0.35);
+    background: rgba(255, 189, 89, 0.1);
+    color: ${({ theme }) => theme.text};
+    opacity: 0.95;
+  }
+
+  .chip-seconds {
+    min-width: 36px;
+    text-align: center;
   }
 `;

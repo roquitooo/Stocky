@@ -2,13 +2,20 @@ import styled from "styled-components";
 import { Icon } from "@iconify/react";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { useVentasStore } from "../../../store/VentasStore";
+import { useUsuariosStore } from "../../../store/UsuariosStore";
 import { useQuery } from "@tanstack/react-query";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
 import { BarLoader } from "react-spinners";
+import { useNavigate } from "react-router-dom";
 
 export const CardHistorialVentas = () => {
+  const navigate = useNavigate();
   const { dataempresa } = useEmpresaStore();
+  const { datausuarios } = useUsuariosStore();
   const { mostrarVentasRecientes } = useVentasStore();
+  const esAdmin = String(datausuarios?.roles?.nombre || "")
+    .toLowerCase()
+    .includes("admin");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["mostrar ventas recientes", { _id_empresa: dataempresa?.id }],
@@ -24,7 +31,17 @@ export const CardHistorialVentas = () => {
     <Container>
       <Header>
         <Title>Historial de Ventas Recientes</Title>
-        <Icon icon="mdi:history" width="24" color="#888" />
+        <HeaderActions>
+          {esAdmin && (
+            <ActionButton
+              type="button"
+              onClick={() => navigate("/dashboard/cierres-caja")}
+            >
+              Ver historial de cierres de caja
+            </ActionButton>
+          )}
+          <Icon icon="mdi:history" width="24" color="#888" />
+        </HeaderActions>
       </Header>
       
       <TableContainer>
@@ -91,13 +108,39 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  gap: 10px;
+  flex-wrap: wrap;
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
 `;
 
 const Title = styled.h3`
   font-size: 18px;
   font-weight: 700;
+  line-height: 1.2;
   margin: 0;
   color: ${({ theme }) => theme.text};
+`;
+
+const ActionButton = styled.button`
+  border: 1px solid rgba(255, 189, 89, 0.55);
+  background: rgba(255, 189, 89, 0.12);
+  color: ${({ theme }) => theme.text};
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 189, 89, 0.2);
+    transform: translateY(-1px);
+  }
 `;
 
 const TableContainer = styled.div`

@@ -5,7 +5,7 @@ import { useModulosStore } from "../../../store/ModulosStore";
 import { Check } from "../../ui/toggles/Check";
 import { useRolesStore } from "../../../store/RolesStore";
 import { usePermisosStore } from "../../../store/PermisosStore";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAsignacionCajaSucursalStore } from "../../../store/AsignacionCajaSucursalStore";
 import { BarLoader } from "react-spinners";
 export const PermisosUser = ({ accionProp, idUsuarioProp }) => {
@@ -21,6 +21,8 @@ export const PermisosUser = ({ accionProp, idUsuarioProp }) => {
     useAsignacionCajaSucursalStore();
   const { mostrarModulos } = useModulosStore();
   const { mostrarRoles, rolesItemSelect, setRolesItemSelect } = useRolesStore();
+  const permisosOriginalesRef = useRef([]);
+  const prevIsAdminRef = useRef(false);
   const accionActual = accionProp ?? accion;
   const idUsuarioActual = idUsuarioProp ?? selectItemAsignaciones?.id_usuario;
 
@@ -47,18 +49,49 @@ export const PermisosUser = ({ accionProp, idUsuarioProp }) => {
     mutationFn: () => actualizarPermisos(),
   });
   useEffect(() => {
+    if (!rolesItemSelect) return;
+
+    const rolNombre = String(rolesItemSelect?.nombre || "").toLowerCase();
+    const isAdmin = rolNombre.includes("admin");
+
+    // Regla de negocio: rol Admin => acceso completo
+    if (isAdmin) {
+      const todosLosModulos = (datamodulos || []).map((m) => m.id);
+      setSelectedModules(todosLosModulos);
+      prevIsAdminRef.current = true;
+      return;
+    }
+
+    // Para usuario nuevo, usamos permisos por defecto del rol seleccionado.
     if (accionActual === "Nuevo") {
       const permisosPorRol =
         dataPermisosDefault
           ?.filter((permiso) => permiso.id_rol === rolesItemSelect?.id)
           .map((permiso) => permiso.id_modulo) || [];
       setSelectedModules(permisosPorRol);
+      prevIsAdminRef.current = false;
+      return;
     }
-  }, [accionActual, rolesItemSelect, setSelectedModules, dataPermisosDefault]);
+
+    // En edición: si venimos de Admin y volvemos a un rol no-admin,
+    // restauramos los permisos originales del usuario.
+    if (accionActual === "Editar" && prevIsAdminRef.current) {
+      setSelectedModules(permisosOriginalesRef.current || []);
+      prevIsAdminRef.current = false;
+    }
+  }, [
+    accionActual,
+    rolesItemSelect,
+    setSelectedModules,
+    dataPermisosDefault,
+    datamodulos,
+  ]);
 
   useEffect(() => {
     if (accionActual !== "Editar") return;
     const modulosUsuario = (datapermisos || []).map((permiso) => permiso.idmodulo);
+    permisosOriginalesRef.current = modulosUsuario;
+    prevIsAdminRef.current = false;
     setSelectedModules(modulosUsuario);
   }, [accionActual, datapermisos, setSelectedModules]);
 

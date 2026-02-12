@@ -9,6 +9,8 @@ import { useClientesProveedoresStore } from "../../../store/ClientesProveedoresS
 
 export function VisorTicketVenta({ setState }) {
   const [base64, setBase64] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const {
     items,
     total,
@@ -23,6 +25,8 @@ export function VisorTicketVenta({ setState }) {
   const { cliproItemSelect } = useClientesProveedoresStore();
 
   const onGenerateTicket = async (output) => {
+    setIsLoading(true);
+    setErrorMsg("");
     const sucursalNombre =
       sucursalesItemSelect?.sucursal ||
       sucursalesItemSelect?.nombre ||
@@ -53,9 +57,15 @@ export function VisorTicketVenta({ setState }) {
       fecha_emision: new Date().toISOString(),
     };
 
-    const response = await ticket(output, dataParaTicket);
-    if (output === "b64") {
-      setBase64(response?.content ?? "");
+    try {
+      const response = await ticket(output, dataParaTicket);
+      if (output === "b64") {
+        setBase64(response?.content ?? "");
+      }
+    } catch (error) {
+      setErrorMsg("No se pudo generar el ticket.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,14 +87,14 @@ export function VisorTicketVenta({ setState }) {
   return (
     <Container>
       <ContentTicket>
-        <article className="contentverticket" onClick={setState}>
-          <span>Ocultar ticket</span>
-        </article>
-
-        <iframe
-          style={{ width: "100%", height: "100%" }}
-          src={`data:application/pdf;base64,${base64}`}
-        />
+        {isLoading && <div className="status">Generando ticket...</div>}
+        {!!errorMsg && <div className="status error">{errorMsg}</div>}
+        {!isLoading && !errorMsg && base64 ? (
+          <iframe
+            style={{ width: "100%", height: "100%" }}
+            src={`data:application/pdf;base64,${base64}`}
+          />
+        ) : null}
       </ContentTicket>
     </Container>
   );
@@ -101,25 +111,26 @@ const Container = styled.div`
   background-color: ${({ theme }) => theme.bgtotal};
 `;
 const ContentTicket = styled.div`
-  height: 80%;
+  height: min(78vh, 820px);
   display: flex;
   gap: 10px;
   flex-direction: column;
-  width: 400px; /* Le damos un ancho fijo para que se vea bien */
-  
-  .contentverticket {
-    cursor: pointer;
+  width: min(420px, 92vw);
+
+  .status {
+    min-height: 46px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    background-color: #ffbd59;
-    padding: 10px;
-    border-radius: 10px;
     justify-content: center;
-    font-weight: bold;
-    color: #fff;
-    .icono{
-        font-size: 25px;
-    }
+    border: 1px solid rgba(255, 189, 89, 0.45);
+    border-radius: 12px;
+    background: rgba(255, 189, 89, 0.12);
+    font-weight: 700;
+    color: ${({ theme }) => theme.text};
+  }
+
+  .status.error {
+    border-color: rgba(239, 68, 68, 0.45);
+    background: rgba(239, 68, 68, 0.12);
   }
 `;

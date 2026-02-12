@@ -34,11 +34,13 @@ export const ProtectedRoute = ({ children, accessBy }) => {
     }
 
     const permisos = dataPermisosGlobales ?? [];
-    const hasPermission = permisos.some(
-      (item) => item?.modulos?.link === location.pathname
-      // si tus links son “base”, mejor esto:
-      // || location.pathname.startsWith(item?.modulos?.link)
-    );
+    const hasPermission = permisos.some((item) => {
+      const link = item?.modulos?.link;
+      if (!link) return false;
+      if (link === location.pathname) return true;
+      if (link === "/" && location.pathname.startsWith("/dashboard/")) return true;
+      return false;
+    });
 
     console.log("state permiso:", hasPermission);
     console.log("state path:", location.pathname);
@@ -53,3 +55,4 @@ export const ProtectedRoute = ({ children, accessBy }) => {
   // fallback
   return <Navigate to="/login" replace />;
 };
+

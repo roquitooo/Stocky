@@ -1,275 +1,192 @@
 import styled from "styled-components";
 import fondocuadros from "../../assets/Logofondo.svg";
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
-import { useModulosStore } from "../../index";
 import { usePermisosStore } from "../../index";
+
 export function ConfiguracionesTemplate() {
-  const {dataPermisosConfiguracion} = usePermisosStore();
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      document.querySelectorAll(".card").forEach((card) => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        card.style.setProperty("--mouse-x", `${x}px`);
-        card.style.setProperty("--mouse-y", `${y}px`);
-      });
-    };
-    const cardsContainer = document.getElementById("cards");
-    if (cardsContainer) {
-      cardsContainer.addEventListener("mousemove", handleMouseMove);
-      return () => {
-        cardsContainer.removeEventListener("mousemove", handleMouseMove);
-      };
-    }
-  }, []);
+  const { dataPermisosConfiguracion } = usePermisosStore();
+
   return (
     <Container>
-      <div id="cards">
-        {dataPermisosConfiguracion.map((item, index) => {
-          return (
-            <Link
-              to={item.modulos.link}
-              className={item.modulos.state ? "card" : "card false"}
-              key={index}
-            >
-              <div className="card-content">
-                <div className="card-image">
-                  <img src={item.modulos.icono} />
-                </div>
+      <BackdropLogo aria-hidden="true" />
 
-                <div className="card-info-wrapper">
-                  <div className="card-info">
-                    <i className="fa-duotone fa-unicorn"></i>
-                    <div className="card-info-title">
-                      <h3>{item.modulos.nombre}</h3>
-                      <h4>{item.modulos.descripcion}</h4>
-                    </div>
+      <Content>
+        <Header>
+          <h1>Configuración</h1>
+          <p>Administra los modulos principales de tu negocio.</p>
+        </Header>
+
+        <CardsGrid>
+          {(dataPermisosConfiguracion || []).map((item, index) => {
+            const modulo = item?.modulos || {};
+            const habilitado = modulo?.state !== false;
+
+            return (
+              <CardLink
+                key={`${modulo?.id || modulo?.nombre || "mod"}-${index}`}
+                to={modulo?.link || "#"}
+                className={habilitado ? "" : "disabled"}
+                aria-disabled={!habilitado}
+                onClick={(e) => {
+                  if (!habilitado) e.preventDefault();
+                }}
+              >
+                <article className="card-content">
+                  <div className="icon-wrap">
+                    <img src={modulo?.icono} alt={modulo?.nombre || "Modulo"} />
                   </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+
+                  <div className="text-wrap">
+                    <h3>{modulo?.nombre || "Modulo"}</h3>
+                    <p>{modulo?.descripcion || "Sin descripcion"}</p>
+                  </div>
+                </article>
+              </CardLink>
+            );
+          })}
+        </CardsGrid>
+      </Content>
     </Container>
   );
 }
+
 const Container = styled.div`
-  background-image: url(${fondocuadros});
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat, repeat;
-  align-items: center;
-  background-color: ${({ theme }) => theme.bgtotal};
-  display: flex;
-  height:calc(100vh - 50px);
-   margin-top:50px;
-  justify-content: center;
+  position: relative;
   width: 100%;
-  align-items: flex-start;
- 
-  #cards {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    max-width: 916px;
-    width: calc(100% - 20px);
-    padding: 10px;
+  min-height: 100%;
+  padding: clamp(14px, 2.5vw, 30px);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 189, 89, 0.2) 0%,
+      rgba(255, 189, 89, 0.1) 40%,
+      rgba(255, 255, 255, 0.04) 100%
+    ),
+    ${({ theme }) => theme.bgtotal};
+  overflow: hidden;
+  overflow-x: clip;
+`;
+
+const BackdropLogo = styled.div`
+  position: absolute;
+  inset: 0;
+  background-image: url(${fondocuadros});
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: min(110vw, 1100px);
+  opacity: 0.2;
+  pointer-events: none;
+`;
+
+const Content = styled.div`
+  position: relative;
+  z-index: 1;
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const Header = styled.header`
+  h1 {
+    margin: 0;
+    font-size: clamp(1.45rem, 2.1vw, 2rem);
+    font-weight: 800;
+    color: ${({ theme }) => theme.text};
+    letter-spacing: 0.2px;
   }
 
-  #cards:hover > .card::after {
-    opacity: 1;
+  p {
+    margin: 6px 0 0;
+    font-size: 0.95rem;
+    color: ${({ theme }) => theme.colortitlecard || theme.text};
+    opacity: 0.75;
   }
+`;
 
-  .card {
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    height: 260px;
-    flex-direction: column;
-    position: relative;
-    width: 300px;
-    &:hover {
-      .card-image {
-        img {
-          filter: grayscale(0);
-        }
-      }
-    }
+const CardsGrid = styled.section`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 18px);
+
+  @media (max-width: 780px) {
+    grid-template-columns: 1fr;
   }
+`;
 
-  .card:hover::before {
-    opacity: 1;
-  }
-
-  .card::before,
-  .card::after {
-    border-radius: inherit;
-    content: "";
-    height: 100%;
-    left: 0px;
-    opacity: 0;
-    position: absolute;
-    top: 0px;
-    transition: opacity 500ms;
-    width: 100%;
-  }
-
-  .card::before {
-    background: radial-gradient(
-      800px circle at var(--mouse-x) var(--mouse-y),
+const CardLink = styled(Link)`
+  text-decoration: none;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: linear-gradient(
+      160deg,
       rgba(255, 255, 255, 0.06),
-      transparent 40%
-    );
-    z-index: 3;
+      rgba(255, 255, 255, 0.02) 48%,
+      rgba(0, 0, 0, 0.05)
+    ),
+    ${({ theme }) => theme.bgcards};
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 189, 89, 0.78);
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.25);
   }
 
-  .card::after {
-    background: radial-gradient(
-      600px circle at var(--mouse-x) var(--mouse-y),
-      rgba(255, 255, 255, 0.4),
-      transparent 40%
-    );
-    z-index: 1;
-  }
-
-  .card > .card-content {
-    background-color: ${({ theme }) => theme.bgcards};
-    border-radius: inherit;
+  .card-content {
+    min-height: 190px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
-    inset: 1px;
-    padding: 10px;
-    position: absolute;
-    z-index: 2;
+    justify-content: space-between;
+    gap: 18px;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  span {
-    color: ${({ theme }) => theme.colorsubtitlecard};
-    font-family: "Rubik", sans-serif;
-    font-weight: 600;
-    margin: 0px;
-  }
-
-  i {
-    color: ${({ theme }) => theme.colorsubtitlecard};
-  }
-
-  .card-image {
-    align-items: center;
+  .icon-wrap {
+    width: 68px;
+    height: 68px;
+    border-radius: 14px;
+    background: rgba(255, 189, 89, 0.14);
+    border: 1px solid rgba(255, 189, 89, 0.45);
     display: flex;
-    height: 140px;
+    align-items: center;
     justify-content: center;
 
     img {
-      transition: 0.3s;
-      height: 70%;
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
       filter: grayscale(100%);
+      transition: filter 0.2s ease;
     }
   }
 
-  .card-info-wrapper {
-    align-items: center;
-    display: flex;
-    flex-grow: 1;
-    justify-content: flex-start;
-    padding: 0px 20px;
-  }
-
-  .card-info {
-    align-items: flex-start;
-    display: flex;
-    gap: 10px;
-  }
-
-  .card-info > i {
-    font-size: 1em;
-    height: 20px;
-    line-height: 20px;
-  }
-
-  .card-info-title > h3 {
-    font-size: 1.1em;
-    line-height: 20px;
-  }
-
-  .card-info-title > h4 {
-    color: ${({ theme }) => theme.colortitlecard};
-    font-size: 0.85em;
-    margin-top: 8px;
-    font-weight: 500;
-  }
-  #cards:hover > .card::after {
-    opacity: 1;
-  }
-  &::before {
-    background: radial-gradient(
-      800px circle at var(--mouse-x) var(--mouse-y),
-      rgba(255, 255, 255, 0.06),
-      transparent 40%
-    );
-    z-index: 3;
-  }
-
-  &::after {
-    background: radial-gradient(
-      600px circle at var(--mouse-x) var(--mouse-y),
-      ${(props) => props.$color0},
-      transparent 40%
-    );
-    z-index: 1;
-  }
-
-  @media (max-width: 1000px) {
-    align-items: flex-start;
-    overflow: auto;
-
-    #cards {
-      max-width: 1000px;
+  .text-wrap {
+    h3 {
+      margin: 0;
+      font-size: 1.34rem;
+      font-weight: 800;
+      color: ${({ theme }) => theme.colorsubtitlecard};
+      line-height: 1.15;
     }
 
-    .card {
-      flex-shrink: 1;
-      width: calc(50% - 4px);
+    p {
+      margin: 8px 0 0;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: ${({ theme }) => theme.colortitlecard};
+      opacity: 0.9;
     }
   }
 
-  @media (max-width: 500px) {
-    .card {
-      height: 180px;
-    }
+  &:hover .icon-wrap img {
+    filter: grayscale(0%);
+  }
 
-    .card-image {
-      height: 80px;
-    }
-
-    .card-image > i {
-      font-size: 3em;
-    }
-
-    .card-info-wrapper {
-      padding: 0px 10px;
-    }
-
-    .card-info > i {
-      font-size: 0.8em;
-    }
-
-    .card-info-title > h3 {
-      font-size: 0.9em;
-    }
-
-    .card-info-title > h4 {
-      font-size: 0.8em;
-      margin-top: 4px;
-    }
+  &.disabled {
+    opacity: 0.45;
+    pointer-events: none;
   }
 `;

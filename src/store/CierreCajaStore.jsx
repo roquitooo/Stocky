@@ -124,4 +124,153 @@ export const useCierreCajaStore = create((set) => ({
     const { cerrarCaja } = useCierreCajaStore.getState();
     return cerrarCaja(p);
   },
+
+  mostrarHistorialCierres: async (p) => {
+    try {
+      if (!p?.id_empresa) return [];
+
+      const { data: sucursales, error: errorSucursales } = await supabase
+        .from("sucursales")
+        .select("id, nombre")
+        .eq("id_empresa", p.id_empresa);
+
+      if (errorSucursales || !Array.isArray(sucursales) || sucursales.length === 0) {
+        return [];
+      }
+
+      const sucursalIds = sucursales.map((s) => s.id);
+      const sucursalesMap = new Map(sucursales.map((s) => [s.id, s.nombre]));
+
+      const { data: cajas, error: errorCajas } = await supabase
+        .from("caja")
+        .select("id, descripcion, id_sucursal")
+        .in("id_sucursal", sucursalIds);
+
+      if (errorCajas || !Array.isArray(cajas) || cajas.length === 0) {
+        return [];
+      }
+
+      const cajaIds = cajas.map((c) => c.id);
+      const cajasMap = new Map(cajas.map((c) => [c.id, c]));
+
+      let query = supabase
+        .from("cierrecaja")
+        .select(`
+          id,
+          fechainicio,
+          fechacierre,
+          estado,
+          id_caja,
+          id_usuario,
+          total_efectivo_calculado,
+          total_efectivo_real,
+          diferencia_efectivo,
+          usuarios(nombres)
+        `)
+        .in("id_caja", cajaIds)
+        .order("fechainicio", { ascending: false })
+        .limit(p?.limit ?? 150);
+
+      if (p?.fechaInicio) {
+        query = query.gte("fechainicio", `${p.fechaInicio} 00:00:00`);
+      }
+      if (p?.fechaFin) {
+        query = query.lte("fechainicio", `${p.fechaFin} 23:59:59`);
+      }
+
+      const { data: cierres, error: errorCierres } = await query;
+
+      if (errorCierres || !Array.isArray(cierres)) {
+        return [];
+      }
+
+      return cierres.map((item) => {
+        const caja = cajasMap.get(item.id_caja);
+        const sucursalNombre = caja ? sucursalesMap.get(caja.id_sucursal) : "-";
+
+        return {
+          ...item,
+          caja_nombre: caja?.descripcion || "-",
+          sucursal_nombre: sucursalNombre || "-",
+          usuario_nombre: item?.usuarios?.nombres || "-",
+        };
+      });
+    } catch (error) {
+      console.error("Error al obtener historial de cierres:", error);
+      return [];
+    }
+  },
+
+  mostrarMovimientosPorCierre: async (p) => {
+    try {
+      if (!p?.id_cierre_caja) return [];
+
+      let query = supabase
+        .from("movimientos_caja")
+        .select(`
+          id,
+          fecha_movimiento,
+          tipo_movimiento,
+          monto,
+          descripcion,
+          vuelto,
+          id_ventas,
+          usuarios(nombres),
+          metodos_pago(nombre),
+          ventas(
+            nro_comprobante,
+            detalle_venta(
+              cantidad,
+              descripcion,
+              productos(nombre)
+            )
+          )
+        `)
+        .eq("id_cierre_caja", p.id_cierre_caja)
+        .order("fecha_movimiento", { ascending: false });
+
+      if (p?.fechaInicio) {
+        query = query.gte("fecha_movimiento", `${p.fechaInicio} 00:00:00`);
+      }
+      if (p?.fechaFin) {
+        query = query.lte("fecha_movimiento", `${p.fechaFin} 23:59:59`);
+      }
+
+      const { data, error } = await query;
+      if (error || !Array.isArray(data)) return [];
+
+      return data.map((item) => {
+        const detalle = Array.isArray(item?.ventas?.detalle_venta)
+          ? item.ventas.detalle_venta
+          : [];
+        const productosMap = new Map();
+        detalle.forEach((d) => {
+          const nombre = d?.descripcion || d?.productos?.nombre;
+          if (!nombre) return;
+          const cantidad = Number(d?.cantidad || 0);
+          productosMap.set(nombre, (productosMap.get(nombre) || 0) + cantidad);
+        });
+
+        const productos_vendidos = productosMap.size
+          ? Array.from(productosMap.entries())
+              .map(([nombre, cantidad]) => {
+                const cant = Number.isInteger(cantidad) ? cantidad : Number(cantidad.toFixed(2));
+                return `${nombre} x${cant}`;
+              })
+              .join(", ")
+          : "-";
+
+        return {
+          ...item,
+          productos_vendidos,
+          usuario_nombre: item?.usuarios?.nombres || "-",
+          metodo_pago: item?.metodos_pago?.nombre || "-",
+          comprobante: item?.ventas?.nro_comprobante || "-",
+        };
+      });
+    } catch (error) {
+      console.error("Error al obtener movimientos por cierre:", error);
+      return [];
+    }
+  },
 }));

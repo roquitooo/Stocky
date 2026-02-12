@@ -52,9 +52,9 @@ const Container = styled.div`
   animation: ${blur_in} 0.5s linear both;
   @media ${Device.desktop} {
     grid-template:
-      "header header" 140px
-      "main main"
-      "footer footer" 60px;
+      "header header" 190px
+      "main main" minmax(0, 1fr)
+      "footer footer" 78px;
   }
 `;
 

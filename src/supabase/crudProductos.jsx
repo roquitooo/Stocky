@@ -1,6 +1,15 @@
 import Swal from "sweetalert2";
 import { supabase } from "../index";
 const tabla = "productos";
+
+function esFuncionNoExiste(error) {
+  const msg = String(error?.message || "").toLowerCase();
+  return (
+    error?.code === "42883" ||
+    msg.includes("function") ||
+    msg.includes("no existe")
+  );
+}
 export async function InsertarProductos(p) {
   const { error,data } = await supabase.rpc("insertarproductos", p);
   if (error) {
@@ -16,14 +25,40 @@ export async function InsertarProductos(p) {
 }
 
 export async function MostrarProductos(p) {
-  const { data } = await supabase.rpc("mostrarproductos",{_id_empresa:p.id_empresa})
+  const payloadSeguro = {
+    _id_empresa: p.id_empresa,
+    _id_sucursal: p.id_sucursal || 0,
+  };
+
+  const seguro = await supabase.rpc("mostrarproductos_seguro", payloadSeguro);
+  if (!seguro.error) return seguro.data;
+
+  // Compatibilidad temporal: si aun no creaste la funcion en Supabase, usa la anterior.
+  if (!esFuncionNoExiste(seguro.error)) {
+    throw new Error(seguro.error.message);
+  }
+
+  const { data } = await supabase.rpc("mostrarproductos", { _id_empresa: p.id_empresa });
   return data;
 }
 
 export async function BuscarProductos(p) {
+  const payloadSeguro = {
+    _id_empresa: p.id_empresa,
+    _id_sucursal: p.id_sucursal || 0,
+    buscador: p.buscador,
+  };
+
+  const seguro = await supabase.rpc("buscarproductos_seguro", payloadSeguro);
+  if (!seguro.error) return seguro.data;
+
+  if (!esFuncionNoExiste(seguro.error)) {
+    throw new Error(seguro.error.message);
+  }
+
   const { data } = await supabase.rpc("buscarproductos", {
     _id_empresa: p.id_empresa,
-    _id_sucursal: p.id_sucursal || 0, // <--- EL FIX: Si es undefined o null, manda 0
+    _id_sucursal: p.id_sucursal || 0,
     buscador: p.buscador
   });
   return data;

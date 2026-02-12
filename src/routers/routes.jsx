@@ -17,6 +17,7 @@ import { MonedaConfig } from "../components/organismos/EmpresaConfigDesign/Moned
 import { MetodosPago } from "../pages/MetodosPago";
 import { Dashboard } from "../pages/Dashboard";
 import {Usuarios} from "../pages/Usuarios"
+import { HistorialCierresCaja } from "../pages/HistorialCierresCaja";
 
 
 export function MyRoutes() {
@@ -150,6 +151,17 @@ export function MyRoutes() {
           <Layout>
             <ProtectedRoute accessBy="authenticated">
               <Usuarios />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+
+      <Route
+        path="/dashboard/cierres-caja"
+        element={
+          <Layout>
+            <ProtectedRoute accessBy="authenticated">
+              <HistorialCierresCaja />
             </ProtectedRoute>
           </Layout>
         }

@@ -85,8 +85,19 @@ const CustomTooltip = ({ active, payload, label }) => {
 // --- ESTILOS ---
 const Container = styled.div` padding: 15px; height: 100%; display: flex; flex-direction: column; `;
 const Header = styled.div` margin-bottom: 20px; padding-left: 5px; `;
-const Title = styled.h3` font-size: 18px; font-weight: 700; color: ${({ theme }) => theme.text}; margin: 0; `;
-const SubTitle = styled.span` font-size: 12px; color: #888; font-weight: 500; `; // Estilo para el subtitulo de fecha
+const Title = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.text};
+  margin: 0;
+  line-height: 1.2;
+`;
+const SubTitle = styled.span`
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+  line-height: 1.2;
+`;
 const TooltipContainer = styled.div` background: ${({ theme }) => theme.bg}; padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 1px solid ${({ theme }) => theme.bordercolorDash}; `;
 const DateLabel = styled.div` font-size: 12px; color: #888; margin-bottom: 4px; `;
 const ValueLabel = styled.div` font-size: 16px; font-weight: 800; color: ${({ theme }) => theme.text}; `;

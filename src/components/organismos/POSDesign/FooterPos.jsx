@@ -56,8 +56,9 @@ export function FooterPos() {
 }
 const Footer = styled.section`
   grid-area: footer;
-  /* background-color: rgba(57, 231, 26, 0.5); */
+  align-items: flex-start;
   display: none;
+  padding-top: 4px;
 
   @media ${Device.desktop} {
     display: flex;
@@ -66,5 +67,6 @@ const Footer = styled.section`
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
   }
 `;

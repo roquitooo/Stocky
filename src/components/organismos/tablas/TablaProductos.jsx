@@ -45,6 +45,7 @@ export function TablaProductos({
   SetopenRegistro,
   setdataSelect,
   setAccion,
+  ocultarPrecioCompra = false,
   rowSelection,
   setRowSelection
 }) {
@@ -161,7 +162,7 @@ export function TablaProductos({
       header: "Se vende por",
       cell: (info) => (
         <div className="ContentCell">
-          <span>{info.getValue()}</span>
+          <span>{String(info.getValue() || "").toUpperCase() === "GRANEL" ? "GRAMOS" : info.getValue()}</span>
         </div>
       ),
     },
@@ -186,7 +187,7 @@ export function TablaProductos({
         </div>
       ),
     },
-  ], []);
+  ].filter((column) => !(ocultarPrecioCompra && column.accessorKey === "p_compra")), [ocultarPrecioCompra]);
 
   const table = useReactTable({
     data,

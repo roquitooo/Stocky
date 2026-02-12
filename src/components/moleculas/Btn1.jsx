@@ -10,6 +10,9 @@ export function Btn1({
   disabled,
   width,border,height,decorador,imagen
 }) {
+  const esBotonNuevo =
+    typeof titulo === "string" && titulo.trim().toLowerCase() === "nuevo";
+
   return (
     <Container
       $width={width}
@@ -21,6 +24,7 @@ export function Btn1({
       $border={border}
       $decorador={decorador}
       $height={height}
+      $isNew={esBotonNuevo}
     >
       <section className="content">
         <Icono $color={color}>{icono}</Icono>
@@ -44,16 +48,25 @@ const Container = styled.button`
   font-weight: 700;
   display: flex;
   font-size: 15px;
-  padding: 10px 25px;
-  border-radius: 16px;
-  background-color: ${(props) => props.$bgcolor};
-  border: ${(props) => props.$border} solid rgba(50, 50, 50, 0.2);
-  border-bottom: 5px solid rgba(50, 50, 50, 0.2);
+  padding: ${(props) => (props.$isNew ? "10px 18px" : "10px 25px")};
+  border-radius: ${(props) => (props.$isNew ? "999px" : "16px")};
+  background: ${(props) =>
+    props.$isNew
+      ? `linear-gradient(180deg, ${props.$bgcolor || "#ffcf79"} 0%, #ffbd59 100%)`
+      : props.$bgcolor};
+  border: ${(props) =>
+    props.$isNew
+      ? "1px solid rgba(125, 74, 0, 0.35)"
+      : `${props.$border || 0} solid rgba(50, 50, 50, 0.2)`};
+  border-bottom: ${(props) =>
+    props.$isNew
+      ? "4px solid rgba(125, 74, 0, 0.25)"
+      : "5px solid rgba(50, 50, 50, 0.2)"};
   transform: translate(0, -3px);
   cursor: pointer;
   transition: 0.2s;
   transition-timing-function: linear;
-  color: ${(props) => props.$color};
+  color: ${(props) => (props.$isNew ? "#2e2a1e" : props.$color)};
   align-items: center;
   justify-content: center;
   width: ${(props) => props.$width};
@@ -74,12 +87,27 @@ const Container = styled.button`
 
   .content {
     display: flex;
-    gap: 12px;
+    gap: ${(props) => (props.$isNew ? "8px" : "12px")};
     align-items:center;
   }
+
+  .btn {
+    font-weight: ${(props) => (props.$isNew ? "800" : "700")};
+    letter-spacing: ${(props) => (props.$isNew ? "0.2px" : "normal")};
+    text-transform: ${(props) => (props.$isNew ? "capitalize" : "none")};
+  }
+
+  .content ${Icono} {
+    width: ${(props) => (props.$isNew ? "18px" : "auto")};
+    height: ${(props) => (props.$isNew ? "18px" : "auto")};
+  }
+
   &:active {
     transform: translate(0, 0);
-    border-bottom: ${(props) => props.$border} solid rgba(50, 50, 50, 0.2);
+    border-bottom: ${(props) =>
+      props.$isNew
+        ? "1px solid rgba(125, 74, 0, 0.25)"
+        : `${props.$border || 0} solid rgba(50, 50, 50, 0.2)`};
   }
   &[disabled] {
     background-color: #646464;

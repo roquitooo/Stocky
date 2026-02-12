@@ -52,6 +52,7 @@ const TicketVenta = async (output, data) => {
     Number(data?.cantidad_items || 0) ||
     productos.reduce((acc, item) => acc + Number(item?._cantidad || 0), 0);
   const nroTicket = getNumeroTicket();
+
   const textLenMeta =
     String(data?.sucursal || "").length +
     String(data?.vendedor || "").length +
@@ -59,14 +60,13 @@ const TicketVenta = async (output, data) => {
   const extraMetaHeight = Math.ceil(textLenMeta / 45) * 9;
   const estimatedProductLines = productos.reduce((acc, item) => {
     const name = String(item?.nombre || item?._descripcion || "Producto");
-    // Aproximacion de ancho util en columna "PRODUCTO"
     const lines = Math.max(1, Math.ceil(name.length / 18));
     return acc + lines;
   }, 0);
-  const estimatedTableHeight = 24 + estimatedProductLines * 12 + productos.length * 4;
+  const estimatedTableHeight = 20 + estimatedProductLines * 10 + productos.length * 3;
   const pageHeight = Math.max(
-    430,
-    Math.min(2200, 320 + extraMetaHeight + estimatedTableHeight + 120)
+    360,
+    Math.min(900, 300 + extraMetaHeight + estimatedTableHeight + 96)
   );
 
   const productTableBody = [
@@ -139,8 +139,6 @@ const TicketVenta = async (output, data) => {
       margin: [0, 3, 0, 4],
       table: {
         headerRows: 1,
-        dontBreakRows: true,
-        keepWithHeaderRows: 1,
         widths: ["15%", "43%", "20%", "22%"],
         body: productTableBody,
       },
@@ -190,7 +188,7 @@ const TicketVenta = async (output, data) => {
     { text: "Gracias por su compra", style: "footer" },
     { text: "Conserve este comprobante", style: "footerSub" },
     { text: "Todos los derechos reservados |", style: "brandFooter" },
-    { text: `© ${getYear()} STOCKY`, style: "brandFooterBold" },
+    { text: `(c) ${getYear()} STOCKY`, style: "brandFooterBold" },
   ];
 
   const styles = {

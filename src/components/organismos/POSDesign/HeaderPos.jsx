@@ -76,16 +76,12 @@ export function HeaderPos() {
       setBuscador("");
     }
   };
-
-  // Mantener el foco automático si la lectora está activa
+  // En modo lectora, enfocamos solo al activarlo (sin secuestrar foco global)
   useEffect(() => {
-    const handleGlobalClick = () => {
-      if (stateLectora && buscadorRef.current) {
-        buscadorRef.current.focus();
-      }
-    };
-    document.addEventListener("click", handleGlobalClick);
-    return () => document.removeEventListener("click", handleGlobalClick);
+    if (!stateLectora) return;
+    if (buscadorRef.current) {
+      buscadorRef.current.focus();
+    }
   }, [stateLectora]);
 
   // --- FUNCIONES DE INTERFAZ ---
@@ -271,6 +267,7 @@ const Header = styled.div`
     width: 100%;
     display: grid;
     grid-template-areas: "area1 area2" "area3 area3";
+    align-items: center;
     .area1 { grid-area: area1; }
     .area2 { grid-area: area2; }
     .area3 { grid-area: area3; }
@@ -284,10 +281,21 @@ const Header = styled.div`
       font-weight: 700;
       img { width: 30px; object-fit: contain; }
     }
+    .contentfecha {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      min-width: 170px;
+      flex-shrink: 0;
+    }
     @media (max-width: 520px) {
       gap: 8px;
       .contentlogo span {
         font-size: 13px;
+      }
+      .contentfecha {
+        min-width: 100%;
+        justify-content: center;
       }
     }
   }
@@ -359,3 +367,4 @@ const Contentuser = styled.div`
     .usuario { font-weight: 700; }
   }
 `;
+

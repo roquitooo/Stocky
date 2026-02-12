@@ -176,9 +176,11 @@ const Name = styled.span`
 `;
 
 const Subtitle = styled.p`
-  font-size: 18px;
+  font-size: 12px;
+  font-weight: 500;
   color: #6b7280;
   margin: 5px 0 0;
+  line-height: 1.2;
 `;
 const Container = styled.div`
   padding: 20px;
@@ -200,8 +202,8 @@ const Header = styled.div`
 `;
 
 const Title = styled.h3`
-  font-size: 25px;
-  font-weight: bold;
+  font-size: 18px;
+  font-weight: 700;
   color: ${({ theme }) => theme.text};
   margin: 0;
 `;  

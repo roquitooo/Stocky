@@ -4,10 +4,11 @@ import { BtnClose } from "../../ui/buttons/BtnClose";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { SelectList } from "../../ui/lists/SelectList";
 import { BarLoader } from "react-spinners";
 import { PermisosUser } from "../UsuariosDesign/PermisosUser";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { InputText } from "./InputText";
 import { Btn1 } from "../../moleculas/Btn1";
@@ -19,6 +20,7 @@ import { useRolesStore } from "../../../store/RolesStore";
 import { usePermisosStore } from "../../../store/PermisosStore";
 
 export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
+  const [showPass, setShowPass] = useState(false);
   const queryClient = useQueryClient();
   const { mostrarCajaXSucursal } = useCajasStore();
   const { insertarUsuario, editarUsuario } = useUsuariosStore();
@@ -170,16 +172,24 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
                   <label htmlFor="email" className="form__label">Email</label>
                 </InputText>
               </article>
-              <article>
+              <article className="pass-row">
                 <InputText icono={<Icon icon="mdi:password" />}>
                   <input
                     id="pass"
-                    className="form__field"
-                    type="password"
+                    className="form__field pass-field"
+                    type={showPass ? "text" : "password"}
                     autoComplete={accion === "Editar" ? "new-password" : "current-password"}
                     {...register("pass", { required: accion !== "Editar" })}
                   />
                   <label htmlFor="pass" className="form__label">Contrasena</label>
+                  <button
+                    type="button"
+                    className="pass-toggle-inline"
+                    onClick={() => setShowPass((prev) => !prev)}
+                    aria-label={showPass ? "Ocultar contrasena" : "Mostrar contrasena"}
+                  >
+                    {showPass ? <FiEyeOff /> : <FiEye />}
+                  </button>
                 </InputText>
               </article>
 
@@ -257,14 +267,84 @@ const Container = styled.div`
   .loading-text { font-size: 20px; font-weight: bold; background: #fff; padding: 20px; border-radius: 10px; }
 `;
 const Form = styled.form`
-  display: flex; flex-direction: column; gap: 15px; background-color: ${({ theme }) => theme.body}; padding: 20px; border-radius: 8px; position: relative; overflow-y: auto; max-height: 90vh; width: 100%; margin: 10px; border: 1px solid ${({ theme }) => theme.bg};
-  .main {
-    display: flex; flex-direction: column; gap: 15px; overflow-y: auto;
-    @media (min-width: 768px) { flex-direction: row; }
-    .area1 { display: flex; flex-direction: column; gap: 10px; flex: 1; }
-    .area2 { flex: 1; border-left: 1px dashed #ccc; padding-left: 15px; }
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background-color: ${({ theme }) => theme.body};
+  padding: 20px;
+  border-radius: 8px;
+  position: relative;
+  overflow-y: auto;
+  max-height: 90vh;
+  width: 100%;
+  margin: 10px;
+  border: 1px solid ${({ theme }) => theme.bg};
+
+  /* Ajuste del campo de contraseña */
+  .pass-row {
+    position: relative; /* Asegura que el contenido se contenga aquí */
   }
-  .contentasignacion { display: flex; flex-direction: column; gap: 5px; span { font-size: 14px; font-weight: 600; } }
+
+  .pass-field {
+    padding-right: 40px; /* Espacio suficiente para que el texto no toque el ojo */
+  }
+
+  .pass-toggle-inline {
+    position: absolute;
+    right: 10px;      /* Un poco de margen derecho */
+    top: 50%;         /* Centrado vertical perfecto */
+    transform: translateY(-50%); /* Corrección exacta del centro */
+    border: none;
+    background: transparent;
+    color: #ffbd59;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    z-index: 2;
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+    @media (min-width: 768px) {
+      flex-direction: row;
+    }
+    .area1 {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      > article {
+        width: 100%;
+        max-width: 230px;
+      }
+      > article .form__group {
+        width: 100%;
+      }
+    }
+    .area2 {
+      flex: 1;
+      border-left: 1px dashed #ccc;
+      padding-left: 15px;
+    }
+  }
+
+  .contentasignacion {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    span {
+      font-size: 14px;
+      font-weight: 600;
+    }
+  }
 `;
 const Header = styled.div` width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;`;
 const Title = styled.span` font-size: 24px; font-weight: bold; `;

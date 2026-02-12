@@ -74,7 +74,7 @@ export function Productos() {
   });
 
   const { data: lowStockProductIds = [], isLoading: isLoadingLowStock } = useQuery({
-    queryKey: ["productos bajo stock ids", { id_sucursal, filtroBajoStock }],
+    queryKey: ["productos bajo stock ids", { id_sucursal }],
     queryFn: async () => {
       if (!id_sucursal) return [];
       const { data, error } = await supabase
@@ -89,7 +89,7 @@ export function Productos() {
         .map((row) => Number(row?.id_producto))
         .filter((id) => Number.isFinite(id));
     },
-    enabled: filtroBajoStock && !!id_sucursal,
+    enabled: !!id_sucursal,
     refetchOnWindowFocus: false,
   });
   
@@ -129,6 +129,7 @@ export function Productos() {
     <ProductosTemplate
       isLoading={isLoading}
       lowStockProductIds={lowStockProductIds}
+      isLoadingLowStock={isLoadingLowStock}
     />
   );
 } 

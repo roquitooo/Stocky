@@ -28,9 +28,11 @@ export function RegistrarProductos({
   dataSelect,
   accion,
   setIsExploding,
+  esCajero = false,
   state,
 }) {
   if (!state) return null;
+  const isCajeroEditando = esCajero && accion === "Editar";
 
   const queryClient = useQueryClient();
 
@@ -46,7 +48,7 @@ export function RegistrarProductos({
     } else {
       setIsChecked1(false);
       setIsChecked2(true);
-      setSevendepor("GRANEL");
+      setSevendepor("GRAMOS");
     }
   };
 
@@ -155,14 +157,24 @@ export function RegistrarProductos({
       const p = {
         _id: dataSelect.id,
         _nombre: ConvertirMinusculas(data.nombre),
-        _precio_venta: parseFloat(data.precio_venta),
-        _precio_compra: parseFloat(data.precio_compra),
+        _precio_venta: isCajeroEditando
+          ? Number(dataSelect?.precio_venta ?? 0)
+          : parseFloat(data.precio_venta),
+        _precio_compra: isCajeroEditando
+          ? Number(dataSelect?.precio_compra ?? 0)
+          : parseFloat(data.precio_compra),
         _id_categoria: categoriaItemSelect.id,
-        _codigo_barras: randomCodebarras ? randomCodebarras : codigogenerado,
-        _codigo_interno: randomCodeinterno ? randomCodeinterno : codigogenerado,
+        _codigo_barras: isCajeroEditando
+          ? dataSelect?.codigo_barras
+          : randomCodebarras ? randomCodebarras : codigogenerado,
+        _codigo_interno: isCajeroEditando
+          ? dataSelect?.codigo_interno
+          : randomCodeinterno ? randomCodeinterno : codigogenerado,
         _id_empresa: dataempresa.id,
-        _sevende_por: sevendepor,
-        _maneja_inventarios: stateInventarios,
+        _sevende_por: isCajeroEditando ? dataSelect?.sevende_por : sevendepor,
+        _maneja_inventarios: isCajeroEditando
+          ? Boolean(dataSelect?.maneja_inventarios)
+          : stateInventarios,
       };
       await editarProductos(p);
 
@@ -191,7 +203,7 @@ export function RegistrarProductos({
       const p = {
         _nombre: ConvertirMinusculas(data.nombre),
         _precio_venta: parseFloat(data.precio_venta),
-        _precio_compra: parseFloat(data.precio_compra),
+        _precio_compra: esCajero ? 0 : parseFloat(data.precio_compra),
         _id_categoria: categoriaItemSelect.id,
         _codigo_barras: randomCodebarras ? randomCodebarras : codigogenerado,
         _codigo_interno: randomCodeinterno ? randomCodeinterno : codigogenerado,
@@ -215,6 +227,7 @@ export function RegistrarProductos({
   }
 
   function checkUseInventarios() {
+    if (isCajeroEditando) return;
     if (accion === "Editar") {
       if (dataalmacen) {
         if (stateInventarios) {
@@ -250,7 +263,7 @@ export function RegistrarProductos({
     if (!randomCodeinterno) generarCodigoInterno();
     if (!randomCodebarras) generarCodigoBarras();
     if (data.precio_venta.toString().trim() === "") data.precio_venta = 0;
-    if (data.precio_compra.toString().trim() === "") data.precio_compra = 0;
+    if (!esCajero && data.precio_compra?.toString().trim() === "") data.precio_compra = 0;
     if (stateInventarios) {
       if (!data.stock || data.stock.toString().trim() === "") data.stock = 0;
       if (!data.stock_minimo || data.stock_minimo.toString().trim() === "") data.stock_minimo = 0;
@@ -290,7 +303,7 @@ export function RegistrarProductos({
         setValue("precio_venta", dataSelect.precio_venta);
         setValue("precio_compra", dataSelect.precio_compra);
     }
-  }, []);
+  }, [accion, dataSelect, esCajero, setValue]);
 
   return (
     <Container>
@@ -341,6 +354,7 @@ export function RegistrarProductos({
                     // defaultValue quitado
                     type="number"
                     placeholder="precio venta"
+                    disabled={isCajeroEditando}
                     {...register("precio_venta")}
                   />
                   <label className="form__label">Precio venta</label>
@@ -351,9 +365,9 @@ export function RegistrarProductos({
                   <input
                     step="0.01"
                     className="form__field"
-                    // defaultValue quitado
                     type="number"
                     placeholder="precio compra"
+                    disabled={isCajeroEditando}
                     {...register("precio_compra")}
                   />
                   <label className="form__label">Precio compra</label>
@@ -363,17 +377,21 @@ export function RegistrarProductos({
               {/* ... (SECCION DE CODIGOS DE BARRAS IGUAL) ... */}
                <article className="contentPadregenerar">
                 <InputText icono={<v.iconoflechaderecha />}>
-                  <input className="form__field" value={randomCodebarras} onChange={handleChangebarras} type="text" placeholder="codigo de barras" />
+                  <input className="form__field" value={randomCodebarras} onChange={handleChangebarras} type="text" placeholder="codigo de barras" disabled={isCajeroEditando} />
                   <label className="form__label">Codigo de barras</label>
                 </InputText>
-                <ContainerBtngenerar><Btngenerarcodigo titulo="Generar" funcion={generarCodigoBarras} /></ContainerBtngenerar>
+                {!isCajeroEditando && (
+                  <ContainerBtngenerar><Btngenerarcodigo titulo="Generar" funcion={generarCodigoBarras} /></ContainerBtngenerar>
+                )}
               </article>
               <article className="contentPadregenerar">
                 <InputText icono={<v.iconoflechaderecha />}>
-                  <input className="form__field" value={randomCodeinterno} onChange={handleChangeinterno} type="text" placeholder="codigo interno" />
+                  <input className="form__field" value={randomCodeinterno} onChange={handleChangeinterno} type="text" placeholder="codigo interno" disabled={isCajeroEditando} />
                   <label className="form__label">Codigo interno</label>
                 </InputText>
-                <ContainerBtngenerar><Btngenerarcodigo titulo="Generar" funcion={generarCodigoInterno} /></ContainerBtngenerar>
+                {!isCajeroEditando && (
+                  <ContainerBtngenerar><Btngenerarcodigo titulo="Generar" funcion={generarCodigoInterno} /></ContainerBtngenerar>
+                )}
               </article>
 
             </section>
@@ -384,12 +402,12 @@ export function RegistrarProductos({
                 <label>UNIDAD </label>{" "}
                 <Checkbox1
                   isChecked={isChecked1}
-                  onChange={() => handleCheckboxChange(1)}
+                  onChange={() => !isCajeroEditando && handleCheckboxChange(1)}
                 />
                 <label>Gramos</label>{" "}
                 <Checkbox1
                   isChecked={isChecked2}
-                  onChange={() => handleCheckboxChange(2)}
+                  onChange={() => !isCajeroEditando && handleCheckboxChange(2)}
                 />
               </ContainerSelector>
 
@@ -415,7 +433,7 @@ export function RegistrarProductos({
                 <label>Controlar stock: </label>
                 <Switch1
                   state={stateInventarios}
-                  setState={checkUseInventarios}
+                  setState={isCajeroEditando ? () => {} : checkUseInventarios}
                 />
               </ContainerSelector>
 
@@ -426,6 +444,7 @@ export function RegistrarProductos({
                     <Selector
                       state={stateSucursalesLista}
                       funcion={() =>
+                        !isCajeroEditando &&
                         setStateSucursalesLista(!stateSucursalesLista)
                       }
                       texto1="🏬"
@@ -434,11 +453,12 @@ export function RegistrarProductos({
                     />
                     <ListaDesplegable
                       refetch={refetch}
-                      funcion={selectSucursal}
+                      funcion={isCajeroEditando ? () => {} : selectSucursal}
                       state={stateSucursalesLista}
                       data={dataSucursales}
                       top="4rem"
                       setState={() =>
+                        !isCajeroEditando &&
                         setStateSucursalesLista(!stateSucursalesLista)
                       }
                     />

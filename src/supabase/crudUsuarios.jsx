@@ -4,7 +4,7 @@ const tabla = "usuarios";
 export async function MostrarUsuarios(p) {
   const { data, error } = await supabase
     .from(tabla)
-    .select()
+    .select("*, roles(id, nombre)")
     .eq("id_auth", p.id_auth)
     .maybeSingle();
   if (error) {

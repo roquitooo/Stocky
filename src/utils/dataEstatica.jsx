@@ -11,7 +11,7 @@ export const DesplegableUser = [
     tipo: "miperfil",
   },
   {
-    text: "Configuracion",
+    text: "Configuración",
     icono: <v.iconoSettings/>,
     tipo: "configuracion",
   },

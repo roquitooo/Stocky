@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { Header } from "../components/organismos/header/Header";
 import { Spinner1 } from "../components/moleculas/Spinner1";
@@ -10,13 +11,18 @@ import { useUsuariosStore } from "../store/UsuariosStore";
 import { useSucursalesStore } from "../store/SucursalesStore";
 import { AlertaStock } from "../components/organismos/AlertaStock";
 import { Footer } from "../components/organismos/Footer";
+import { UserAuth } from "../context/AuthContent";
 
 export function Layout({ children }) {
   const location = useLocation();
+  const isConfiguracionRoot = location.pathname === "/configuracion";
+  const navigate = useNavigate();
+  const { cerrarSesion } = UserAuth();
   const { mostrarusuarios } = useUsuariosStore();
   const { mostrarempresa, mostrarempresaPorId } = useEmpresaStore();
   const { mostrarPermisosGlobales } = usePermisosStore();
   const { mostrarSucursalesAsignadas } = useSucursalesStore();
+  const [segundosParaRedirigir, setSegundosParaRedirigir] = useState(5);
 
   const {
     data: datausuarios,
@@ -91,6 +97,33 @@ export function Layout({ children }) {
     isLoadingPermisosGlobales;
   const error =
     errorUsuarios || errorEmpresa || errorSucursales || errorPermisosGlobales;
+  const sinEmpresaAsignada = !isLoading && !error && !dataEmpresa?.id;
+
+  useEffect(() => {
+    if (!sinEmpresaAsignada) {
+      setSegundosParaRedirigir(5);
+      return;
+    }
+
+    setSegundosParaRedirigir(5);
+
+    const intervalId = setInterval(() => {
+      setSegundosParaRedirigir((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        await cerrarSesion();
+      } finally {
+        navigate("/login", { replace: true });
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(intervalId);
+      clearTimeout(timeoutId);
+    };
+  }, [sinEmpresaAsignada, cerrarSesion, navigate]);
 
   if (isLoading) {
     return (
@@ -123,7 +156,10 @@ export function Layout({ children }) {
   if (!dataEmpresa?.id) {
     return (
       <ContainerLoading>
-        <span>Tu usuario no tiene empresa asignada. Contacta al administrador.</span>
+        <ContainerMensaje>
+          <span>Tu usuario no tiene empresa asignada. Contacta al administrador.</span>
+          <span>Seras redirigido al login en {segundosParaRedirigir} segundos...</span>
+        </ContainerMensaje>
       </ContainerLoading>
     );
   }
@@ -134,7 +170,7 @@ export function Layout({ children }) {
       <section className="header-section">
         <Header />
       </section>
-      <ContainerBody>{children}</ContainerBody>
+      <ContainerBody $fullBleed={isConfiguracionRoot}>{children}</ContainerBody>
       {location.pathname !== "/pos" && (
         <section className="footer-section">
           <Footer />
@@ -175,7 +211,7 @@ const ContainerBody = styled.section`
   width: 100%;
   overflow-y: auto;
   min-height: 0;
-  padding: clamp(10px, 2vw, 20px);
+  padding: ${({ $fullBleed }) => ($fullBleed ? "0" : "clamp(10px, 2vw, 20px)")};
   position: relative;
 
   &::-webkit-scrollbar {
@@ -203,4 +239,12 @@ const ContainerLoading = styled.div`
   left: 0;
   z-index: 999;
   color: ${({ theme }) => theme.text};
+`;
+
+const ContainerMensaje = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
 `;
