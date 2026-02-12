@@ -2,8 +2,11 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { BarLoader } from "react-spinners";
 // 👇 CORRECCIÓN 1: Imports directos para evitar bucles de dependencias
 import { supabase } from "../supabase/supabase.config";
-import { MostrarUsuarios } from "../supabase/crudUsuarios"; // Importa directo
+import { InsertarUsuarios, MostrarUsuarios } from "../supabase/crudUsuarios"; // Importa directo
 import { InsertarEmpresa } from "../supabase/crudEmpresa";   // Importa directo
+import { MostrarRolesXnombre } from "../supabase/crudRol";
+import { MostrarModulos } from "../supabase/crudModulos";
+import { InsertarPermisos } from "../supabase/crudPermisos";
 
 const AuthContext = createContext();
 
@@ -24,11 +27,13 @@ export const AuthContextProvider = ({ children }) => {
 
         // Si hay sesión, guardamos el usuario y verificamos datos
         setUser(session.user);
-        
-        // Ejecutamos tu lógica de inserción en segundo plano
-        // (No bloqueamos el renderizado por esto, para que sea rápido)
-        insertarDatos(session.user.id, session.user.email);
-        
+
+        // Evita loop infinito de loading si alguna llamada a Supabase se cuelga.
+        await Promise.race([
+          insertarDatos(session.user),
+          new Promise((resolve) => setTimeout(resolve, 8000)),
+        ]);
+
         setIsReady(true);
       }
     );
@@ -38,14 +43,54 @@ export const AuthContextProvider = ({ children }) => {
     };
   }, []);
 
-  const insertarDatos = async (id_auth, correo) => {
+  const insertarDatos = async (user) => {
+    const id_auth = user?.id;
+    const correo = user?.email || "";
+    const nombreBase =
+      user?.user_metadata?.full_name ||
+      user?.user_metadata?.name ||
+      correo.split("@")[0] ||
+      "Usuario";
+
+    if (!id_auth) return;
+
     try {
-      const response = await MostrarUsuarios({ id_auth: id_auth });
-      if (response) {
+      const response = await MostrarUsuarios({ id_auth });
+      if (response?.id) {
         return;
-      } else {
-        // Si no existe, creamos la empresa (según tu lógica original)
-        await InsertarEmpresa({ id_auth: id_auth, correo: correo });
+      }
+
+      // Flujo original: crear empresa inicial (si tu BD tiene trigger, puede crear usuario aquí).
+      await InsertarEmpresa({ id_auth, correo });
+
+      // Re-validamos por si el trigger ya creó usuario/permisos.
+      const usuarioPostEmpresa = await MostrarUsuarios({ id_auth });
+      if (usuarioPostEmpresa?.id) return;
+
+      // Fallback robusto: crear usuario en tabla public.usuarios.
+      const rolAdmin = await MostrarRolesXnombre({ nombre: "admin" });
+      const usuarioNuevo = await InsertarUsuarios({
+        nombres: nombreBase,
+        correo,
+        id_auth,
+        id_rol: rolAdmin?.id ?? null,
+      });
+
+      // Si existe rol admin, damos acceso completo a módulos.
+      if (usuarioNuevo?.id && rolAdmin?.id) {
+        const modulos = await MostrarModulos();
+        await Promise.all(
+          (modulos || []).map(async (modulo) => {
+            try {
+              await InsertarPermisos({
+                id_usuario: usuarioNuevo.id,
+                idmodulo: modulo.id,
+              });
+            } catch {
+              // Evita cortar login por duplicados o RLS puntuales.
+            }
+          })
+        );
       }
     } catch (error) {
       console.error("Error al insertar datos iniciales:", error);

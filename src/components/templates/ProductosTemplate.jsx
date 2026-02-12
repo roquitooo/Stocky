@@ -52,6 +52,15 @@ export function ProductosTemplate({
     generarCodigo();
   }
 
+  function aplicarFiltroBajoStock() {
+    navigate("/configuracion/productos?filtro=bajo-stock");
+  }
+
+  function limpiarFiltroBajoStock() {
+    setBuscador("");
+    navigate("/configuracion/productos");
+  }
+
   return (
     <Container>
       {openRegistro && (
@@ -100,17 +109,16 @@ export function ProductosTemplate({
         <button
           type="button"
           className={`chip-lowstock ${filtroBajoStock ? "active" : ""}`}
-          onClick={() =>
-            navigate(
-              filtroBajoStock
-                ? "/configuracion/productos"
-                : "/configuracion/productos?filtro=bajo-stock"
-            )
-          }
+          onClick={aplicarFiltroBajoStock}
         >
-          {filtroBajoStock
-            ? `Bajo stock activo: ${productosFiltrados.length} producto(s) - Quitar filtro`
-            : `Ver productos con bajo stock (${isLoadingLowStock ? "..." : lowStockProductIds.length})`}
+          {`Aplicar filtro bajo stock (${isLoadingLowStock ? "..." : lowStockProductIds.length})`}
+        </button>
+        <button
+          type="button"
+          className="chip-lowstock clear"
+          onClick={limpiarFiltroBajoStock}
+        >
+          Limpiar filtro
         </button>
       </section>
 
@@ -185,5 +193,11 @@ const Container = styled.div`
     border-color: #f2b84f;
     background: linear-gradient(180deg, #ffcf79 0%, #ffbd59 100%);
     color: #7d4a00;
+  }
+
+  .chip-lowstock.clear {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: ${({ theme }) => theme.bgtotal};
+    color: ${({ theme }) => theme.text};
   }
 `;
