@@ -360,19 +360,21 @@ export function RegistrarProductos({
                   <label className="form__label">Precio venta</label>
                 </InputText>
               </article>
-              <article>
-                <InputText icono={<v.iconoflechaderecha />}>
-                  <input
-                    step="0.01"
-                    className="form__field"
-                    type="number"
-                    placeholder="precio compra"
-                    disabled={isCajeroEditando}
-                    {...register("precio_compra")}
-                  />
-                  <label className="form__label">Precio compra</label>
-                </InputText>
-              </article>
+              {!esCajero && (
+                <article>
+                  <InputText icono={<v.iconoflechaderecha />}>
+                    <input
+                      step="0.01"
+                      className="form__field"
+                      type="number"
+                      placeholder="precio compra"
+                      disabled={isCajeroEditando}
+                      {...register("precio_compra")}
+                    />
+                    <label className="form__label">Precio compra</label>
+                  </InputText>
+                </article>
+              )}
              
               {/* ... (SECCION DE CODIGOS DE BARRAS IGUAL) ... */}
                <article className="contentPadregenerar">
