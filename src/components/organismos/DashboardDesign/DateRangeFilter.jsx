@@ -6,9 +6,14 @@ import { useDashboardStore } from "../../../store/DashboardStore";
 const { RangePicker } = DatePicker;
 
 export const DateRangeFilter = () => {
+  const getAllRange = () => {
+    const startDate = dayjs("2000-01-01").startOf("day");
+    const endDate = dayjs().endOf("day");
+    return [startDate, endDate];
+  };
+
   const [dates, setDates] = useState([
-    dayjs("2025-01-01"),
-    dayjs("2025-12-31"),
+    ...getAllRange(),
   ]);
 
   const [singleDate, setSingleDate] = useState(null);
@@ -18,8 +23,7 @@ export const DateRangeFilter = () => {
 
   //para mostrar todas las fechas
   const setSiempreRange = () => {
-    const startDate = dayjs("2025-01-01");
-    const endDate = dayjs("2025-12-31");
+    const [startDate, endDate] = getAllRange();
     setDates([startDate, endDate]);
     setActiveRange("Todo");
     setRangoFechas(

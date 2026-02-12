@@ -3,8 +3,9 @@ import fondocuadros from "../../assets/Logofondo.svg";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { useModulosStore } from "../../index";
+import { usePermisosStore } from "../../index";
 export function ConfiguracionesTemplate() {
-  const {dataModulos} = useModulosStore();
+  const {dataPermisosConfiguracion} = usePermisosStore();
   useEffect(() => {
     const handleMouseMove = (e) => {
       document.querySelectorAll(".card").forEach((card) => {
@@ -26,24 +27,24 @@ export function ConfiguracionesTemplate() {
   return (
     <Container>
       <div id="cards">
-        {dataModulos.map((item, index) => {
+        {dataPermisosConfiguracion.map((item, index) => {
           return (
             <Link
-              to={item.link}
-              className={item.state ? "card" : "card false"}
+              to={item.modulos.link}
+              className={item.modulos.state ? "card" : "card false"}
               key={index}
             >
               <div className="card-content">
                 <div className="card-image">
-                  <img src={item.icono} />
+                  <img src={item.modulos.icono} />
                 </div>
 
                 <div className="card-info-wrapper">
                   <div className="card-info">
                     <i className="fa-duotone fa-unicorn"></i>
                     <div className="card-info-title">
-                      <h3>{item.nombre}</h3>
-                      <h4>{item.descripcion}</h4>
+                      <h3>{item.modulos.nombre}</h3>
+                      <h4>{item.modulos.descripcion}</h4>
                     </div>
                   </div>
                 </div>

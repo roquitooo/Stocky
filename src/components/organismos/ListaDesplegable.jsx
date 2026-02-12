@@ -15,12 +15,12 @@ export function ListaDesplegable({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const dropdownRef = useRef(null);
   function seleccionar(p) {
-    if (refetch) {
-      refetch();
-    }
 
     funcion(p);
     setState();
+    if (refetch) {
+      refetch();
+    }
     if (funcioncrud) {
       funcioncrud();
     }

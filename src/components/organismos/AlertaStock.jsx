@@ -57,8 +57,11 @@ export const AlertaStock = () => {
                 action: {
                   label: "VER",
                   onClick: () => {
-                    setBuscador(nombreProducto);
-                    navigate("/configuracion/productos");
+                    navigate("/configuracion/productos", {
+                      state: { fromStockAlert: true, search: nombreProducto }
+                    });
+                    setBuscador(nombreProducto); // Esto hará que el buscador filtre por ese producto al entrar a la página.
+                    
                   },
                 },
               }

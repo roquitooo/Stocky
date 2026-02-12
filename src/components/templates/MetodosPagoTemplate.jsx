@@ -9,7 +9,6 @@ import {
 import { v } from "../../styles/variables";
 import { TablaCategorias } from "../organismos/tablas/TablaCategorias";
 import { useState } from "react";
-import ConfettiExplosion from "react-confetti-explosion";
 import { RegistrarMetodosPago } from "../organismos/formularios/RegistrarMetodosPago";
 import { TablaMetodosPago } from "../organismos/tablas/TablaMetodosPago";
 
@@ -47,7 +46,6 @@ export function MetodosPagoTemplate() {
      
 
       <section className="main">
-        {isExploding && <ConfettiExplosion />}
         <TablaMetodosPago setdataSelect={setdataSelect} setAccion={setAccion} SetopenRegistro={SetopenRegistro} data={dataMetodosPago} />
       </section>
     </Container>

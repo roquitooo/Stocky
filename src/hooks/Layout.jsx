@@ -1,22 +1,23 @@
 import styled from "styled-components";
-import {
-  Header,
-  Spinner1,
-  useEmpresaStore,
-  useUsuariosStore,
-  useSucursalesStore,
-} from "../index";
 import { useQuery } from "@tanstack/react-query";
-// 1. IMPORTAMOS EL COMPONENTE DE ALERTA
-import { AlertaStock } from "../components/organismos/AlertaStock"; 
+import { useLocation } from "react-router-dom";
 
+import { Header } from "../components/organismos/header/Header";
+import { Spinner1 } from "../components/moleculas/Spinner1";
+import { useEmpresaStore } from "../store/EmpresaStore";
+import { usePermisosStore } from "../store/PermisosStore";
+import { useUsuariosStore } from "../store/UsuariosStore";
+import { useSucursalesStore } from "../store/SucursalesStore";
+import { AlertaStock } from "../components/organismos/AlertaStock";
+import { Footer } from "../components/organismos/Footer";
 
 export function Layout({ children }) {
+  const location = useLocation();
   const { mostrarusuarios } = useUsuariosStore();
-  const { mostrarempresa } = useEmpresaStore();
+  const { mostrarempresa, mostrarempresaPorId } = useEmpresaStore();
+  const { mostrarPermisosGlobales } = usePermisosStore();
   const { mostrarSucursalesAsignadas } = useSucursalesStore();
 
-  // 1. CARGAR USUARIO
   const {
     data: datausuarios,
     isLoading: isLoadingUsuarios,
@@ -27,32 +28,69 @@ export function Layout({ children }) {
     refetchOnWindowFocus: false,
   });
 
-  // 2. CARGAR EMPRESA (Protegido: espera al usuario)
+  const {
+    data: dataSucursalesAsignadas,
+    isLoading: isLoadingSucursales,
+    error: errorSucursales,
+  } = useQuery({
+    queryKey: ["mostrar sucursales asignadas", datausuarios?.id],
+    queryFn: async () => {
+      return await mostrarSucursalesAsignadas({ id_usuario: datausuarios?.id });
+    },
+    enabled: !!datausuarios?.id,
+    refetchOnWindowFocus: false,
+  });
+
+  const empresaIdDesdeSucursal =
+    dataSucursalesAsignadas?.[0]?.id_empresa ??
+    dataSucursalesAsignadas?.[0]?.sucursales?.id_empresa ??
+    dataSucursalesAsignadas?.[0]?.sucursal?.id_empresa;
+  const empresaIdsAsignadas = [
+    ...new Set(
+      (dataSucursalesAsignadas ?? [])
+        .map(
+          (item) =>
+            item?.id_empresa ??
+            item?.sucursales?.id_empresa ??
+            item?.sucursal?.id_empresa
+        )
+        .filter(Boolean)
+    ),
+  ];
+
   const {
     data: dataEmpresa,
     isLoading: isLoadingEmpresa,
     error: errorEmpresa,
   } = useQuery({
-    queryKey: ["mostrar empresa", datausuarios?.id],
-    queryFn: () => mostrarempresa({ _id_usuario: datausuarios?.id }),
+    queryKey: ["mostrar empresa", datausuarios?.id, empresaIdDesdeSucursal ?? null],
+    queryFn: () => {
+      if (empresaIdDesdeSucursal) {
+        return mostrarempresaPorId({ id: empresaIdDesdeSucursal });
+      }
+      return mostrarempresa({ _id_usuario: datausuarios?.id });
+    },
     enabled: !!datausuarios?.id,
     refetchOnWindowFocus: false,
   });
 
-  // 3. CARGAR SUCURSALES (Protegido: espera al usuario)
   const {
-    isLoading: isLoadingSucursales,
-    error: errorSucursales,
+    isLoading: isLoadingPermisosGlobales,
+    error: errorPermisosGlobales,
   } = useQuery({
-    queryKey: ["mostrar sucursales asignadas", datausuarios?.id],
-    queryFn: () => mostrarSucursalesAsignadas({ id_usuario: datausuarios?.id }),
+    queryKey: ["Mostrar Permisos Globales", datausuarios?.id],
+    queryFn: () => mostrarPermisosGlobales({ id_usuario: datausuarios?.id }),
     enabled: !!datausuarios?.id,
     refetchOnWindowFocus: false,
   });
 
-  // Consolidamos estados de carga
-  const isLoading = isLoadingUsuarios || isLoadingEmpresa || isLoadingSucursales;
-  const error = errorUsuarios || errorEmpresa || errorSucursales;
+  const isLoading =
+    isLoadingUsuarios ||
+    isLoadingEmpresa ||
+    isLoadingSucursales ||
+    isLoadingPermisosGlobales;
+  const error =
+    errorUsuarios || errorEmpresa || errorSucursales || errorPermisosGlobales;
 
   if (isLoading) {
     return (
@@ -70,16 +108,25 @@ export function Layout({ children }) {
     );
   }
 
-  // Protección final
-  if (!dataEmpresa?.id) {
+  if (empresaIdsAsignadas.length > 1) {
     return (
       <ContainerLoading>
-        <Spinner1 />
+        <span>
+          Tu usuario tiene sucursales asignadas en multiples empresas. Contacta
+          al administrador para corregir asignaciones.
+        </span>
       </ContainerLoading>
     );
   }
 
-  
+  // Evita spinner infinito cuando el usuario no tiene empresa vinculada.
+  if (!dataEmpresa?.id) {
+    return (
+      <ContainerLoading>
+        <span>Tu usuario no tiene empresa asignada. Contacta al administrador.</span>
+      </ContainerLoading>
+    );
+  }
 
   return (
     <Container>
@@ -87,36 +134,48 @@ export function Layout({ children }) {
       <section className="header-section">
         <Header />
       </section>
-      <ContainerBody>
-        {children}
-      </ContainerBody>
+      <ContainerBody>{children}</ContainerBody>
+      {location.pathname !== "/pos" && (
+        <section className="footer-section">
+          <Footer />
+        </section>
+      )}
     </Container>
   );
 }
 
-// --- ESTILOS VISUALES (LAYOUT TIPO MERCADO LIBRE) ---
-
 const Container = styled.main`
   display: flex;
-  flex-direction: column; 
-  height: 100vh;         
-  width: 100vw;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 100vh;
+  width: 100%;
   background-color: ${({ theme }) => theme.bgtotal};
   color: ${({ theme }) => theme.text};
-  overflow: hidden;      
+  overflow: hidden;
   transition: 0.1s ease-in-out;
-  
+
   .header-section {
-    flex-shrink: 0; 
-    z-index: 100;   
+    flex-shrink: 0;
+    z-index: 100;
+  }
+
+  .footer-section {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid rgba(145, 164, 183, 0.2);
+    background-color: ${({ theme }) => theme.bgtotal};
+    padding: 2px 0;
   }
 `;
 
 const ContainerBody = styled.section`
-  flex: 1;                
+  flex: 1;
   width: 100%;
-  overflow-y: auto;      
-  padding: 20px;
+  overflow-y: auto;
+  min-height: 0;
+  padding: clamp(10px, 2vw, 20px);
   position: relative;
 
   &::-webkit-scrollbar {

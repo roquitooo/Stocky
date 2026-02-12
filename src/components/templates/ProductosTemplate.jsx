@@ -6,25 +6,32 @@ import {
   TablaProductos,
   Title,
   useProductosStore,
-} from "../../index"; // <--- MANTENEMOS TU IMPORT ORIGINAL
+  Spinner1 // Asegúrate de importar tu spinner aquí si lo usas
+} from "../../index"; 
 import { v } from "../../styles/variables";
-import { useEffect, useState } from "react";
-import ConfettiExplosion from "react-confetti-explosion";
-// Importamos el nuevo modal
+import { useMemo, useState } from "react";
 import { AumentarPrecio } from "../organismos/formularios/AumentarPrecio";
+import { BarLoader } from "react-spinners"; // O usa Spinner1 si prefieres
+import { useLocation, useNavigate } from "react-router-dom";
 
-export function ProductosTemplate() {
+export function ProductosTemplate({ isLoading, lowStockProductIds = [] }) { // <--- Recibimos isLoading
+  const location = useLocation();
+  const navigate = useNavigate();
   const [openRegistro, SetopenRegistro] = useState(false);
   const { dataProductos, setBuscador, generarCodigo } = useProductosStore();
   const [accion, setAccion] = useState("");
   const [dataSelect, setdataSelect] = useState([]);
   const [isExploding, setIsExploding] = useState(false);
 
-  // --- ESTADOS NUEVOS PARA LA SELECCIÓN ---
   const [rowSelection, setRowSelection] = useState({});
   const [openAumento, setOpenAumento] = useState(false);
-  // Convertimos la selección a un array de IDs
   const selectedIds = Object.keys(rowSelection).map((key) => parseInt(key));
+  const filtroBajoStock = new URLSearchParams(location.search).get("filtro") === "bajo-stock";
+  const productosFiltrados = useMemo(() => {
+    if (!filtroBajoStock) return dataProductos || [];
+    const ids = new Set((lowStockProductIds || []).map((id) => Number(id)));
+    return (dataProductos || []).filter((item) => ids.has(Number(item?.id)));
+  }, [dataProductos, filtroBajoStock, lowStockProductIds]);
 
   function nuevoRegistro() {
     SetopenRegistro(!openRegistro);
@@ -37,46 +44,37 @@ export function ProductosTemplate() {
   return (
     <Container>
       {openRegistro && (
-  <RegistrarProductos
-    // ✅ AGREGAMOS ESTA LÍNEA MÁGICA:
-    // Al cambiar el ID, React destruye el formulario viejo y crea uno nuevo y limpio.
-    key={dataSelect?.id || "nuevo"} 
+        <RegistrarProductos
+          key={dataSelect?.id || "nuevo"} 
+          setIsExploding={setIsExploding}
+          onClose={() => SetopenRegistro(!openRegistro)}
+          dataSelect={dataSelect}
+          accion={accion}
+          state={openRegistro}
+        />
+      )}
 
-    setIsExploding={setIsExploding}
-    onClose={() => SetopenRegistro(!openRegistro)}
-    dataSelect={dataSelect}
-    accion={accion}
-    state={openRegistro}
-  />
-)}
-
-      {/* --- MODAL DE AUMENTO --- */}
       {openAumento && (
         <AumentarPrecio 
           selectedIds={selectedIds}
           setIsExploding={setIsExploding}
           onClose={() => {
              setOpenAumento(false);
-             setRowSelection({}); // Limpiar selección al terminar
+             setRowSelection({}); 
           }}
         />
       )}
 
       <section className="area1">
         <Title>Productos</Title>
-        
-        {/* --- BOTÓN NUEVO (Solo aparece si seleccionas productos) --- */}
         {selectedIds.length > 0 && (
              <Btn1 
                funcion={() => setOpenAumento(true)}
                bgcolor="#F3D20C" 
                color="#000"
                titulo={`Aumentar precios (${selectedIds.length})`} 
-
              />
         )}
-        {/* --------------------------------------------------------- */}
-
         <Btn1
           funcion={nuevoRegistro}
           bgcolor={v.colorPrincipal}
@@ -86,21 +84,36 @@ export function ProductosTemplate() {
       </section>
 
       <section className="area2">
+        {/* EL BUSCADOR SIEMPRE VISIBLE */}
         <Buscador setBuscador={setBuscador} />
+        {filtroBajoStock && (
+          <button
+            type="button"
+            className="chip-lowstock"
+            onClick={() => navigate("/configuracion/productos")}
+          >
+            Bajo stock activo: {productosFiltrados.length} producto(s) - Quitar filtro
+          </button>
+        )}
       </section>
 
       <section className="main">
-        {isExploding && <ConfettiExplosion />}
-        <TablaProductos 
-            setdataSelect={setdataSelect} 
-            setAccion={setAccion} 
-            SetopenRegistro={SetopenRegistro} 
-            data={dataProductos} 
-            
-            // --- PASAMOS LA SELECCIÓN A LA TABLA ---
-            rowSelection={rowSelection}
-            setRowSelection={setRowSelection}
-        />
+        {/* LÓGICA DE CARGA SOLO EN EL CUERPO */}
+        {isLoading ? (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "50px" }}>
+             <BarLoader color="#6d6d6d" /> 
+             {/* O puedes usar <Spinner1/> si prefieres */}
+          </div>
+        ) : (
+          <TablaProductos 
+              setdataSelect={setdataSelect} 
+              setAccion={setAccion} 
+              SetopenRegistro={SetopenRegistro} 
+              data={productosFiltrados} 
+              rowSelection={rowSelection}
+              setRowSelection={setRowSelection}
+          />
+        )}
       </section>
     </Container>
   );
@@ -128,8 +141,21 @@ const Container = styled.div`
     display: flex;
     justify-content: end;
     align-items: center;
+    gap: 10px;
   }
   .main {
     grid-area: main;
+  }
+
+  .chip-lowstock {
+    border: 1px solid #f2b84f;
+    background: linear-gradient(180deg, #ffcf79 0%, #ffbd59 100%);
+    color: #7d4a00;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
   }
 `;

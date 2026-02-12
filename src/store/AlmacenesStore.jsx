@@ -9,7 +9,7 @@ import {
 import { supabase } from "../supabase/supabase.config";
 
 export const useAlmacenesStore = create((set, get) => ({
-  dataalmacen: [],
+  dataalmacen: null,
   dataalmacenxsucursalxproducto: [],
   
   mostrarAlmacen: async (p) => {

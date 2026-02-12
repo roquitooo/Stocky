@@ -9,79 +9,90 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFormattedDate } from "../../../../hooks/useFormattedDate";
 import { useMetodosPagoStore } from "../../../../store/MetodosPagoStore";
 import { useMovCajaStore } from "../../../../store/MovCajaStore";
-import { toast } from "sonner"; // <--- FALTABA ESTA IMPORTACIÓN
-
-
+import { toast } from "sonner";
 
 export function PantallaAperturaCaja() {
   const [montoEfectivo, setMontoEfectivo] = useState(0);
   const fechaActual = useFormattedDate();
   const queryClient = useQueryClient();
+
   const { datausuarios } = useUsuariosStore();
-  const { dataCaja } = useCajasStore();
-  const { aperturarcaja } = useCierreCajaStore();
+  const { dataCaja, cajaSelectItem } = useCajasStore();
+
+  // ✅ NOMBRES CORRECTOS (como están en tu store)
+  const aperturarCaja = useCierreCajaStore((s) => s.aperturarCaja);
+  const mostrarCierreCaja = useCierreCajaStore((s) => s.mostrarCierreCaja);
+
   const { dataMetodosPago } = useMetodosPagoStore();
   const { insertarMovCaja } = useMovCajaStore();
 
-  const registrarMovCaja = async (p) => {
-    // Buscamos el ID del método efectivo de forma segura
-    const metodoEfectivo = dataMetodosPago.find((item) => item.nombre === "Efectivo");
-    const id_metodo_pago = metodoEfectivo ? metodoEfectivo.id : 0;
+  const cajaActiva =
+    cajaSelectItem ?? (Array.isArray(dataCaja) ? dataCaja[0] : dataCaja);
 
-    const pmovcaja = {
+  const id_caja = cajaActiva?.id;
+
+  const registrarMovCaja = async ({ id_cierre_caja, monto }) => {
+    const metodoEfectivo = (dataMetodosPago ?? []).find((m) => m.nombre === "Efectivo");
+    const id_metodo_pago = metodoEfectivo?.id ?? 0;
+
+    await insertarMovCaja({
       fecha_movimiento: fechaActual,
       tipo_movimiento: "apertura",
-      monto: montoEfectivo ? montoEfectivo : 0,
-      id_metodo_pago: id_metodo_pago,
-      descripcion: `Apertura de caja con`,
+      monto: Number.isFinite(monto) ? monto : 0,
+      id_metodo_pago,
+      descripcion: "Apertura de caja",
       id_usuario: datausuarios?.id,
-      id_cierre_caja: p.id_cierre_caja,
-    };
-
-    await insertarMovCaja(pmovcaja);
+      id_cierre_caja,
+    });
   };
 
-  const insertar = async () => {
-    // Validaciones básicas
-    if (!dataCaja?.id) {
-        toast.error("No se detectó la caja seleccionada");
-        return;
+  const insertar = async ({ monto }) => {
+    if (typeof aperturarCaja !== "function") {
+      throw new Error("aperturarCaja no está disponible en el store.");
     }
 
-    const p = {
-      fechainicio: fechaActual,
-      fechacierre: null, // <--- IMPORTANTE: Enviamos null para mantenerla abierta
+    if (!id_caja) {
+      throw new Error("No se detectó la caja seleccionada");
+    }
+
+    // 1) Abrimos caja (tu store devuelve true/false)
+    const ok = await aperturarCaja({
+      id_caja,
       id_usuario: datausuarios?.id,
-      id_caja: dataCaja.id,
-    };
-    
-    // Guardamos la apertura
-    const data = await aperturarcaja(p);
+      total_efectivo_calculado: monto, // ✅ tu store usa este campo
+      fechainicio: fechaActual,
+      fechacierre: null,
+    });
 
-    // Si se guardó bien, registramos el movimiento de dinero inicial
-    if(data?.id){
-        await registrarMovCaja({ id_cierre_caja: data.id });
+    if (!ok) {
+      throw new Error("No se pudo aperturar la caja");
     }
-    
-    return data; // Retornamos data para usarla en onSuccess
+
+    // 2) Traemos el cierre abierto para obtener el ID
+    const cierre = await mostrarCierreCaja({ id_caja });
+
+    if (!cierre?.id) {
+      throw new Error("Caja abierta, pero no pude obtener el ID del cierre");
+    }
+
+    // 3) Registramos movimiento
+    await registrarMovCaja({ id_cierre_caja: cierre.id, monto });
+
+    return cierre;
   };
 
   const mutation = useMutation({
     mutationKey: ["aperturar caja"],
     mutationFn: insertar,
-    onSuccess: (data) => {
+    onSuccess: (cierre) => {
       toast.success("Caja aperturada con éxito");
-      
-      // Actualizamos manualmente el caché para que la UI responda de inmediato
-      if(data) {
-        queryClient.setQueryData(["mostrar cierre de caja"], data);
-      }
-      
-      // Invalidamos para asegurar consistencia en segundo plano
-      queryClient.invalidateQueries(["mostrar cierre de caja"]);
+
+      // ✅ misma key que tu POS
+      queryClient.setQueryData(["mostrar cierre de caja", { id_caja }], cierre);
+      queryClient.invalidateQueries({ queryKey: ["mostrar cierre de caja"] });
     },
     onError: (error) => {
-      toast.error(`Error: ${error.message}`);
+      toast.error(error?.message ?? "Error inesperado");
     },
   });
 
@@ -93,26 +104,26 @@ export function PantallaAperturaCaja() {
         <InputText2>
           <input
             className="form__field"
-            onChange={(e) => setMontoEfectivo(parseFloat(e.target.value))}
             type="number"
             placeholder="0.00"
-          />
-        </InputText2>
-        <span>en efectivo.</span>
-        <article className="contentbtn">
-          <Btn1
-            titulo="OMITIR"
-            funcion={() => {
-              setMontoEfectivo(0);
-              mutation.mutateAsync();
+            value={Number.isFinite(montoEfectivo) ? montoEfectivo : 0}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setMontoEfectivo(Number.isFinite(v) ? v : 0);
             }}
           />
+        </InputText2>
+
+        <span>en efectivo.</span>
+
+        <article className="contentbtn">
+          <Btn1 titulo="OMITIR" funcion={() => mutation.mutateAsync({ monto: 0 })} />
           <Btn1
             titulo="APERTURAR"
             color="#ffffff"
             border="2px"
             bgcolor="#ffbd59"
-            funcion={() => mutation.mutateAsync()}
+            funcion={() => mutation.mutateAsync({ monto: montoEfectivo })}
           />
         </article>
       </section>
@@ -127,14 +138,17 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   display: flex;
+
   .area1 {
     display: flex;
     flex-direction: column;
     gap: 12px;
+
     .title {
       font-size: 19px;
       font-weight: bold;
     }
+
     .contentbtn {
       display: flex;
       gap: 12px;

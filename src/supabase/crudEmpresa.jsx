@@ -22,6 +22,14 @@ export async function MostrarEmpresaXidsuario(p) {
   const { data } = await supabase.rpc("mostrarempresaxiduser", p).maybeSingle();
   return data;
 }
+export async function MostrarEmpresaXid(p) {
+  const { data } = await supabase
+    .from(tabla)
+    .select()
+    .eq("id", p.id)
+    .maybeSingle();
+  return data;
+}
 export async function EditarMonedaEmpresa(p){
   const {error}= await supabase.from(tabla).update(p).eq("id",p.id)
   if(error){

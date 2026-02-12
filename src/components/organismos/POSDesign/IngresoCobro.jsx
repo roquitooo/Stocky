@@ -39,7 +39,8 @@ export const IngresoCobro = forwardRef((props, ref) => {
   // Stores
   const { dataMetodosPago } = useMetodosPagoStore();
   const { datausuarios } = useUsuariosStore();
-  const { sucursalesItemSelectAsignadas } = useSucursalesStore();
+  const { sucursalesItemSelect } = useSucursalesStore();
+
   const { dataempresa } = useEmpresaStore();
   const { idventa, insertarVentas, resetearventas } = useVentasStore();
   const { insertarDetalleVentas } = useDetalleVentasStore();
@@ -113,7 +114,7 @@ export const IngresoCobro = forwardRef((props, ref) => {
         fecha: fechaActual,
         id_cliente: cliproItemSelect?.id,
         id_usuario: datausuarios?.id,
-        id_sucursal: sucursalesItemSelectAsignadas?.id_sucursal,
+        _id_sucursal: sucursalesItemSelect?._id_sucursal,
         id_empresa: dataempresa?.id,
         estado: "confirmada",
         vuelto: vuelto,
@@ -138,7 +139,7 @@ export const IngresoCobro = forwardRef((props, ref) => {
                     _descripcion: item._descripcion, // Ojo: item.nombre a veces no existe aquí, usa descripcion
                     _id_producto: item._id_producto,
                     _precio_compra: item._precio_compra,
-                    _id_sucursal: sucursalesItemSelectAsignadas?.id_sucursal // Aseguramos el ID Sucursal
+                    _id_sucursal: sucursalesItemSelect?.id_sucursal // Aseguramos el ID Sucursal
                 };
                 
                 await insertarDetalleVentas(detalleLimpio);
@@ -317,8 +318,9 @@ export const IngresoCobro = forwardRef((props, ref) => {
 const Container = styled.div`
   position: relative;
   box-sizing: border-box;
-  width: 400px;
-  padding: 20px;
+  width: min(100%, 420px);
+  max-width: 420px;
+  padding: clamp(12px, 2.5vw, 20px);
   border-radius: 10px;
   box-shadow: 2px 2px 15px 0px #e2e2e2;
   gap: 10px; /* Reducido un poco para que quepa todo */
@@ -329,14 +331,14 @@ const Container = styled.div`
   min-height: 100%;
   align-items: center;
   justify-content: center;
-  font-size: 20px; /* Ajustado tamaño fuente base */
+  font-size: clamp(14px, 2.4vw, 20px);
 
   input {
     color: #000 !important;
     font-weight: 700;
   }
   /* ... (estilos de before/after ticket se mantienen) ... */
-  &:before, &:after { content: ""; position: absolute; left: 5px; height: 6px; width: 380px; }
+  &:before, &:after { content: ""; position: absolute; left: 5px; height: 6px; width: calc(100% - 10px); }
   &:before { top: -5px; background: radial-gradient(circle, transparent, transparent 50%, #fbfbfb 50%, #fbfbfb 100%) -7px -8px / 16px 16px repeat-x; }
   &:after { bottom: -5px; background: radial-gradient(circle, transparent, transparent 50%, #fbfbfb 50%, #fbfbfb 100%) -7px -2px / 16px 16px repeat-x; }
 
@@ -350,7 +352,8 @@ const Container = styled.div`
     }
   }
   .area2 {
-    input { font-size: 32px; } /* Un poco más chico para que no se corte */
+    width: 100%;
+    input { font-size: clamp(22px, 5.4vw, 32px); } /* Un poco mas chico para que no se corte */
   }
   .area3 {
     display: flex; justify-content: space-between; width: 100%;
@@ -365,3 +368,4 @@ const Linea = styled.span`
   border-bottom: dashed 1px #d4d4d4;
   margin: 5px 0;
 `;
+

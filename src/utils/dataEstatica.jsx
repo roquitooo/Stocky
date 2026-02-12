@@ -35,11 +35,6 @@ export const LinksArray = [
     label: "Empezar a vender",
     icon: "tdesign:cart-filled",
     to: "/pos",
-  },
-  {
-    label: "Inventario",
-    icon: "fluent:box-16-filled",
-    to: "/kardex",
   }
  
 ];

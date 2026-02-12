@@ -1,7 +1,16 @@
 import { Icon } from "@iconify/react";
 import styled from "styled-components";
 
-export const CardTotales = ({ title, value, percentage, caption, icon }) => {
+export const CardTotales = ({
+  title,
+  value,
+  percentage,
+  caption,
+  icon,
+  actionLabel,
+  actionIcon,
+  onAction,
+}) => {
   return (
     <Container>
       <div className="top-section">
@@ -21,6 +30,12 @@ export const CardTotales = ({ title, value, percentage, caption, icon }) => {
            </span>
         )}
         <span className="caption">{caption}</span>
+        {actionLabel && onAction && (
+          <button className="action-btn" onClick={onAction} type="button">
+            {actionIcon && <Icon icon={actionIcon} width="14" />}
+            <span>{actionLabel}</span>
+          </button>
+        )}
       </FooterSection>
     </Container>
   );
@@ -97,5 +112,26 @@ const FooterSection = styled.div`
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 11px;
+  }
+
+  .action-btn {
+    margin-top: 2px;
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    background: ${({ theme }) => theme.colorPrincipal || "#ffbd59"};
+    color: #fff;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .action-btn:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
   }
 `;

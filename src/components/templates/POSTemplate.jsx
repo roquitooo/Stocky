@@ -39,7 +39,8 @@ export function POSTemplate() {
   );
 }
 const Container = styled.div`
-  height: calc(100vh - 60px);
+  height: calc(100dvh - 60px);
+  min-height: calc(100vh - 60px);
   padding: 10px;
   padding-top: 50px;
   display: grid;
@@ -65,6 +66,7 @@ const Main = styled.div`
   width: 100%;
   position: relative;
   overflow: hidden;
+  min-height: 0;
   gap: 10px;
 
   @media ${Device.desktop} {

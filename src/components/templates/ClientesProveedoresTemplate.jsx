@@ -11,7 +11,6 @@ import {
 import { v } from "../../styles/variables";
 import { TablaCategorias } from "../organismos/tablas/TablaCategorias";
 import { useState } from "react";
-import ConfettiExplosion from "react-confetti-explosion";
 import { useLocation } from "react-router-dom";
 import { TablaClientesProveedores } from "../organismos/tablas/TablaClientesProveedores";
 export function ClientesProveedoresTemplate() {
@@ -53,7 +52,6 @@ export function ClientesProveedoresTemplate() {
       </section>
 
       <section className="main">
-        {isExploding && <ConfettiExplosion />}
         <TablaClientesProveedores setdataSelect={setdataSelect} setAccion={setAccion} SetopenRegistro={SetopenRegistro} data={dataclipro} />
       </section>
     </Container>

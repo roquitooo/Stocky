@@ -1,27 +1,56 @@
 import styled from "styled-components";
 import ticket from "../../../reports/TicketVenta";
 import { useEffect, useState } from "react";
-import { Icon } from "@iconify/react/dist/iconify.js";
 import { useCartVentasStore } from "../../../store/CartVentasStore";
-import { useEmpresaStore } from "../../../store/EmpresaStore"; // 1. Importar Store Empresa
+import { useEmpresaStore } from "../../../store/EmpresaStore";
+import { useUsuariosStore } from "../../../store/UsuariosStore";
+import { useSucursalesStore } from "../../../store/SucursalesStore";
+import { useClientesProveedoresStore } from "../../../store/ClientesProveedoresStore";
 
 export function VisorTicketVenta({ setState }) {
   const [base64, setBase64] = useState("");
-  const { items, total } = useCartVentasStore(); // 2. Traer el total
-  const { dataempresa } = useEmpresaStore(); // 3. Traer datos de empresa
+  const {
+    items,
+    total,
+    subtotal,
+    descuento,
+    tipoDescuento,
+    tipocobro,
+  } = useCartVentasStore();
+  const { dataempresa } = useEmpresaStore();
+  const { datausuarios } = useUsuariosStore();
+  const { sucursalesItemSelect } = useSucursalesStore();
+  const { cliproItemSelect } = useClientesProveedoresStore();
 
   const onGenerateTicket = async (output) => {
-    // 4. Preparamos el objeto con TODOS los datos reales
+    const sucursalNombre =
+      sucursalesItemSelect?.sucursal ||
+      sucursalesItemSelect?.nombre ||
+      "Sucursal principal";
+    const clienteNombre = cliproItemSelect?.nombres || "Cliente generico";
+    const cantidadItems = (items || []).reduce(
+      (acc, item) => acc + Number(item?._cantidad || 0),
+      0
+    );
+
     const dataParaTicket = {
-      // Tu logo fijo como fallback si no hay uno en la BD, como pediste:
       logo: dataempresa?.logo || "https://i.ibb.co/xKv00pwB/Stocky-logo.png",
       nombre_empresa: dataempresa?.nombre,
       direccion_empresa: dataempresa?.direccion_fiscal || dataempresa?.direccion,
       ruc_empresa: dataempresa?.id_fiscal || dataempresa?.identificador_fiscal,
       productos: items,
-      total: total, // Pasamos el total real
+      total,
+      subtotal,
+      descuento,
+      tipo_descuento: tipoDescuento,
       currency: dataempresa?.currency || "$",
-      iso: dataempresa?.iso || "USD"
+      iso: dataempresa?.iso || "USD",
+      vendedor: datausuarios?.nombres || "Cajero",
+      sucursal: sucursalNombre,
+      cliente: clienteNombre,
+      tipo_cobro: tipocobro || "-",
+      cantidad_items: cantidadItems,
+      fecha_emision: new Date().toISOString(),
     };
 
     const response = await ticket(output, dataParaTicket);
@@ -32,7 +61,18 @@ export function VisorTicketVenta({ setState }) {
 
   useEffect(() => {
     onGenerateTicket("b64");
-  }, []);
+  }, [
+    items,
+    total,
+    subtotal,
+    descuento,
+    tipoDescuento,
+    tipocobro,
+    dataempresa,
+    datausuarios,
+    sucursalesItemSelect,
+    cliproItemSelect,
+  ]);
 
   return (
     <Container>

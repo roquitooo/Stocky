@@ -1,103 +1,225 @@
 import { urlToBase64, FormatearNumeroDinero } from "../utils/Conversiones";
 import createPdf from "../utils/CreatePdf";
 
-const TicketVenta = async (output, data) => {
-  const logoempresa = data.logo ? await urlToBase64(data.logo) : null;
+const formatFecha = (value) => {
+  const d = new Date(value || Date.now());
+  if (Number.isNaN(d.getTime())) return "--";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${dd}/${mm}/${yyyy} ${hh}:${mi}:${ss}`;
+};
 
-  // --- CUERPO DE PRODUCTOS ---
+const getNumeroTicket = () => {
+  const now = new Date();
+  const y = String(now.getFullYear()).slice(-2);
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const h = String(now.getHours()).padStart(2, "0");
+  const mi = String(now.getMinutes()).padStart(2, "0");
+  const s = String(now.getSeconds()).padStart(2, "0");
+  return `${y}${m}${d}-${h}${mi}${s}`;
+};
+
+const getYear = () => new Date().getFullYear();
+
+const divider = {
+  canvas: [
+    {
+      type: "line",
+      x1: 0,
+      y1: 0,
+      x2: 210,
+      y2: 0,
+      lineWidth: 1,
+      dash: { length: 2 },
+      lineColor: "#8b8b8b",
+    },
+  ],
+  margin: [0, 6, 0, 6],
+};
+
+const TicketVenta = async (output, data) => {
+  const logoempresa = data?.logo ? await urlToBase64(data.logo) : null;
+  const productos = Array.isArray(data?.productos) ? data.productos : [];
+  const subtotal = Number(data?.subtotal || 0);
+  const total = Number(data?.total || 0);
+  const descuento = Number(data?.descuento || 0);
+  const cantidadItems =
+    Number(data?.cantidad_items || 0) ||
+    productos.reduce((acc, item) => acc + Number(item?._cantidad || 0), 0);
+  const nroTicket = getNumeroTicket();
+  const textLenMeta =
+    String(data?.sucursal || "").length +
+    String(data?.vendedor || "").length +
+    String(data?.cliente || "").length;
+  const extraMetaHeight = Math.ceil(textLenMeta / 45) * 9;
+  const estimatedProductLines = productos.reduce((acc, item) => {
+    const name = String(item?.nombre || item?._descripcion || "Producto");
+    // Aproximacion de ancho util en columna "PRODUCTO"
+    const lines = Math.max(1, Math.ceil(name.length / 18));
+    return acc + lines;
+  }, 0);
+  const estimatedTableHeight = 24 + estimatedProductLines * 12 + productos.length * 4;
+  const pageHeight = Math.max(
+    430,
+    Math.min(2200, 320 + extraMetaHeight + estimatedTableHeight + 120)
+  );
+
   const productTableBody = [
     [
       { text: "CANT", style: "tProductsHeader", alignment: "center" },
-      { text: "DESCRIPCIÓN", style: "tProductsHeader", alignment: "left" },
-      { text: "PRECIO", style: "tProductsHeader", alignment: "right" },
-      { text: "TOTAL", style: "tProductsHeader", alignment: "right" },
+      { text: "PRODUCTO", style: "tProductsHeader", alignment: "left" },
+      { text: "P.U.", style: "tProductsHeader", alignment: "right" },
+      { text: "IMPORTE", style: "tProductsHeader", alignment: "right" },
     ],
-    ...data.productos.map((item) => [
-      { text: item._cantidad, style: "tProductsBody", alignment: "center" },
-      { text: item.nombre || item._descripcion, style: "tProductsBody", alignment: "left" },
-      { 
-        text: FormatearNumeroDinero(item._precio_venta, data.currency, data.iso), 
-        style: "tProductsBody", 
-        alignment: "right" 
+    ...productos.map((item) => [
+      { text: Number(item?._cantidad || 0), style: "tProductsBody", alignment: "center" },
+      {
+        text: item?.nombre || item?._descripcion || "Producto",
+        style: "tProductsBody",
+        alignment: "left",
       },
-      { 
-        text: FormatearNumeroDinero(item._total, data.currency, data.iso), 
-        style: "tProductsBody", 
-        alignment: "right" 
+      {
+        text: FormatearNumeroDinero(
+          Number(item?._precio_venta || 0),
+          data?.currency,
+          data?.iso
+        ),
+        style: "tProductsBody",
+        alignment: "right",
+      },
+      {
+        text: FormatearNumeroDinero(Number(item?._total || 0), data?.currency, data?.iso),
+        style: "tProductsBody",
+        alignment: "right",
       },
     ]),
   ];
 
   const content = [
-    // LOGO Y DATOS
-    logoempresa ? {
-      image: logoempresa,
-      fit: [100, 50],
-      alignment: "center",
-      margin: [0, 0, 0, 10]
-    } : {},
-    
-    { text: data.nombre_empresa || "NOMBRE EMPRESA", style: "header" },
-    { text: data.direccion_empresa || "Dirección desconocida", style: "subHeader" },
-    { text: `RUC: ${data.ruc_empresa || "---"}`, style: "subHeader" },
-    { text: "TICKET DE VENTA", style: "ticketNumber", margin: [0, 10, 0, 10] },
-
-    // LÍNEA
-    { canvas: [{ type: 'line', x1: 0, y1: 5, x2: 200, y2: 5, lineWidth: 1, lineCap: 'round', dash: { length: 2 } }] },
-    
-    // TABLA PRODUCTOS
+    ...(logoempresa
+      ? [
+          {
+            image: logoempresa,
+            fit: [110, 54],
+            alignment: "center",
+            margin: [0, 0, 0, 6],
+          },
+        ]
+      : []),
+    { text: data?.nombre_empresa || "MI EMPRESA", style: "header" },
+    { text: data?.direccion_empresa || "Direccion no informada", style: "subHeader" },
+    { text: `ID FISCAL: ${data?.ruc_empresa || "-"}`, style: "subHeader" },
+    divider,
+    { text: "COMPROBANTE DE VENTA", style: "ticketTitle" },
     {
-      margin: [0, 10, 0, 10],
+      margin: [0, 4, 0, 0],
       table: {
-        widths: ["15%", "45%", "20%", "20%"],
-        body: productTableBody,
+        widths: ["37%", "63%"],
+        body: [
+          [{ text: "Ticket:", style: "metaLabel" }, { text: nroTicket, style: "metaValue" }],
+          [
+            { text: "Fecha:", style: "metaLabel" },
+            { text: formatFecha(data?.fecha_emision), style: "metaValue" },
+          ],
+          [{ text: "Sucursal:", style: "metaLabel" }, { text: data?.sucursal || "-", style: "metaValue" }],
+          [{ text: "Vendedor:", style: "metaLabel" }, { text: data?.vendedor || "-", style: "metaValue" }],
+          [{ text: "Cliente:", style: "metaLabel" }, { text: data?.cliente || "Cliente generico", style: "metaValue" }],
+          [{ text: "Cobro:", style: "metaLabel" }, { text: data?.tipo_cobro || "-", style: "metaValue" }],
+        ],
       },
       layout: "noBorders",
     },
-
-    // LÍNEA
-    { canvas: [{ type: 'line', x1: 0, y1: 5, x2: 200, y2: 5, lineWidth: 1, lineCap: 'round', dash: { length: 2 } }] },
-
-    // TOTALES FUNCIONALES
+    divider,
     {
-      margin: [0, 10, 0, 0],
+      margin: [0, 3, 0, 4],
       table: {
-        widths: ["60%", "40%"],
+        headerRows: 1,
+        dontBreakRows: true,
+        keepWithHeaderRows: 1,
+        widths: ["15%", "43%", "20%", "22%"],
+        body: productTableBody,
+      },
+      layout: {
+        hLineWidth: (i) => (i === 1 ? 0.8 : 0),
+        vLineWidth: () => 0,
+        hLineColor: () => "#d8d8d8",
+        paddingTop: () => 2,
+        paddingBottom: () => 2,
+        paddingLeft: () => 1,
+        paddingRight: () => 1,
+      },
+    },
+    divider,
+    {
+      table: {
+        widths: ["58%", "42%"],
         body: [
+          [{ text: "Items:", style: "resumeLabel" }, { text: String(cantidadItems), style: "resumeValue" }],
           [
-            { text: "TOTAL A PAGAR:", style: "totalLabel", alignment: "right" },
-            { 
-              // AQUI ESTA LA MAGIA: Usamos el total real formateado
-              text: FormatearNumeroDinero(data.total, data.currency, data.iso), 
-              style: "totalValue", 
-              alignment: "right" 
+            { text: "Subtotal:", style: "resumeLabel" },
+            { text: FormatearNumeroDinero(subtotal, data?.currency, data?.iso), style: "resumeValue" },
+          ],
+          [
+            { text: "Descuento:", style: "resumeLabel" },
+            {
+              text:
+                descuento > 0
+                  ? `${FormatearNumeroDinero(descuento, data?.currency, data?.iso)} (${data?.tipo_descuento === "porcentaje" ? "%" : "$"})`
+                  : FormatearNumeroDinero(0, data?.currency, data?.iso),
+              style: "resumeValue",
             },
           ],
-          // Puedes agregar desglose de pago aquí si tienes los datos de "pago con" y "vuelto"
-        ]
+          [
+            { text: "TOTAL:", style: "totalLabel", alignment: "right" },
+            {
+              text: FormatearNumeroDinero(total, data?.currency, data?.iso),
+              style: "totalValue",
+              alignment: "right",
+            },
+          ],
+        ],
       },
-      layout: "noBorders"
+      layout: "noBorders",
     },
-
-    {
-      text: "¡Gracias por su compra!",
-      style: "footer",
-      margin: [0, 20, 0, 0],
-    },
+    divider,
+    { text: "Gracias por su compra", style: "footer" },
+    { text: "Conserve este comprobante", style: "footerSub" },
+    { text: "Todos los derechos reservados |", style: "brandFooter" },
+    { text: `© ${getYear()} STOCKY`, style: "brandFooterBold" },
   ];
 
   const styles = {
-    header: { fontSize: 12, bold: true, alignment: "center" },
-    subHeader: { fontSize: 9, alignment: "center", color: "#555" },
-    ticketNumber: { fontSize: 10, bold: true, alignment: "center" },
-    tProductsHeader: { fontSize: 8, bold: true, color: "#000", margin: [0, 2, 0, 2] },
-    tProductsBody: { fontSize: 9, margin: [0, 2, 0, 2] },
-    totalLabel: { fontSize: 11, bold: true },
-    totalValue: { fontSize: 14, bold: true },
-    footer: { fontSize: 10, alignment: "center", bold: true },
+    header: { fontSize: 11, bold: true, alignment: "center" },
+    subHeader: { fontSize: 8.5, alignment: "center", color: "#4f4f4f" },
+    ticketTitle: { fontSize: 9.5, bold: true, alignment: "center", margin: [0, 0, 0, 3] },
+    metaLabel: { fontSize: 8, bold: true, color: "#343434" },
+    metaValue: { fontSize: 8, color: "#343434" },
+    tProductsHeader: { fontSize: 8, bold: true, color: "#1f1f1f" },
+    tProductsBody: { fontSize: 8.3, color: "#1f1f1f" },
+    resumeLabel: { fontSize: 8.5, bold: true, alignment: "right" },
+    resumeValue: { fontSize: 8.5, alignment: "right" },
+    totalLabel: { fontSize: 10, bold: true },
+    totalValue: { fontSize: 12.5, bold: true },
+    footer: { fontSize: 9, alignment: "center", bold: true, margin: [0, 2, 0, 0] },
+    footerSub: { fontSize: 8, alignment: "center", color: "#555", margin: [0, 1, 0, 0] },
+    brandFooter: { fontSize: 7.6, alignment: "center", color: "#91a4b7", margin: [0, 3, 0, 0] },
+    brandFooterBold: { fontSize: 8, alignment: "center", color: "#6f8498", bold: true, margin: [0, 0, 0, 0] },
   };
 
-  const response = await createPdf({ content, styles, pageSize: { width: 226, height: 'auto' } }, output);
+  const response = await createPdf(
+    {
+      content,
+      styles,
+      pageSize: { width: 226, height: pageHeight },
+      pageMargins: [8, 8, 8, 8],
+    },
+    output
+  );
   return response;
 };
 

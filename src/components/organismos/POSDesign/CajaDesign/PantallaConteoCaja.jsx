@@ -4,7 +4,6 @@ import { InputText2 } from "../../formularios/InputText2";
 import {
   Btn1,
   FormatearNumeroDinero,
-  useAuthStore,
   useEmpresaStore,
   useUsuariosStore,
 } from "../../../..";
@@ -16,15 +15,16 @@ import { useFormattedDate } from "../../../../hooks/useFormattedDate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BarLoader } from "react-spinners";
+import { useNavigate } from "react-router-dom";
 export function PantallaConteoCaja() {
-  const { cerrarSesion } = useAuthStore();
+  const navigate = useNavigate();
   const [montoEfectivo, setMontoEfectivo] = useState(0);
   const { totalEfectivoTotalCaja } = useMovCajaStore();
   const { datausuarios } = useUsuariosStore();
   const fechaactual = useFormattedDate();
   const { dataempresa } = useEmpresaStore();
   const {
-    cerrarTurnoCaja,
+    cerrarCaja,
     dataCierreCaja,
     setStateConteoCaja,
     setStateCierraCaja,
@@ -39,7 +39,7 @@ export function PantallaConteoCaja() {
 
   const insertar = async (data) => {
     const p = {
-      id: dataCierreCaja?.id,
+      id_cierre_caja: dataCierreCaja?.id,
       fechacierre: fechaactual,
       id_usuario: datausuarios?.id,
       total_efectivo_calculado: parseFloat(totalEfectivoTotalCaja),
@@ -48,7 +48,7 @@ export function PantallaConteoCaja() {
       diferencia_efectivo: diferencia,
     };
     console.log(p);
-    await cerrarTurnoCaja(p);
+    await cerrarCaja(p);
   };
   const { isPending, mutate: doInsertar } = useMutation({
     mutationKey: ["cerrar turno caja"],
@@ -59,7 +59,7 @@ export function PantallaConteoCaja() {
       setStateCierraCaja(false);
       reset();
       queryClient.invalidateQueries(["mostrar cierre de caja"]);
-      cerrarSesion();
+      navigate("/", { replace: true });
     },
     onError: (error) => {
       toast.error(`Error al cerrar caja: ${error.message}`);

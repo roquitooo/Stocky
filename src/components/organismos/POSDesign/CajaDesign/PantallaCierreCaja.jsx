@@ -3,8 +3,7 @@ import { VolverBtn } from "../../../moleculas/VolverBtn";
 import { Btn1 } from "../../../moleculas/Btn1";
 import { Device } from "../../../../styles/breakpoints";
 import { useCierreCajaStore } from "../../../../store/CierreCajaStore";
-import { useFormattedDate } from "../../../../hooks/useFormattedDate";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { useMovCajaStore } from "../../../../store/MovCajaStore";
 import { FormatearNumeroDinero } from "../../../../utils/Conversiones";
@@ -24,11 +23,16 @@ export function PantallaCierreCaja() {
     totalEfectivoTotalCaja,
   } = useMovCajaStore();
   const { dataempresa } = useEmpresaStore();
-  const fechaactual = useFormattedDate();
-  const fechaInicioFormateada = format(
-    new Date(dataCierreCaja?.fechainicio),
-    "dd/MM/yyyy HH:mm:ss"
-  );
+  const fechaInicio = dataCierreCaja?.fechainicio
+    ? new Date(dataCierreCaja.fechainicio)
+    : null;
+  const fechaFin = new Date();
+  const fechaInicioFormateada =
+    fechaInicio && isValid(fechaInicio)
+      ? format(fechaInicio, "dd/MM/yyyy HH:mm:ss")
+      : "--";
+  const fechaFinFormateada =
+    fechaFin && isValid(fechaFin) ? format(fechaFin, "dd/MM/yyyy HH:mm:ss") : "--";
   const {
     isLoading: isloading1,
     isError: iserror1,
@@ -39,6 +43,7 @@ export function PantallaCierreCaja() {
       mostrarEfectivoSinVentasMovcierrecaja({
         _id_cierre_caja: dataCierreCaja?.id,
       }),
+    enabled: !!dataCierreCaja?.id,
   });
   const {
     data: dataventasmetodopago,
@@ -49,6 +54,7 @@ export function PantallaCierreCaja() {
     queryKey: ["mostrar ventas metodoPago movCaja"],
     queryFn: () =>
       mostrarVentasMetodoPagoMovCaja({ _id_cierre_caja: dataCierreCaja?.id }),
+    enabled: !!dataCierreCaja?.id,
   });
   const isLoading = isloading1 || isloading2;
   const isError = iserror1 || iserror2;
@@ -59,13 +65,21 @@ export function PantallaCierreCaja() {
   if (isError) {
     return <span>error...{error.message} </span>;
   }
+  if (!dataCierreCaja?.id) {
+    return (
+      <Container>
+        <VolverBtn funcion={() => setStateCierraCaja(false)} />
+        <span>No hay una caja abierta para cerrar.</span>
+      </Container>
+    );
+  }
 
   return (
     <Container>
       <VolverBtn funcion={()=>setStateCierraCaja(false)} />
 
       <Fechas>
-        Corte de caja desde: {fechaInicioFormateada} Hasta: {fechaactual}
+        Corte de caja | Apertura: {fechaInicioFormateada} | Cierre: {fechaFinFormateada}
       </Fechas>
       <Datos>
         <section>

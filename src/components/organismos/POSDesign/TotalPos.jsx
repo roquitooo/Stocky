@@ -3,22 +3,20 @@ import { Btn1 } from "../../moleculas/Btn1";
 import { Device } from "../../../styles/breakpoints";
 import { useCartVentasStore, useEmpresaStore } from "../../..";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
-// 1. IMPORTAR VENTAS STORE
 import { useVentasStore } from "../../../store/VentasStore";
+import { useValidarPermisosOperativos } from "../../../hooks/useValidarPermisosOperativos";
 
 export function TotalPos() {
-  const { total, setStateMetodosPago, cart } = useCartVentasStore();
+  const { total, setStateMetodosPago, items } = useCartVentasStore();
   const { dataempresa } = useEmpresaStore();
-  
-  // 2. EXTRAER FUNCIÓN VALIDADORA
+  const { validarPermiso } = useValidarPermisosOperativos();
   const { validarStockCarrito } = useVentasStore();
 
-  // 3. FUNCIÓN INTERMEDIA DE COBRO
   const handleCobrar = () => {
-    // Primero validamos stock
-    const esValido = validarStockCarrito(cart);
-    
-    // Solo avanzamos si es válido
+    const hasPermission = validarPermiso("Cobrar venta");
+    if (!hasPermission) return;
+
+    const esValido = validarStockCarrito(items);
     if (esValido) {
       setStateMetodosPago();
     }
@@ -32,7 +30,7 @@ export function TotalPos() {
             border="2px"
             bgcolor="#ffbd59"
             color="#ffbd59"
-            funcion={handleCobrar} // <--- USAR handleCobrar, NO setStateMetodosPago
+            funcion={handleCobrar}
             titulo="COBRAR"
           />
         </section>
@@ -48,11 +46,10 @@ export function TotalPos() {
   );
 }
 
-// ... (Estilos iguales que antes) ...
 const Container = styled.div`
   display: flex;
   text-align: center;
-  justify-content: center; 
+  justify-content: center;
   align-items: center;
   border-radius: 15px;
   font-weight: 700;
@@ -91,7 +88,7 @@ const Container = styled.div`
     z-index: 10;
     display: flex;
     flex-direction: column;
-    align-items: center; 
+    align-items: center;
     justify-content: center;
     width: 100%;
 

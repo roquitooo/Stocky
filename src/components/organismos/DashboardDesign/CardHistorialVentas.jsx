@@ -32,8 +32,8 @@ export const CardHistorialVentas = () => {
           <thead>
             <tr>
               <th>Fecha</th>
-              <th>Productos</th> {/* Nueva Columna */}
-              <th className="align-center">Cant.</th> {/* Nueva Columna */}
+              <th>Productos</th>
+              <th className="align-center">Cant.</th>
               <th>Vendedor</th>
               <th>Método</th>
               <th className="align-right">Total</th>
@@ -43,23 +43,12 @@ export const CardHistorialVentas = () => {
             {data?.map((item, index) => (
               <tr key={index}>
                 <td className="fecha-col">{item.fecha}</td>
-                
-                {/* Columna de Productos */}
-                <td className="productos-col">
-                  {item.productos || "Sin detalle"}
-                </td>
-
-                {/* Columna de Cantidad Total */}
-                <td className="align-center font-bold">
-                  {item.cantidad_total}
-                </td>
-
+                <td className="productos-col">{item.productos || "Sin detalle"}</td>
+                <td className="align-center font-bold">{item.cantidad_total}</td>
                 <td>{item.vendedor}</td>
-                
                 <td>
                   <Badge $tipo={item.metodo}>{item.metodo}</Badge>
                 </td>
-                
                 <td className="align-right font-bold">
                   {FormatearNumeroDinero(item.total, dataempresa?.currency, dataempresa?.iso)}
                 </td>
@@ -76,7 +65,7 @@ export const CardHistorialVentas = () => {
 };
 
 // --- ESTILOS ---
-
+// (Tus estilos se mantienen exactamente igual, no hace falta tocarlos)
 const Container = styled.div`
   background-color: ${({ theme }) => theme.body};
   border-radius: 12px;
@@ -118,7 +107,7 @@ const TableContainer = styled.div`
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px; /* Bajamos un poco la fuente para que quepa todo */
+  font-size: 13px;
 
   th {
     text-align: left;
@@ -135,7 +124,6 @@ const Table = styled.table`
     color: ${({ theme }) => theme.text};
   }
 
-  /* Estilos específicos para columnas */
   .fecha-col {
     white-space: nowrap;
     font-size: 12px;
@@ -143,7 +131,7 @@ const Table = styled.table`
   }
 
   .productos-col {
-    max-width: 250px; /* Limitamos el ancho para que no rompa la tabla */
+    max-width: 250px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

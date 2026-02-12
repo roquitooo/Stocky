@@ -88,7 +88,7 @@ export function RegistrarProductos({
 
   // Consulta para traer el stock
   const {
-    isPending: isLoadingStock,
+    isFetching: isLoadingStock,
     refetch, // <--- ESTO FALTABA
   } = useQuery({
     queryKey: [

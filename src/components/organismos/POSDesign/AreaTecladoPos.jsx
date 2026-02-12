@@ -72,7 +72,7 @@ const Container = styled.div`
   border-radius: 15px;
   @media ${Device.desktop} {
     position: relative;
-    width: 450px;
+    width: clamp(320px, 34vw, 450px);
     bottom: initial;
   }
   .areatipopago {

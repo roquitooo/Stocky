@@ -8,15 +8,16 @@ import { CardHistorialVentas } from "../organismos/DashboardDesign/CardHistorial
 import { useEmpresaStore } from "../../store/EmpresaStore";
 import { FormatearNumeroDinero } from "../../utils/Conversiones";
 import { useAlmacenesStore } from "../../store/AlmacenesStore";
-import { useVentasStore } from "../../store/VentasStore"; 
+import { useVentasStore } from "../../store/VentasStore";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 export const DashboardTemplate = () => {
+  const navigate = useNavigate();
   const { dataempresa } = useEmpresaStore();
   const { contarProductosBajoStock } = useAlmacenesStore();
-  const { totalVentas } = useVentasStore(); 
+  const { totalVentas } = useVentasStore();
 
-  // 1. Consulta Bajo Stock
   const { data: cantidadBajoStock, isLoading: loadingStock } = useQuery({
     queryKey: ["contar bajo stock", { _id_empresa: dataempresa?.id }],
     queryFn: () => contarProductosBajoStock({ id_empresa: dataempresa?.id }),
@@ -24,7 +25,6 @@ export const DashboardTemplate = () => {
     refetchOnWindowFocus: false,
   });
 
-  // 2. Consulta Ventas Totales
   const { data: totalVentasData, isLoading: loadingVentas } = useQuery({
     queryKey: ["sumar ventas totales", { _id_empresa: dataempresa?.id }],
     queryFn: () => totalVentas({ id_empresa: dataempresa?.id }),
@@ -37,21 +37,29 @@ export const DashboardTemplate = () => {
       <DashboardHeader />
       <MainContent>
         <Area1>
-          {/* Tarjeta 1: VENTAS TOTALES (Conectada) */}
           <CardTotales
-            // percentage={10} // Puedes descomentar si calculas porcentaje
-            value={loadingVentas ? "..." : FormatearNumeroDinero(totalVentasData || 0, dataempresa?.currency, dataempresa?.iso)}
+            value={
+              loadingVentas
+                ? "..."
+                : FormatearNumeroDinero(
+                    totalVentasData || 0,
+                    dataempresa?.currency,
+                    dataempresa?.iso
+                  )
+            }
             title="Ventas Totales"
             icon={"mdi:currency-usd"}
-            caption="Ingeresos generados en ventas"
+            caption="Ingresos generados en ventas"
           />
 
-          {/* Tarjeta 2: BAJO STOCK (Conectada) */}
           <CardTotales
             value={loadingStock ? "..." : cantidadBajoStock || 0}
             title="Bajo Stock"
             icon={"mdi:package-variant-closed-minus"}
-            caption="Productos requieren reposición"
+            caption="Productos requieren reposicion"
+            actionLabel="Ver productos"
+            actionIcon="mdi:arrow-right"
+            onAction={() => navigate("/configuracion/productos?filtro=bajo-stock")}
           />
         </Area1>
 
@@ -70,8 +78,6 @@ export const DashboardTemplate = () => {
     </Container>
   );
 };
-
-// --- ESTILOS ---
 
 const Container = styled.div`
   display: flex;
@@ -106,12 +112,11 @@ const MainContent = styled.div`
 const Area1 = styled.section`
   grid-area: area1;
   display: grid;
-  /* Mantenemos 2 columnas, si agregas más tarjetas cambia a 'repeat(3, 1fr)' */
-  grid-template-columns: repeat(2, 1fr); 
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
-  
+
   @media (max-width: 768px) {
-    grid-template-columns: 1fr; 
+    grid-template-columns: 1fr;
   }
 `;
 

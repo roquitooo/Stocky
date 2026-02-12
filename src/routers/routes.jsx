@@ -16,6 +16,8 @@ import { BasicosConfig } from "../components/organismos/EmpresaConfigDesign/Basi
 import { MonedaConfig } from "../components/organismos/EmpresaConfigDesign/MonedaConfig";
 import { MetodosPago } from "../pages/MetodosPago";
 import { Dashboard } from "../pages/Dashboard";
+import {Usuarios} from "../pages/Usuarios"
+
 
 export function MyRoutes() {
   return (
@@ -33,51 +35,55 @@ export function MyRoutes() {
       <Route
         path="/"
         element={
-          <ProtectedRoute accessBy="authenticated">
-            <Layout>
+          <Layout>
+            <ProtectedRoute accessBy="authenticated">
+            
               <Dashboard />
-            </Layout>
-          </ProtectedRoute>
+            </ProtectedRoute>
+          </Layout>
         }
       />
       <Route
         path="/configuracion"
         element={
-          <ProtectedRoute accessBy="authenticated">
-            <Layout>
+          <Layout>
+            <ProtectedRoute accessBy="authenticated">
+            
               <Configuraciones />
-            </Layout>
-          </ProtectedRoute>
+            </ProtectedRoute>
+          </Layout>
         }
       />
       <Route
         path="/configuracion/categorias"
         element={
+          <Layout>
           <ProtectedRoute accessBy="authenticated">
-            <Layout>
+            
               <Categorias />
-            </Layout>
-          </ProtectedRoute>
+            </ProtectedRoute>
+          </Layout>
         }
       />
       <Route
         path="/configuracion/productos"
         element={
+          <Layout>
           <ProtectedRoute accessBy="authenticated">
-            <Layout>
+            
               <Productos />
-            </Layout>
-          </ProtectedRoute>
+            </ProtectedRoute>
+          </Layout>
         }
       />
       <Route
         path="/configuracion/empresa"
         element={
-          <ProtectedRoute accessBy="authenticated">
-            <Layout>
+          <Layout>
+            <ProtectedRoute accessBy="authenticated">
               <Empresa />
-            </Layout>
-          </ProtectedRoute>
+            </ProtectedRoute>
+          </Layout>
         }
       >
         <Route index element={<Navigate to="empresabasicos" />} />
@@ -87,46 +93,71 @@ export function MyRoutes() {
       <Route
         path="/pos"
         element={
+          <Layout>
           <ProtectedRoute accessBy="authenticated">
-            <Layout>
               <POS />
-            </Layout>
           </ProtectedRoute>
+          </Layout>
         }
       />
       
       <Route
         path="/configuracion/clientes"
         element={
+          <Layout>
           <ProtectedRoute accessBy="authenticated">
-            <Layout>
               <ClientesProveedores />
-            </Layout>
-          </ProtectedRoute>
+            </ProtectedRoute>
+          </Layout>
         }
       />
       <Route
         path="/configuracion/proveedores"
         element={
-          <ProtectedRoute accessBy="authenticated">
-            <Layout>
+           <Layout>
+            <ProtectedRoute accessBy="authenticated">
               <ClientesProveedores />
-            </Layout>
-          </ProtectedRoute>
+            </ProtectedRoute>
+          </Layout>
         }
       />
       <Route
+        path="/configuracion/empresa"
+        element={
+          <Layout>
+            <ProtectedRoute accessBy="authenticated">
+              <Empresa />
+            </ProtectedRoute>
+          </Layout>
+        }
+      >
+        
+      </Route>
+      <Route
         path="/configuracion/metodospago"
         element={
-          <ProtectedRoute accessBy="authenticated">
-            <Layout>
+          <Layout>
+            <ProtectedRoute accessBy="authenticated">
+            
               <MetodosPago />
-            </Layout>
-          </ProtectedRoute>
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/configuracion/usuarios"
+        element={
+          <Layout>
+            <ProtectedRoute accessBy="authenticated">
+              <Usuarios />
+            </ProtectedRoute>
+          </Layout>
         }
       />
       
       <Route path="*" element={<PageNot />} />
+      
     </Routes>
+
   );
 }
