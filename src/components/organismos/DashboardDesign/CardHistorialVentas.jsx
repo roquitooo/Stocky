@@ -145,10 +145,12 @@ const ActionButton = styled.button`
 
 const TableContainer = styled.div`
   overflow-x: auto;
+  width: 100%;
 `;
 
 const Table = styled.table`
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   font-size: 13px;
 

@@ -3,7 +3,7 @@ export function Switch1({state,setState}) {
   return (
     <Container>
       <label className="switch">
-        <input checked={state} className="toggle" type="checkbox" onClick={setState} />
+        <input checked={state} className="toggle" type="checkbox" onChange={setState} />
         <span className="slider"></span>
         <span className="card-side"></span>
       </label>

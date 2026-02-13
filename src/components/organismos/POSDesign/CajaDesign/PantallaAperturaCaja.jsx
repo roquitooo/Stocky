@@ -12,7 +12,7 @@ import { useMovCajaStore } from "../../../../store/MovCajaStore";
 import { toast } from "sonner";
 
 export function PantallaAperturaCaja() {
-  const [montoEfectivo, setMontoEfectivo] = useState(0);
+  const [montoEfectivo, setMontoEfectivo] = useState("");
   const fechaActual = useFormattedDate();
   const queryClient = useQueryClient();
 
@@ -105,11 +105,10 @@ export function PantallaAperturaCaja() {
           <input
             className="form__field"
             type="number"
-            placeholder="0.00"
-            value={Number.isFinite(montoEfectivo) ? montoEfectivo : 0}
+            placeholder="Ej: $5000"
+            value={montoEfectivo}
             onChange={(e) => {
-              const v = Number(e.target.value);
-              setMontoEfectivo(Number.isFinite(v) ? v : 0);
+              setMontoEfectivo(e.target.value);
             }}
           />
         </InputText2>
@@ -123,7 +122,13 @@ export function PantallaAperturaCaja() {
             color="#ffffff"
             border="2px"
             bgcolor="#ffbd59"
-            funcion={() => mutation.mutateAsync({ monto: montoEfectivo })}
+            funcion={() =>
+              mutation.mutateAsync({
+                monto: Number.isFinite(Number(montoEfectivo))
+                  ? Number(montoEfectivo)
+                  : 0,
+              })
+            }
           />
         </article>
       </section>

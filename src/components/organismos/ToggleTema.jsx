@@ -58,7 +58,7 @@ const Container = styled.div`
     justify-content: space-between;
     padding: 0 11px;
     background: linear-gradient(135deg, #182230 0%, #0d141f 100%);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 2px solid #000;
     box-shadow:
       inset 0 1px 1px rgba(255, 255, 255, 0.12),
       0 8px 18px rgba(0, 0, 0, 0.18);
@@ -90,7 +90,7 @@ const Container = styled.div`
 
   #switch-theme:checked + .track {
     background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-    border-color: rgba(255, 255, 255, 0.28);
+    border-color: #000;
     box-shadow:
       inset 0 1px 1px rgba(255, 255, 255, 0.32),
       0 8px 18px rgba(249, 115, 22, 0.35);

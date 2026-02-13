@@ -210,6 +210,7 @@ const ContainerBody = styled.section`
   flex: 1;
   width: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
   padding: ${({ $fullBleed }) => ($fullBleed ? "0" : "clamp(10px, 2vw, 20px)")};
   position: relative;

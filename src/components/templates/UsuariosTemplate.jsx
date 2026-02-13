@@ -68,22 +68,43 @@ export function UsuariosTemplate({ isLoading }) {
 
 const Container = styled.div`
   width: 100%;
+  min-height: calc(100dvh - 80px);
   background-color: ${({ theme }) => theme.bgtotal};
   color: ${({ theme }) => theme.text};
   display: grid;
   padding: 15px;
   grid-template:
-    "area1" 80px
-    "area2" 60px
-    "main" auto;
+    "area1" auto
+    "area2" auto
+    "main" 1fr;
+  gap: 10px;
     
-  .area1 { grid-area: area1; display: flex; align-items: center; }
-  .area2 { grid-area: area2; display: flex; align-items: center; }
-  .main { grid-area: main; }
+  .area1 {
+    grid-area: area1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .area2 {
+    grid-area: area2;
+    display: flex;
+    align-items: center;
+  }
+  .main {
+    grid-area: main;
+    min-width: 0;
+  }
   
   .loading-container {
     display: flex;
     justify-content: center;
     padding-top: 50px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 10px;
+    .area2 {
+      width: 100%;
+    }
   }
 `;

@@ -261,6 +261,7 @@ export function TablaProductos({
 const Container = styled.div`
   position: relative;
   margin: 5% 3%;
+  overflow-x: auto;
   @media (min-width: ${v.bpbart}) {
     margin: 2%;
   }
@@ -269,6 +270,7 @@ const Container = styled.div`
   }
   .responsive-table {
     width: 100%;
+    min-width: 760px;
     margin-bottom: 1.5em;
     border-spacing: 0;
     font-size: 0.9em;
@@ -319,36 +321,20 @@ const Container = styled.div`
       }
 
       td {
-        display: block;
-        text-align: right;
+        display: table-cell;
+        text-align: center;
         padding: 0.5em;
         border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-        
-        @media (min-width: ${v.bpbart}) {
-          display: table-cell;
-          text-align: center;
-          border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-        }
       }
 
       td[data-title]:before {
-        content: attr(data-title);
-        float: left;
-        font-size: 0.8em;
-        font-weight: 700;
-        @media (min-width: ${v.bpbart}) {
-          content: none;
-        }
+        content: none;
       }
 
       .ContentCell {
         display: flex;
-        justify-content: flex-end;
+        justify-content: center;
         align-items: center;
-        
-        @media (min-width: ${v.bpbart}) {
-          justify-content: center;
-        }
       }
     }
   }

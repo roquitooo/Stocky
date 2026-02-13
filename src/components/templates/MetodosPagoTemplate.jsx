@@ -52,32 +52,32 @@ export function MetodosPagoTemplate() {
   );
 }
 const Container = styled.div`
-  height: calc(100vh - 80px);
-  
-   margin-top:50px;
+  min-height: calc(100dvh - 80px);
+  margin-top: 50px;
   padding: 15px;
   display: grid;
   grid-template:
-    "area1" 60px
-    "area2" 60px
-    "main" auto;
+    "area1" auto
+    "main" 1fr;
+  gap: 10px;
   .area1 {
     grid-area: area1;
-    /* background-color: rgba(103, 93, 241, 0.14); */
     display: flex;
-    justify-content: end;
+    justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     gap: 15px;
-  }
-  .area2 {
-    grid-area: area2;
-    /* background-color: rgba(7, 237, 45, 0.14); */
-    display: flex;
-    justify-content: end;
-    align-items: center;
   }
   .main {
     grid-area: main;
-    /* background-color: rgba(237, 7, 221, 0.14); */
+    min-width: 0;
+  }
+
+  @media (max-width: 768px) {
+    margin-top: 10px;
+    padding: 10px;
+    .area1 {
+      justify-content: flex-start;
+    }
   }
 `;

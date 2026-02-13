@@ -320,7 +320,7 @@ const Container = styled.div`
   flex-direction: column;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 247, 247, 0.98)), #fff;
   color: #0d0d0d;
-  min-height: 100%;
+  min-height: auto;
   align-items: center;
   justify-content: flex-start;
   font-size: 15px;

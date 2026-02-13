@@ -81,13 +81,7 @@ export const MonedaConfig = () => {
         </Dropdown>
       )}
 
-      <Cardselect
-        flag={
-          selectedCountry
-            ? `https://flagcdn.com/${selectedCountry.iso.toLowerCase()}.svg`
-            : ""
-        }
-      >
+      <Cardselect>
         <article className="area1">
           <span className="titulo">Moneda actual</span>
         </article>

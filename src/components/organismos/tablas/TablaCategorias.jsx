@@ -72,14 +72,14 @@ export function TablaCategorias({
       header: "Icono", 
       enableSorting: false,
       cell: (info) => (
-        <td data-title="Color" className="ContentCell">
+        <div className="ContentCell">
           {
             info.getValue()!="-"?(   <ImagenContent imagen={info.getValue()}/>):(<Icono>
               {<v.iconoimagenvacia/>}
             </Icono>)
           }
     
-        </td>
+        </div>
       ),
 
       enableColumnFilter: true,
@@ -107,9 +107,9 @@ export function TablaCategorias({
       header: "Color",
       enableSorting: false,
       cell: (info) => (
-        <td data-title="Color" className="ContentCell">
+        <div className="ContentCell">
           <Colorcontent color={info.getValue()} $alto="25px" $ancho="25px" />
-        </td>
+        </div>
       ),
 
       enableColumnFilter: true,
@@ -124,12 +124,12 @@ export function TablaCategorias({
       header: "",
       enableSorting: false,
       cell: (info) => (
-        <td data-title="Acciones" className="ContentCell">
+        <div className="ContentCell">
           <ContentAccionesTabla
             funcionEditar={() => editar(info.row.original)}
             funcionEliminar={() => eliminar(info.row.original)}
           />
-        </td>
+        </div>
       ),
       enableColumnFilter: true,
       filterFn: (row, columnId, filterStatuses) => {
@@ -206,7 +206,14 @@ export function TablaCategorias({
                 <tr key={item.id}>
                   {item.getVisibleCells().map(cell => (
                   
-                      <td key={cell.id}>
+                      <td
+                        key={cell.id}
+                        data-title={
+                          typeof cell.column.columnDef.header === "string"
+                            ? cell.column.columnDef.header
+                            : ""
+                        }
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()

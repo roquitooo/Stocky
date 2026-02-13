@@ -55,28 +55,28 @@ export function PantallaCobro() {
 
 const Container = styled.div`
   position: absolute;
-  height: 100%;
-  width: 100%;
+  inset: 0;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   flex-direction: column;
   z-index: 100;
-  background:
-    radial-gradient(circle at 20% 12%, rgba(255, 189, 89, 0.08), transparent 42%),
-    radial-gradient(circle at 80% 90%, rgba(255, 189, 89, 0.05), transparent 34%),
-    ${({ theme }) => theme.bgtotal};
+  background: ${({ theme }) => theme.bgtotal};
 
   .contentingresocobro {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    gap: 14px;
-    height: calc(100% - 4rem);
+    gap: 10px;
+    width: min(92vw, 420px);
+    min-height: 0;
+    padding: 12px 0 14px;
+    overflow-y: auto;
 
     .contentverticket {
-      align-self: stretch;
+      width: 100%;
+      align-self: center;
       justify-content: center;
       cursor: pointer;
       display: flex;
@@ -111,6 +111,7 @@ const Container = styled.div`
       width: fit-content;
       align-self: center;
       padding: 0 18px;
+      margin-top: 2px;
     }
   }
 `;

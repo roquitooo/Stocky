@@ -94,6 +94,11 @@ const Container = styled.header`
   z-index: 100;
   width: 100%;
   box-sizing: border-box; 
+
+  @media (max-width: 900px) {
+    padding: 0 12px;
+    gap: 8px;
+  }
 `;
 
 /* Solo me aseguro de mostrarte que LogoWrapper ya tiene "cursor: pointer", 
@@ -123,11 +128,11 @@ const LogoWrapper = styled.div`
 `;
 
 // ... resto de estilos (LeftSection, CenterSection, NavList, RightSection, Divider, ThemeContainer, LogoutBtn, MobileButton) ...
-const LeftSection = styled.div` display: flex; align-items: center; gap: 15px; min-width: 150px; `;
+const LeftSection = styled.div` display: flex; align-items: center; gap: 15px; min-width: 0; `;
 const MobileButton = styled.button` background: none; border: none; font-size: 28px; cursor: pointer; color: #2d3436; display: none; padding: 0; @media (max-width: 900px) { display: flex; } `;
 const CenterSection = styled.div` flex: 1; display: flex; justify-content: center; align-items: center; padding: 0 20px; @media (max-width: 900px) { display: none; } `;
 const NavList = styled.nav` display: flex; gap: 8px; a { text-decoration: none; color: #4a4a4a; padding: 10px 18px; border-radius: 6px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s ease; display: flex; align-items: center; .link-item { display: flex; align-items: center; gap: 8px; } &:hover { background-color: rgba(255, 255, 255, 0.25); color: #000; } &.active { background-color: white; color: #333333; box-shadow: 0 2px 5px rgba(0,0,0,0.05); .icon { color: #333333; } } } `;
-const RightSection = styled.div` display: flex; align-items: center; justify-content: flex-end; gap: 15px; min-width: 150px; .desktop-actions { display: flex; align-items: center; gap: 12px; a { color: #4a4a4a; font-size: 24px; display: flex; align-items: center; transition: transform 0.2s; &:hover { transform: scale(1.1); color: #000; } &.active-icon { color: #fff; } } @media (max-width: 900px) { display: none; } } `;
-const Divider = styled.div` height: 24px; width: 1px; background-color: rgba(0,0,0,0.15); margin: 0 5px; `;
-const ThemeContainer = styled.div` display: flex; align-items: center; justify-content: center; & > div, .toggle { margin-top: 0 !important; } transform: scale(0.9); `;
+const RightSection = styled.div` display: flex; align-items: center; justify-content: flex-end; gap: 15px; min-width: 0; .desktop-actions { display: flex; align-items: center; gap: 12px; a { color: #4a4a4a; font-size: 24px; display: flex; align-items: center; transition: transform 0.2s; &:hover { transform: scale(1.1); color: #000; } &.active-icon { color: #fff; } } @media (max-width: 900px) { display: none; } } @media (max-width: 600px) { gap: 8px; } `;
+const Divider = styled.div` height: 24px; width: 1px; background-color: rgba(0,0,0,0.15); margin: 0 5px; @media (max-width: 600px) { display: none; } `;
+const ThemeContainer = styled.div` display: flex; align-items: center; justify-content: center; & > div, .toggle { margin-top: 0 !important; } transform: scale(0.9); @media (max-width: 600px) { transform: scale(0.78); } `;
 const LogoutBtn = styled.button` background: none; border: none; cursor: pointer; font-size: 26px; color: #4a4a4a; display: flex; align-items: center; padding: 0; transition: color 0.2s; &:hover { color: ${v.blanco}; } `;

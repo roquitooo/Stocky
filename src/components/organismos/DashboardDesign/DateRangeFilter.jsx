@@ -152,10 +152,14 @@ export const DateRangeFilter = () => {
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin: 20px;
+  gap: 12px;
+  margin: 10px;
 `;
-const ButtonGroup = styled.div``;
+const ButtonGroup = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
 
 // AQUÍ EL CAMBIO: Leemos $isActive en lugar de isActive
 const TimeRangeButton = styled.button`
@@ -163,12 +167,14 @@ const TimeRangeButton = styled.button`
   background-color: ${({ $isActive, theme }) => $isActive ? theme.bg : "transparent"};
   border: none;
   border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 14px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.1;
   cursor: pointer;
 `;
 
 const StyledRangePicker = styled(RangePicker)`
+  width: 100%;
   background-color: ${({ theme }) => theme.bg};
   border: 2px dashed ${({ theme }) => theme.body};
   .ant-picker-input > input {
@@ -190,6 +196,7 @@ const StyledRangePicker = styled(RangePicker)`
 `;
 
 const StyledDatePicker = styled(DatePicker)`
+  width: 100%;
   background-color: ${({ theme }) => theme.bg};
   border: 2px dashed ${({ theme }) => theme.body};
   .ant-picker-input > input {

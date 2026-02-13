@@ -105,7 +105,9 @@ export function ProductosTemplate({
       </section>
 
       <section className="area2">
-        <Buscador setBuscador={setBuscador} />
+        <div className="search-wrap">
+          <Buscador setBuscador={setBuscador} />
+        </div>
         <button
           type="button"
           className={`chip-lowstock ${filtroBajoStock ? "active" : ""}`}
@@ -150,31 +152,39 @@ export function ProductosTemplate({
 }
 
 const Container = styled.div`
-  height: calc(100vh - 80px);
+  min-height: calc(100dvh - 80px);
   margin-top: 50px;
   padding: 15px;
   display: grid;
   grid-template:
-    "area1" 60px
-    "area2" 60px
-    "main" auto;
+    "area1" auto
+    "area2" auto
+    "main" 1fr;
+  gap: 10px;
 
   .area1 {
     grid-area: area1;
     display: flex;
-    justify-content: end;
+    justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     gap: 15px;
   }
   .area2 {
     grid-area: area2;
     display: flex;
-    justify-content: end;
+    justify-content: flex-end;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
+  }
+  .search-wrap {
+    flex: 1 1 280px;
+    min-width: 220px;
   }
   .main {
     grid-area: main;
+    min-width: 0;
   }
 
   .chip-lowstock {
@@ -199,5 +209,29 @@ const Container = styled.div`
     border: 1px solid rgba(255, 255, 255, 0.3);
     background: ${({ theme }) => theme.bgtotal};
     color: ${({ theme }) => theme.text};
+  }
+
+  @media (max-width: 768px) {
+    margin-top: 10px;
+    padding: 10px;
+
+    .area1 {
+      justify-content: flex-start;
+      gap: 10px;
+    }
+
+    .area2 {
+      justify-content: flex-start;
+    }
+
+    .search-wrap {
+      flex: 1 1 100%;
+      min-width: 0;
+    }
+
+    .chip-lowstock {
+      white-space: normal;
+      line-height: 1.2;
+    }
   }
 `;

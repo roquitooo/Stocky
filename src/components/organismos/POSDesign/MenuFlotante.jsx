@@ -19,7 +19,7 @@ export function MenuFlotante() {
       <MenuItems $isOpen={isOpen}>
         <MenuItem
           $isOpen={isOpen} // <--- Corregido
-          delay="0s"
+          $delay="0s"
           onClick={() => {
             toggleMenu();
             setStateIngresoSalida(true);
@@ -32,7 +32,7 @@ export function MenuFlotante() {
         
         <MenuItem
           $isOpen={isOpen} // <--- Corregido
-          delay="0.1s"
+          $delay="0.1s"
           onClick={() => {
             toggleMenu();
             setStateIngresoSalida(true);
@@ -44,7 +44,7 @@ export function MenuFlotante() {
         
         <MenuItem
           $isOpen={isOpen} // <--- Corregido
-          delay="0.2s"
+          $delay="0.2s"
           onClick={() => {
             toggleMenu();
             setStateCierraCaja(true);
@@ -53,13 +53,13 @@ export function MenuFlotante() {
           <Text>Cerrar caja</Text>
         </MenuItem>
 
-        <MenuItem $isOpen={isOpen} delay="0.4s"> {/* <--- Corregido */}
+        <MenuItem $isOpen={isOpen} $delay="0.4s"> {/* <--- Corregido */}
           <Text>Ver ventas del día</Text>
         </MenuItem>
         
         <MenuItem 
           $isOpen={isOpen} // <--- Corregido
-          delay="0.3s" 
+          $delay="0.3s" 
           onClick={toggleMenu}
         >
           <Text>Eliminar venta</Text>
@@ -142,7 +142,7 @@ const MenuItem = styled.div`
   
   /* CORRECCIÓN 2: Leemos $isOpen en lugar de isOpen */
   animation: ${({ $isOpen }) => ($isOpen ? slideUp : "none")} 0.4s ease forwards;
-  animation-delay: ${({ delay }) => delay};
+  animation-delay: ${({ $delay }) => $delay};
 
   &:hover {
     background-color: #c7c7c7;
