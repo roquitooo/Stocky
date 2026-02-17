@@ -34,13 +34,13 @@ export function TablaUsuarios({
   function eliminar(p) {
   
     Swal.fire({
-      title: "¿Estás seguro/a?",
-      text: "Una vez eliminado, ¡no podrá recuperar este registro!",
+      title: "Â¿EstÃ¡s seguro/a?",
+      text: "Una vez eliminado, Â¡no podrÃ¡ recuperar este registro!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Si, eliminar",
+      confirmButtonText: "SÃ­, eliminar",
     }).then(async (result) => {
       if (result.isConfirmed) {
         await eliminarUsuarioAsignado({ id: p.id_usuario });
@@ -197,8 +197,8 @@ export function TablaUsuarios({
                     )}
                     {
                       {
-                        asc: " 🔼",
-                        desc: " 🔽",
+                        asc: " ▲",
+                        desc: " ▼",
                       }[header.column.getIsSorted()]
                     }
                     <div
@@ -221,9 +221,13 @@ export function TablaUsuarios({
                   
                       <td
                         key={cell.id}
+                        data-cell-id={cell.column.id}
                         data-title={
-                          typeof cell.column.columnDef.header === "string"
+                          typeof cell.column.columnDef.header === "string" &&
+                          cell.column.columnDef.header.trim() !== ""
                             ? cell.column.columnDef.header
+                            : cell.column.id === "acciones"
+                            ? "Acciones"
                             : ""
                         }
                       >
@@ -252,158 +256,178 @@ export function TablaUsuarios({
 }
 const Container = styled.div`
   position: relative;
+  margin: 8px 0 0;
 
-  margin: 5% 3%;
-  @media (min-width: ${v.bpbart}) {
-    margin: 2%;
-  }
-  @media (min-width: ${v.bphomer}) {
-    margin: 2em auto;
-    /* max-width: ${v.bphomer}; */
-  }
   .responsive-table {
     width: 100%;
-    margin-bottom: 1.5em;
+    margin-bottom: 1rem;
     border-spacing: 0;
+    border-collapse: separate;
+
     @media (min-width: ${v.bpbart}) {
       font-size: 0.9em;
     }
+
     @media (min-width: ${v.bpmarge}) {
       font-size: 1em;
     }
-    thead {
-      
-      position: absolute;
 
+    thead {
+      position: absolute;
       padding: 0;
       border: 0;
       height: 1px;
       width: 1px;
       overflow: hidden;
-      
+
       @media (min-width: ${v.bpbart}) {
         position: relative;
         height: auto;
         width: auto;
         overflow: auto;
       }
+
       th {
-        
-        border-bottom: 2px solid ${({theme})=>theme.color2};
-        font-weight:700;
+        border-bottom: 2px solid ${({ theme }) => theme.color2};
+        font-weight: 700;
         text-align: center;
         color: ${({ theme }) => theme.text};
-        &:first-of-type {
-          text-align: center;
-        }
       }
     }
+
     tbody,
     tr,
     th,
     td {
-      
       display: block;
       padding: 0;
       text-align: left;
       white-space: normal;
     }
-    tr {
-      
-      @media (min-width: ${v.bpbart}) {
-        display: table-row;
-      }
-    }
 
     th,
     td {
-      
       padding: 0.5em;
       vertical-align: middle;
+
       @media (min-width: ${v.bplisa}) {
         padding: 0.75em 0.5em;
       }
+
       @media (min-width: ${v.bpbart}) {
         display: table-cell;
         padding: 0.5em;
       }
+
       @media (min-width: ${v.bpmarge}) {
         padding: 0.75em 0.5em;
       }
+
       @media (min-width: ${v.bphomer}) {
         padding: 0.75em;
       }
     }
-    tbody {
-      @media (min-width: ${v.bpbart}) {
+
+    @media (min-width: ${v.bpbart}) {
+      thead {
+        display: table-header-group;
+      }
+
+      tbody {
         display: table-row-group;
       }
+
       tr {
-        margin-bottom: 1em;
-        @media (min-width: ${v.bpbart}) {
-          display: table-row;
-          border-width: 1px;
-        }
-        &:last-of-type {
-          margin-bottom: 0;
-        }
-        &:nth-of-type(even) {
-          @media (min-width: ${v.bpbart}) {
-           
-          }
-        }
+        display: table-row;
       }
-      th[scope="row"] {
-        
-        @media (min-width: ${v.bplisa}) {
-          border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-        }
-        @media (min-width: ${v.bpbart}) {
-          background-color: transparent;
-          text-align: center;
-          color: ${({ theme }) => theme.text};
-        }
+    }
+
+    tbody {
+      tr {
+        margin-bottom: 0.85rem;
+        border: 1px solid rgba(161, 161, 161, 0.32);
+        border-radius: 14px;
+        background-color: ${({ theme }) => theme.bg2};
+        overflow: hidden;
       }
+
+      tr:last-of-type {
+        margin-bottom: 0.5rem;
+      }
+
+      td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: left;
+        border-bottom: 1px solid rgba(161, 161, 161, 0.22);
+      }
+
+      td:last-child {
+        border-bottom: none;
+      }
+
+      td[data-title]:before {
+        content: attr(data-title);
+        font-size: 0.86em;
+        font-weight: 600;
+        color: ${({ theme }) => theme.text};
+        opacity: 0.85;
+        flex-shrink: 0;
+      }
+
+      td[data-cell-id="usuario"] span,
+      td[data-cell-id="email"] span,
+      td[data-cell-id="sucursal"] span,
+      td[data-cell-id="caja"] span,
+      td[data-cell-id="rol"] span,
+      td[data-cell-id="estadouser"] span {
+        word-break: break-word;
+      }
+
+      td[data-cell-id="acciones"] .ContentCell {
+        justify-content: flex-end;
+      }
+
       .ContentCell {
         text-align: right;
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: center;
-        height: 50px;
+        gap: 10px;
+        width: 100%;
+        min-height: 38px;
+        border-bottom: none;
+      }
 
-        border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-        @media (min-width: ${v.bpbart}) {
-          justify-content: center;
-          border-bottom: none;
+      @media (min-width: ${v.bpbart}) {
+        display: table-row-group;
+
+        tr {
+          display: table-row;
+          margin-bottom: 0;
+          border: none;
+          border-radius: 0;
+          background-color: transparent;
         }
-      }
-      td {
-        text-align: right;
-        @media (min-width: ${v.bpbart}) {
-          /* border-bottom: 1px solid rgba(161, 161, 161, 0.32); */
+
+        td {
+          display: table-cell;
           text-align: center;
+          border-bottom: 1px solid rgba(161, 161, 161, 0.32);
         }
-      }
-      td[data-title]:before {
-        content: attr(data-title);
-        float: left;
-        font-size: 0.8em;
-        @media (min-width: ${v.bplisa}) {
-          font-size: 0.9em;
-        }
-        @media (min-width: ${v.bpbart}) {
+
+        td[data-title]:before {
           content: none;
+        }
+
+        .ContentCell {
+          justify-content: center;
+          min-height: 50px;
+          width: auto;
         }
       }
     }
   }
-`;
-const Colorcontent = styled.div`
-  justify-content: center;
-  min-height: ${(props) => props.$alto};
-  width: ${(props) => props.$ancho};
-  display: flex;
-  background-color: ${(props) => props.color};
-  border-radius: 50%;
-  text-align: center;
 `;

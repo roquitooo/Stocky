@@ -21,21 +21,35 @@ export function AreaDetalleventaPos() {
   const { dataempresa } = useEmpresaStore();
   const [editIndex, setEditIndex] = useState(null);
   const [newCantidad, setNewCantidad] = useState(1);
+
+  const sanitizarCantidadEntera = (value) => {
+    const soloDigitos = String(value ?? "").replace(/\D/g, "");
+    const cantidad = Number.parseInt(soloDigitos, 10);
+    if (Number.isNaN(cantidad) || cantidad <= 0) return 1;
+    return cantidad;
+  };
+
+  const bloquearTeclasNoEnteras = (e) => {
+    if ([".", ",", "e", "E", "-", "+"].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
   const handleEditClick = (index, cantidad) => {
     setEditIndex(index);
-    setNewCantidad(cantidad);
+    setNewCantidad(sanitizarCantidadEntera(cantidad));
   };
   const handleInputChange = (e) => {
-    const value = Math.max(0, parseFloat(e.target.value));
-    setNewCantidad(value);
+    setNewCantidad(sanitizarCantidadEntera(e.target.value));
   };
   const handleInputBlur = (item) => {
-    updateCantidadItem(item, newCantidad);
-    setEditIndex(null); // Salir del modo edición
+    const cantidadNormalizada = sanitizarCantidadEntera(newCantidad);
+    updateCantidadItem(item, cantidadNormalizada);
+    setEditIndex(null); // Salir del modo edicion
   };
   const handleKeyDown = (e, item) => {
+    bloquearTeclasNoEnteras(e);
     if (e.key === "Enter") {
-      handleInputBlur(item); // Llama a `handleInputBlur` cuando se presiona Enter
+      handleInputBlur(item);
     }
   };
   return (
@@ -68,6 +82,8 @@ export function AreaDetalleventaPos() {
                   <InputText2>
                     <input
                       type="number"
+                      step="1"
+                      inputMode="numeric"
                       value={newCantidad}
                       onChange={handleInputChange}
                       onBlur={() => handleInputBlur(item)}
@@ -120,13 +136,18 @@ export function AreaDetalleventaPos() {
 const AreaDetalleventa = styled.section`
   display: flex;
   width: 100%;
-  margin-top: 10px;
+  margin-top: 6px;
   flex-direction: column;
   gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
  
   &.animacion {
-    height: 100%;
-    justify-content: center;
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 0;
+    justify-content: flex-start;
   }
 `;
 const Itemventa = styled.section`
@@ -227,3 +248,4 @@ const Itemventa = styled.section`
     }
   }
 `;
+

@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import fondocuadros from "../../assets/Logofondo.svg";
 import { Link } from "react-router-dom";
 import { usePermisosStore } from "../../index";
@@ -13,7 +13,7 @@ export function ConfiguracionesTemplate() {
       <Content>
         <Header>
           <h1>Configuración</h1>
-          <p>Administra los modulos principales de tu negocio.</p>
+          <p>Administra los módulos principales de tu negocio.</p>
         </Header>
 
         <CardsGrid>
@@ -33,12 +33,12 @@ export function ConfiguracionesTemplate() {
               >
                 <article className="card-content">
                   <div className="icon-wrap">
-                    <img src={modulo?.icono} alt={modulo?.nombre || "Modulo"} />
+                    <img src={modulo?.icono} alt={modulo?.nombre || "Módulo"} />
                   </div>
 
                   <div className="text-wrap">
-                    <h3>{modulo?.nombre || "Modulo"}</h3>
-                    <p>{modulo?.descripcion || "Sin descripcion"}</p>
+                    <h3>{modulo?.nombre || "Módulo"}</h3>
+                    <p>{modulo?.descripcion || "Sin descripción"}</p>
                   </div>
                 </article>
               </CardLink>
@@ -190,3 +190,5 @@ const CardLink = styled(Link)`
     pointer-events: none;
   }
 `;
+
+

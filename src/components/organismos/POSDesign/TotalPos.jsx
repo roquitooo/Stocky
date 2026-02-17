@@ -1,39 +1,14 @@
 import styled from "styled-components";
-import { Btn1 } from "../../moleculas/Btn1";
-import { Device } from "../../../styles/breakpoints";
 import { useCartVentasStore, useEmpresaStore } from "../../..";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
-import { useVentasStore } from "../../../store/VentasStore";
-import { useValidarPermisosOperativos } from "../../../hooks/useValidarPermisosOperativos";
 
 export function TotalPos() {
-  const { total, setStateMetodosPago, items } = useCartVentasStore();
+  const { total } = useCartVentasStore();
   const { dataempresa } = useEmpresaStore();
-  const { validarPermiso } = useValidarPermisosOperativos();
-  const { validarStockCarrito } = useVentasStore();
-
-  const handleCobrar = () => {
-    const hasPermission = validarPermiso("Cobrar venta");
-    if (!hasPermission) return;
-
-    const esValido = validarStockCarrito(items);
-    if (esValido) {
-      setStateMetodosPago();
-    }
-  };
 
   return (
     <Container>
       <section className="contentTotal">
-        <section className="contentTituloTotal">
-          <Btn1
-            border="2px"
-            bgcolor="#ffbd59"
-            color="#ffbd59"
-            funcion={handleCobrar}
-            titulo="COBRAR"
-          />
-        </section>
         <span>
           {FormatearNumeroDinero(
             total,
@@ -91,15 +66,5 @@ const Container = styled.div`
     align-items: center;
     justify-content: center;
     width: 100%;
-
-    .contentTituloTotal {
-      display: flex;
-      align-items: center;
-      position: relative;
-      margin-bottom: 5px;
-      @media ${Device.desktop} {
-        display: none;
-      }
-    }
   }
 `;

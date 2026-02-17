@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import {
   Btn1,
   Buscador,
@@ -81,3 +81,4 @@ const Container = styled.div`
     }
   }
 `;
+

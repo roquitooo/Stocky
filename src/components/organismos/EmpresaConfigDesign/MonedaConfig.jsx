@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import { useMonedasStore } from "../../../store/MonedasStore";
 import { getAllInfoByISO } from "iso-country-currency";
 import iso from "iso-country-currency";
@@ -111,7 +111,7 @@ export const MonedaConfig = () => {
         </article>
       </Cardselect>
       {
-        mutate.onSuccess && <span>cambios guardados</span>
+        mutate.onSuccess && <span>Cambios guardados</span>
       }
     </Container>
   );
@@ -201,3 +201,5 @@ const Linea = styled.span`
   border-bottom: solid 2px ${({ theme }) => theme.color2};
   margin: 10px 0;
 `;
+
+

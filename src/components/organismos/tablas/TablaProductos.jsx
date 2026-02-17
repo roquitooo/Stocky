@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-// Importamos íconos para indicar el orden
+// Importamos Ã­conos para indicar el orden
 import { FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 
 // --- Componente Checkbox fuera para rendimiento ---
@@ -74,7 +74,7 @@ export function TablaProductos({
       showCancelButton: true,
       confirmButtonColor: "#ffbd58",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Si, eliminar",
+      confirmButtonText: "Sí, eliminar",
     }).then(async (result) => {
       if (result.isConfirmed) {
         await eliminarProductos({ id: p.id });
@@ -122,8 +122,8 @@ export function TablaProductos({
             className="header-sortable" 
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-             <span>Descripcion</span>
-             {/* Lógica para mostrar el ícono correcto */}
+             <span>Descripción</span>
+             {/* LÃ³gica para mostrar el Ã­cono correcto */}
              <span className="icon">
                {{
                  asc: <FaSortUp />,
@@ -199,7 +199,7 @@ export function TablaProductos({
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting, // <--- Pasamos la función para actualizar
+    onSortingChange: setSorting, // <--- Pasamos la funciÃ³n para actualizar
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -234,9 +234,16 @@ export function TablaProductos({
               {row.getVisibleCells().map((cell) => (
                 <td 
                   key={cell.id} 
+                  data-cell-id={cell.column.id}
                   data-title={
                     typeof cell.column.columnDef.header === 'string' 
                       ? cell.column.columnDef.header 
+                      : cell.column.id === "nombre"
+                      ? "Descripción"
+                      : cell.column.id === "select"
+                      ? "Seleccionar"
+                      : cell.column.id === "acciones"
+                      ? "Acciones"
                       : ""
                   }
                 >
@@ -260,31 +267,44 @@ export function TablaProductos({
 
 const Container = styled.div`
   position: relative;
-  margin: 5% 3%;
-  overflow-x: auto;
-  @media (min-width: ${v.bpbart}) {
-    margin: 2%;
-  }
-  @media (min-width: ${v.bphomer}) {
-    margin: 2em auto;
-  }
+  margin: 8px 0 0;
+
   .responsive-table {
     width: 100%;
-    min-width: 760px;
-    margin-bottom: 1.5em;
+    margin-bottom: 1rem;
     border-spacing: 0;
-    font-size: 0.9em;
-    
+    border-collapse: separate;
+
+    @media (min-width: ${v.bpbart}) {
+      font-size: 0.9em;
+    }
+
+    @media (min-width: ${v.bpmarge}) {
+      font-size: 1em;
+    }
+
     thead {
-      /* ... estilos previos ... */
+      position: absolute;
+      padding: 0;
+      border: 0;
+      height: 1px;
+      width: 1px;
+      overflow: hidden;
+
+      @media (min-width: ${v.bpbart}) {
+        position: relative;
+        height: auto;
+        width: auto;
+        overflow: auto;
+      }
+
       th {
         border-bottom: 2px solid ${({ theme }) => theme.color2};
         font-weight: 700;
         text-align: center;
         color: ${({ theme }) => theme.text};
         padding: 10px;
-        
-        /* ESTILO PARA EL HEADER CLIQUEABLE */
+
         .header-sortable {
           display: flex;
           align-items: center;
@@ -292,50 +312,160 @@ const Container = styled.div`
           gap: 5px;
           cursor: pointer;
           transition: 0.2s;
+
           &:hover {
-             opacity: 0.8;
+            opacity: 0.8;
           }
+
           .icon {
-             display: flex;
-             align-items: center;
-             font-size: 12px;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
           }
+
           .icon-default {
-             opacity: 0.3; /* Icono tenue si no está ordenado */
+            opacity: 0.3;
           }
         }
+      }
+    }
+
+    tbody,
+    tr,
+    th,
+    td {
+      display: block;
+      padding: 0;
+      text-align: left;
+      white-space: normal;
+    }
+
+    th,
+    td {
+      padding: 0.5em;
+      vertical-align: middle;
+
+      @media (min-width: ${v.bplisa}) {
+        padding: 0.75em 0.5em;
+      }
+
+      @media (min-width: ${v.bpbart}) {
+        display: table-cell;
+        padding: 0.5em;
+      }
+
+      @media (min-width: ${v.bpmarge}) {
+        padding: 0.75em 0.5em;
+      }
+
+      @media (min-width: ${v.bphomer}) {
+        padding: 0.75em;
+      }
+    }
+
+    @media (min-width: ${v.bpbart}) {
+      thead {
+        display: table-header-group;
+      }
+
+      tbody {
+        display: table-row-group;
+      }
+
+      tr {
+        display: table-row;
       }
     }
 
     tbody {
-      /* ... estilos previos se mantienen igual ... */
       tr {
-        margin-bottom: 1em;
-        @media (min-width: ${v.bpbart}) {
-          display: table-row;
-          border-width: 1px;
-        }
-        &:nth-of-type(even) {
-          background-color: rgba(161, 161, 161, 0.05);
-        }
+        margin-bottom: 0.85rem;
+        border: 1px solid rgba(161, 161, 161, 0.32);
+        border-radius: 14px;
+        background-color: ${({ theme }) => theme.bg2};
+        overflow: hidden;
+      }
+
+      tr:last-of-type {
+        margin-bottom: 0.5rem;
       }
 
       td {
-        display: table-cell;
-        text-align: center;
-        padding: 0.5em;
-        border-bottom: 1px solid rgba(161, 161, 161, 0.32);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: left;
+        border-bottom: 1px solid rgba(161, 161, 161, 0.22);
+      }
+
+      td:last-child {
+        border-bottom: none;
       }
 
       td[data-title]:before {
-        content: none;
+        content: attr(data-title);
+        font-size: 0.86em;
+        font-weight: 600;
+        color: ${({ theme }) => theme.text};
+        opacity: 0.85;
+        flex-shrink: 0;
       }
 
       .ContentCell {
         display: flex;
-        justify-content: center;
+        justify-content: flex-end;
         align-items: center;
+        width: 100%;
+      }
+
+      td[data-cell-id="select"] .px-1 {
+        display: flex;
+        justify-content: flex-end;
+        width: 100%;
+      }
+
+      td span {
+        word-break: break-word;
+      }
+
+      @media (min-width: ${v.bpbart}) {
+        display: table-row-group;
+
+        tr {
+          display: table-row;
+          margin-bottom: 0;
+          border: none;
+          border-radius: 0;
+          background-color: transparent;
+        }
+
+        tr:nth-of-type(even) {
+          background-color: rgba(161, 161, 161, 0.05);
+        }
+
+        td {
+          display: table-cell;
+          text-align: center;
+          border-bottom: 1px solid rgba(161, 161, 161, 0.32);
+        }
+
+        td[data-title]:before {
+          content: none;
+        }
+
+        .ContentCell {
+          justify-content: center;
+          width: auto;
+        }
+
+        td[data-cell-id="select"] .px-1 {
+          justify-content: center;
+          width: auto;
+        }
       }
     }
   }
 `;
+
+

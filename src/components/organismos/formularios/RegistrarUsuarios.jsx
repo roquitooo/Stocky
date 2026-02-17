@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import { useForm } from "react-hook-form";
 import { BtnClose } from "../../ui/buttons/BtnClose";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -181,12 +181,12 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
                     autoComplete={accion === "Editar" ? "new-password" : "current-password"}
                     {...register("pass", { required: accion !== "Editar" })}
                   />
-                  <label htmlFor="pass" className="form__label">Contrasena</label>
+                  <label htmlFor="pass" className="form__label">Contraseña</label>
                   <button
                     type="button"
                     className="pass-toggle-inline"
                     onClick={() => setShowPass((prev) => !prev)}
-                    aria-label={showPass ? "Ocultar contrasena" : "Mostrar contrasena"}
+                    aria-label={showPass ? "Ocultar contraseña" : "Mostrar contraseña"}
                   >
                     {showPass ? <FiEyeOff /> : <FiEye />}
                   </button>
@@ -229,7 +229,7 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
                     defaultValue={dataSelect?.telefono || ""}
                     {...register("telefono", { required: true })}
                   />
-                  <label htmlFor="telefono" className="form__label">Telefono</label>
+                  <label htmlFor="telefono" className="form__label">Teléfono</label>
                 </InputText>
               </article>
 
@@ -248,7 +248,7 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
 
             <section className="area2">
               <span style={{ fontWeight: "bold", marginBottom: "10px", display: "block" }}>
-                Permisos (Modulos):
+                Permisos (Módulos):
               </span>
               <PermisosUser
                 accionProp={accion}
@@ -280,9 +280,9 @@ const Form = styled.form`
   margin: 10px;
   border: 1px solid ${({ theme }) => theme.bg};
 
-  /* Ajuste del campo de contraseña */
+  /* Ajuste del campo de contraseÃ±a */
   .pass-row {
-    position: relative; /* Asegura que el contenido se contenga aquí */
+    position: relative; /* Asegura que el contenido se contenga aquÃ­ */
   }
 
   .pass-field {
@@ -293,7 +293,7 @@ const Form = styled.form`
     position: absolute;
     right: 10px;      /* Un poco de margen derecho */
     top: 50%;         /* Centrado vertical perfecto */
-    transform: translateY(-50%); /* Corrección exacta del centro */
+    transform: translateY(-50%); /* CorrecciÃ³n exacta del centro */
     border: none;
     background: transparent;
     color: #ffbd59;
@@ -348,3 +348,5 @@ const Form = styled.form`
 `;
 const Header = styled.div` width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;`;
 const Title = styled.span` font-size: 24px; font-weight: bold; `;
+
+

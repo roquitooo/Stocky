@@ -1,4 +1,4 @@
-import { Icon } from "@iconify/react/dist/iconify.js";
+﻿import { Icon } from "@iconify/react/dist/iconify.js";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useCartVentasStore } from "../../../store/CartVentasStore";
@@ -34,7 +34,7 @@ export function PantallaCobro() {
         )}
 
         <article className="contentverticket" onClick={() => setStateVerticker(!stateVerticket)}>
-          <span>{stateVerticket ? "ocultar ticket" : "mostrar ticket"}</span>
+          <span>{stateVerticket ? "Ocultar ticket" : "Mostrar ticket"}</span>
           {stateVerticket ? (
             <Icon className="icono" icon="ep:arrow-down-bold" />
           ) : (
@@ -46,7 +46,7 @@ export function PantallaCobro() {
 
         <article className="contentverticket back" onClick={setStatePantallaCobro}>
           <Icon className="icono" icon="ep:arrow-left-bold" />
-          <span>volver</span>
+          <span>Volver</span>
         </article>
       </section>
     </Container>
@@ -115,3 +115,5 @@ const Container = styled.div`
     }
   }
 `;
+
+

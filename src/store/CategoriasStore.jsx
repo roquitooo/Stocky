@@ -14,6 +14,7 @@ export const useCategoriasStore = create((set, get) => ({
   },
   datacategorias: [],
   categoriaItemSelect: [],
+  ultimaCategoriaCreadaId: null,
   parametros: {},
   mostrarCategorias: async (p) => {
     const response = await MostrarCategorias(p);
@@ -25,11 +26,15 @@ export const useCategoriasStore = create((set, get) => ({
   selectCategoria: (p) => {
     set({ categoriaItemSelect: p });
   },
+  limpiarUltimaCategoriaCreada: () => {
+    set({ ultimaCategoriaCreadaId: null });
+  },
   insertarCategorias: async (p, file) => {
-    await InsertarCategorias(p, file);
+    const idNuevaCategoria = await InsertarCategorias(p, file);
     const { mostrarCategorias } = get();
     const { parametros } = get();
-    set(mostrarCategorias(parametros));
+    await mostrarCategorias(parametros);
+    set({ ultimaCategoriaCreadaId: idNuevaCategoria || null });
   },
   eliminarCategoria: async (p) => {
     await EliminarCategorias(p);

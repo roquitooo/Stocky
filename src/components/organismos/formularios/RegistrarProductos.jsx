@@ -74,11 +74,74 @@ export function RegistrarProductos({
   const [stateCategoriasLista, setStateCategoriasLista] = useState(false);
   const [randomCodeinterno, setRandomCodeinterno] = useState("");
   const [randomCodebarras, setRandomCodebarras] = useState("");
+  const [categoriaEditadaManualmente, setCategoriaEditadaManualmente] =
+    useState(false);
 
   const { sucursalesItemSelect, dataSucursales, selectSucursal } =
     useSucursalesStore();
-  const { datacategorias, selectCategoria, categoriaItemSelect } =
-    useCategoriasStore();
+  const {
+    datacategorias,
+    selectCategoria,
+    categoriaItemSelect,
+    ultimaCategoriaCreadaId,
+    limpiarUltimaCategoriaCreada,
+  } = useCategoriasStore();
+
+  function obtenerIdCategoriaProducto(producto) {
+    if (!producto || typeof producto !== "object") return "";
+
+    const posiblesIds = [
+      producto.id_categoria,
+      producto.idCategoria,
+      producto.idcategoria,
+      producto._id_categoria,
+      producto.categoria_id,
+      producto.id_cat,
+      producto?.categoria?.id,
+      producto?.categorias?.id,
+    ];
+
+    for (const value of posiblesIds) {
+      const normalizado = String(value ?? "").trim();
+      if (normalizado) return normalizado;
+    }
+
+    return "";
+  }
+
+  function obtenerCategoriaProducto(producto, categorias = []) {
+    if (!Array.isArray(categorias) || categorias.length === 0) return null;
+
+    const idCategoriaProducto = obtenerIdCategoriaProducto(producto);
+    if (idCategoriaProducto) {
+      const categoriaPorId = categorias.find(
+        (item) => String(item?.id ?? "").trim() === idCategoriaProducto
+      );
+      if (categoriaPorId) return categoriaPorId;
+    }
+
+    const nombreCategoriaProducto = [
+      producto?.categoria,
+      producto?.nombre_categoria,
+      producto?.categoria_nombre,
+      producto?.categorias?.nombre,
+    ].find((value) => typeof value === "string" && value.trim() !== "");
+
+    if (!nombreCategoriaProducto) return null;
+
+    const nombreNormalizado = nombreCategoriaProducto.trim().toLowerCase();
+    return (
+      categorias.find(
+        (item) =>
+          String(item?.nombre ?? "").trim().toLowerCase() === nombreNormalizado
+      ) || null
+    );
+  }
+
+  function onSelectCategoria(categoria) {
+    setCategoriaEditadaManualmente(true);
+    selectCategoria(categoria);
+  }
 
   const {
     register,
@@ -106,7 +169,7 @@ export function RegistrarProductos({
     refetchOnWindowFocus: false,
   });
 
-  // --- 2. SOLUCIÓN DEL BUG: Sincronizar inputs cuando llega la data del almacén ---
+  // --- 2. SOLUCIÃ“N DEL BUG: Sincronizar inputs cuando llega la data del almacÃ©n ---
   useEffect(() => {
     if (accion === "Editar" && stateInventarios) {
         // Si hay data, la ponemos. Si no, asumimos 0 para evitar undefined
@@ -123,6 +186,52 @@ export function RegistrarProductos({
          setValue("stock_minimo", 0);
       }
   }, [dataSelect.id])
+
+  useEffect(() => {
+    setCategoriaEditadaManualmente(false);
+  }, [accion, dataSelect?.id]);
+
+  useEffect(() => {
+    if (accion !== "Editar" || categoriaEditadaManualmente) return;
+
+    const categoriaDelProducto = obtenerCategoriaProducto(
+      dataSelect,
+      datacategorias
+    );
+
+    if (categoriaDelProducto) {
+      selectCategoria(categoriaDelProducto);
+    }
+  }, [
+    accion,
+    categoriaEditadaManualmente,
+    dataSelect,
+    datacategorias,
+    selectCategoria,
+  ]);
+
+  useEffect(() => {
+    if (accion !== "Nuevo" || !ultimaCategoriaCreadaId) return;
+    if (!Array.isArray(datacategorias) || datacategorias.length === 0) return;
+
+    const categoriaNueva = datacategorias.find(
+      (item) =>
+        String(item?.id ?? "").trim() ===
+        String(ultimaCategoriaCreadaId ?? "").trim()
+    );
+
+    if (categoriaNueva) {
+      selectCategoria(categoriaNueva);
+    }
+
+    limpiarUltimaCategoriaCreada();
+  }, [
+    accion,
+    datacategorias,
+    ultimaCategoriaCreadaId,
+    selectCategoria,
+    limpiarUltimaCategoriaCreada,
+  ]);
 
 
   const { isPending, mutate: doInsertar } = useMutation({
@@ -154,6 +263,16 @@ export function RegistrarProductos({
     validarVacios(data);
 
     if (accion === "Editar") {
+      const categoriaProducto = obtenerCategoriaProducto(
+        dataSelect,
+        datacategorias
+      );
+      const idCategoriaProducto =
+        categoriaProducto?.id ?? obtenerIdCategoriaProducto(dataSelect);
+      const idCategoriaEdicion = categoriaEditadaManualmente
+        ? categoriaItemSelect?.id ?? idCategoriaProducto
+        : idCategoriaProducto || categoriaItemSelect?.id;
+
       const p = {
         _id: dataSelect.id,
         _nombre: ConvertirMinusculas(data.nombre),
@@ -163,7 +282,7 @@ export function RegistrarProductos({
         _precio_compra: isCajeroEditando
           ? Number(dataSelect?.precio_compra ?? 0)
           : parseFloat(data.precio_compra),
-        _id_categoria: categoriaItemSelect.id,
+        _id_categoria: idCategoriaEdicion,
         _codigo_barras: isCajeroEditando
           ? dataSelect?.codigo_barras
           : randomCodebarras ? randomCodebarras : codigogenerado,
@@ -179,7 +298,7 @@ export function RegistrarProductos({
       await editarProductos(p);
 
       if (stateInventarios) {
-        // Validamos si existe dataalmacen (si ya tenía registro previo en BD)
+        // Validamos si existe dataalmacen (si ya tenÃ­a registro previo en BD)
         if (dataalmacen?.id) {
              const palmacenes = {
             _id: dataalmacen.id,
@@ -188,7 +307,7 @@ export function RegistrarProductos({
           };
           await editarStock(palmacenes);
         } else {
-            // Si activó inventario por primera vez en un producto existente
+            // Si activÃ³ inventario por primera vez en un producto existente
            const palmacenes = {
             id_sucursal: sucursalesItemSelect.id,
             id_producto: dataSelect.id,
@@ -233,12 +352,12 @@ export function RegistrarProductos({
         if (stateInventarios) {
           Swal.fire({
             title: "¿Estás seguro(a)?",
-            text: "Si desactiva esta opción se eliminara el stock!",
+            text: "Si desactiva esta opción, se eliminará el stock.",
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
             cancelButtonColor: "#d33",
-            confirmButtonText: "Si, eliminar",
+            confirmButtonText: "Sí, eliminar",
           }).then(async (result) => {
             if (result.isConfirmed) {
               setStateInventarios(false);
@@ -308,14 +427,14 @@ export function RegistrarProductos({
   return (
     <Container>
       {isPending ? (
-        <span>...🔼</span>
+        <span>Cargando...</span>
       ) : (
         <div className="sub-contenedor">
           <div className="headers">
             <section>
               <h1>
                 {accion == "Editar"
-                  ? "Editar productos"
+                  ? "Editar producto"
                   : "REGISTRAR NUEVO PRODUCTO"}
               </h1>
             </section>
@@ -353,7 +472,7 @@ export function RegistrarProductos({
                     className="form__field"
                     // defaultValue quitado
                     type="number"
-                    placeholder="precio venta"
+                    placeholder="precio de venta"
                     disabled={isCajeroEditando}
                     {...register("precio_venta")}
                   />
@@ -367,7 +486,7 @@ export function RegistrarProductos({
                       step="0.01"
                       className="form__field"
                       type="number"
-                      placeholder="precio compra"
+                      placeholder="precio de compra"
                       disabled={isCajeroEditando}
                       {...register("precio_compra")}
                     />
@@ -379,8 +498,8 @@ export function RegistrarProductos({
               {/* ... (SECCION DE CODIGOS DE BARRAS IGUAL) ... */}
                <article className="contentPadregenerar">
                 <InputText icono={<v.iconoflechaderecha />}>
-                  <input className="form__field" value={randomCodebarras} onChange={handleChangebarras} type="text" placeholder="codigo de barras" disabled={isCajeroEditando} />
-                  <label className="form__label">Codigo de barras</label>
+                  <input className="form__field" value={randomCodebarras} onChange={handleChangebarras} type="text" placeholder="código de barras" disabled={isCajeroEditando} />
+                  <label className="form__label">Código de barras</label>
                 </InputText>
                 {!isCajeroEditando && (
                   <ContainerBtngenerar><Btngenerarcodigo titulo="Generar" funcion={generarCodigoBarras} /></ContainerBtngenerar>
@@ -388,8 +507,8 @@ export function RegistrarProductos({
               </article>
               <article className="contentPadregenerar">
                 <InputText icono={<v.iconoflechaderecha />}>
-                  <input className="form__field" value={randomCodeinterno} onChange={handleChangeinterno} type="text" placeholder="codigo interno" disabled={isCajeroEditando} />
-                  <label className="form__label">Codigo interno</label>
+                  <input className="form__field" value={randomCodeinterno} onChange={handleChangeinterno} type="text" placeholder="código interno" disabled={isCajeroEditando} />
+                  <label className="form__label">Código interno</label>
                 </InputText>
                 {!isCajeroEditando && (
                   <ContainerBtngenerar><Btngenerarcodigo titulo="Generar" funcion={generarCodigoInterno} /></ContainerBtngenerar>
@@ -414,16 +533,16 @@ export function RegistrarProductos({
               </ContainerSelector>
 
               <ContainerSelector>
-                <label>Categoria: </label>
+                <label>Categoría: </label>
                 <Selector
                   state={stateCategoriasLista}
                   funcion={() => setStateCategoriasLista(!stateCategoriasLista)}
-                  texto1="🏬"
+                  texto1={"\u{1F3EC}"}
                   texto2={categoriaItemSelect?.nombre}
                   color="#ffbd58"
                 />
                 <ListaDesplegable
-                  funcion={selectCategoria}
+                  funcion={onSelectCategoria}
                   state={stateCategoriasLista}
                   data={datacategorias}
                   top="4rem"
@@ -449,7 +568,7 @@ export function RegistrarProductos({
                         !isCajeroEditando &&
                         setStateSucursalesLista(!stateSucursalesLista)
                       }
-                      texto1="🏬"
+                      texto1={"\u{1F3EC}"}
                       texto2={sucursalesItemSelect?.nombre}
                       color="#ffbd58"
                     />
@@ -466,7 +585,7 @@ export function RegistrarProductos({
                     />
                   </ContainerSelector>
                   
-                  {/* AQUÍ ESTÁ LA MAGIA VISUAL: Si está cargando, mostramos loading */}
+                  {/* AQUÃ ESTÃ LA MAGIA VISUAL: Si estÃ¡ cargando, mostramos loading */}
                   {isLoadingStock ? (
                     <span style={{padding:"10px"}}>Cargando stock...</span>
                   ) : (
@@ -491,10 +610,10 @@ export function RegistrarProductos({
                              // defaultValue ELIMINADO
                             step="0.01"
                             type="number"
-                            placeholder="stock minimo"
+                            placeholder="stock mínimo"
                             {...register("stock_minimo")}
                           />
-                          <label className="form__label">Alerta Stock Crítico:</label>
+                          <label className="form__label">Alerta de stock crítico:</label>
                         </InputText>
                       </article>
                     </>
@@ -526,3 +645,5 @@ const ContainerStock = styled.div`
 `;
 
 const ContainerBtngenerar = styled.div` position: absolute; right: 0; top: 10%; `;
+
+

@@ -334,7 +334,22 @@ export function HistorialCierresCajaTemplate() {
                     <td>{formatFecha(item.fecha_movimiento)}</td>
                     <td>{item.tipo_movimiento || "-"}</td>
                     <td>{item.productos_vendidos || "-"}</td>
-                    <td>{item.descripcion || "-"}</td>
+                    <td>
+                      <div className="desc-wrap">
+                        <span>{item.descripcion || "-"}</span>
+                        {Number(item?.descuento_monto || 0) > 0 && (
+                          <small className="discount-note">
+                            Descuento aplicado:{" "}
+                            {FormatearNumeroDinero(
+                              item.descuento_monto || 0,
+                              dataempresa?.currency,
+                              dataempresa?.iso
+                            )}{" "}
+                            ({Number(item.descuento_porcentaje || 0).toFixed(2)}%)
+                          </small>
+                        )}
+                      </div>
+                    </td>
                     <td>{item.metodo_pago}</td>
                     <td>{item.usuario_nombre}</td>
                     <td>{item.comprobante}</td>
@@ -517,6 +532,18 @@ const Table = styled.table`
     border-bottom: 1px solid rgba(128, 128, 128, 0.12);
     font-size: 13px;
     white-space: nowrap;
+  }
+
+  .desc-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .discount-note {
+    color: #f59e0b;
+    font-size: 11px;
+    font-weight: 700;
   }
 
   .align-right {

@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import {
   Btn1,
   Buscador,
@@ -31,7 +31,7 @@ export function CategoriasTemplate() {
         />
       )}
       <section className="area1">
-        <Title>Categorias</Title>
+        <Title>Categorías</Title>
         <Btn1
           funcion={nuevoRegistro}
           bgcolor={v.colorPrincipal}
@@ -98,3 +98,4 @@ const Container = styled.div`
     }
   }
 `;
+

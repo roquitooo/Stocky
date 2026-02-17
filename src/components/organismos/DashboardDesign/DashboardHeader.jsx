@@ -69,4 +69,11 @@ const ActionsContainer = styled.div`
     ${({ theme }) => theme.body};
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
   padding: 2px;
+  width: 100%;
+
+  @media ${Device.desktop} {
+    width: auto;
+    min-width: 520px;
+    max-width: 760px;
+  }
 `;

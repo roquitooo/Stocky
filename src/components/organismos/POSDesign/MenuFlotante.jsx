@@ -88,18 +88,22 @@ const slideUp = keyframes`
 
 const Container = styled.div`
   position: fixed;
-  bottom: 100px;
-  width: 100%;
+  right: 14px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  width: auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 10px;
+  z-index: 1200;
+  pointer-events: none;
   @media ${Device.desktop} {
     display: none;
   }
 `;
 
 const FloatingButton = styled.button`
+  pointer-events: auto;
   border: none;
   border-radius: 50%;
   width: 60px;
@@ -117,11 +121,12 @@ const FloatingButton = styled.button`
 `;
 
 const MenuItems = styled.div`
-  margin-top: 10px;
+  margin-bottom: 8px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 15px;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: auto;
   
   /* CORRECCIÓN 2: Leemos $isOpen en lugar de isOpen */
   ${({ $isOpen }) => !$isOpen && "display: none;"}

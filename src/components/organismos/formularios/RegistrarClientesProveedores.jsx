@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import styled from "styled-components";
 import { v } from "../../../styles/variables";
 import {
@@ -43,7 +43,7 @@ export function RegistrarClientesProveedores({
   };
 
   async function insertar(data) {
-    // 🛡️ PROTECCIÓN CONTRA UNDEFINED
+    // ðŸ›¡ï¸ PROTECCIÃ“N CONTRA UNDEFINED
     if (!dataempresa?.id) {
       console.error("Error: No hay ID de empresa cargado.");
       return; 
@@ -80,14 +80,14 @@ export function RegistrarClientesProveedores({
 
   useEffect(() => {
     if (accion === "Editar") {
-      // Lógica de edición si fuera necesaria
+      // LÃ³gica de ediciÃ³n si fuera necesaria
     }
   }, []);
 
   return (
     <Container>
       {isPending ? (
-        <span>...🔼</span>
+        <span>...ðŸ”¼</span>
       ) : (
         <div className="sub-contenedor">
           <div className="headers">
@@ -129,12 +129,12 @@ export function RegistrarClientesProveedores({
                     className="form__field"
                     defaultValue={dataSelect.direccion}
                     type="text"
-                    placeholder="direccion"
+                    placeholder="dirección"
                     {...register("direccion", {
                       required: true,
                     })}
                   />
-                  <label className="form__label">direccion</label>
+                  <label className="form__label">dirección</label>
                   {errors.direccion?.type === "required" && (
                     <p>Campo requerido</p>
                   )}
@@ -146,12 +146,12 @@ export function RegistrarClientesProveedores({
                     className="form__field"
                     defaultValue={dataSelect.telefono}
                     type="text"
-                    placeholder="telefono"
+                    placeholder="teléfono"
                     {...register("telefono", {
                       required: true,
                     })}
                   />
-                  <label className="form__label">telefono</label>
+                  <label className="form__label">teléfono</label>
                   {errors.telefono?.type === "required" && (
                     <p>Campo requerido</p>
                   )}
@@ -258,3 +258,5 @@ const Container = styled.div`
     }
   }
 `;
+
+

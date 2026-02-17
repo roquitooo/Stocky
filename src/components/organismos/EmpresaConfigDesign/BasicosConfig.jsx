@@ -1,4 +1,4 @@
-import { Icon } from "@iconify/react/dist/iconify.js";
+﻿import { Icon } from "@iconify/react/dist/iconify.js";
 import React, { useRef, useState } from "react";
 import styled from "styled-components";
 import { InputText2 } from "../formularios/InputText2";
@@ -40,7 +40,7 @@ export const BasicosConfig = () => {
     mutationKey: "editar empresa",
     mutationFn: editar,
     onError: (error) => {
-      toast.error("Ocurrio un error " + error.message);
+      toast.error("Ocurrió un error " + error.message);
     },
     onSuccess: () => {
       toast.success("Datos guardados");
@@ -115,7 +115,7 @@ export const BasicosConfig = () => {
               <input
                 defaultValue={dataempresa?.direccion_fiscal}
                 className="form__field"
-                placeholder="Direccion"
+                placeholder="Dirección"
                 type="text"
                 {...register("direccion", {
                   required: true,
@@ -208,9 +208,9 @@ const Avatar = styled.div`
     color: #fff !important;
   }
   
-  /* --- CAMBIO AQUÍ --- */
-  background-color: #ffbd59; /* Color Sólido Stocky */
-  /* Se eliminaron las líneas de background-image y animation */
+  /* --- CAMBIO AQUÃ --- */
+  background-color: #ffbd59; /* Color SÃ³lido Stocky */
+  /* Se eliminaron las lÃ­neas de background-image y animation */
   /* ------------------- */
 
   img {
@@ -251,3 +251,4 @@ const Label = styled.label`
   display: block;
   margin: 10px 0 5px;
 `;
+

@@ -77,6 +77,11 @@ const Container = styled.div`
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.2);
   }
 
+  @media (max-width: 768px) {
+    padding: 10px 14px;
+    min-height: 130px;
+  }
+
   .top-section {
     display: flex;
     justify-content: space-between;
@@ -113,6 +118,11 @@ const ValueSection = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   color: ${({ theme }) => theme.text};
+
+  @media (max-width: 768px) {
+    margin: 14px 0;
+    font-size: clamp(16px, 7vw, 26px);
+  }
 `;
 
 const SecondaryValueSection = styled.div`
@@ -175,6 +185,12 @@ const FooterSection = styled.div`
     background: ${({ theme }) => theme.colorPrincipal || "#ffbd59"};
     color: #fff;
     transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  @media (max-width: 768px) {
+    .caption {
+      white-space: normal;
+    }
   }
 
   .action-btn:hover {

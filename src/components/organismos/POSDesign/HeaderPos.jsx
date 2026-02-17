@@ -1,6 +1,5 @@
 import styled from "styled-components";
 import {
-  Btn1,
   InputText2,
   ListaDesplegable,
   Reloj,
@@ -11,13 +10,9 @@ import {
 } from "../../../index";
 import { v } from "../../../styles/variables";
 import { Device } from "../../../styles/breakpoints";
-import { Icon } from "@iconify/react";
 import { useEffect, useRef, useState } from "react";
 
 export function HeaderPos() {
-  const [stateLectora, setStateLectora] = useState(false);
-  const [stateTeclado, setStateTeclado] = useState(true);
-
   const [cantidadInput, setCantidadInput] = useState(1);
   const [stateListaproductos, setStateListaproductos] = useState(false);
 
@@ -37,71 +32,75 @@ export function HeaderPos() {
   const { addItem } = useCartVentasStore();
   const buscadorRef = useRef(null);
 
-  // --- LÓGICA DE LECTORA CORREGIDA ---
-  
-  const ejecutarVentaPorLectora = (codigo) => {
-    if (!codigo) return;
+  const sanitizarCantidadEntera = (value) => {
+    const soloDigitos = String(value ?? "").replace(/\D/g, "");
+    const cantidad = Number.parseInt(soloDigitos, 10);
+    if (Number.isNaN(cantidad) || cantidad <= 0) return 1;
+    return cantidad;
+  };
 
-    const valorAEscanear = codigo.toString().trim();
-    
-    // Buscamos en dataProductos comparando con 'codigo_barras' o 'codigo'
-    const productoEncontrado = dataProductos.find((p) => {
-      const cb = p.codigo_barras?.toString().trim();
-      const c = p.codigo?.toString().trim();
-      return cb === valorAEscanear || c === valorAEscanear;
-    });
-
-    if (productoEncontrado) {
-      const cantidad = parseFloat(cantidadInput) || 1;
-      
-      const pDetalleVentas = {
-        _id_venta: 1,
-        _cantidad: cantidad,
-        _precio_venta: productoEncontrado.precio_venta,
-        _total: cantidad * productoEncontrado.precio_venta,
-        _descripcion: productoEncontrado.nombre,
-        _id_producto: productoEncontrado.id,
-        _precio_compra: productoEncontrado.precio_compra,
-        _id_sucursal: id_sucursal_seguro,
-        stock: productoEncontrado.stock,
-        maneja_inventarios: productoEncontrado.maneja_inventarios,
-        nombre: productoEncontrado.nombre,
-      };
-
-      addItem(pDetalleVentas);
-      setBuscador(""); // Limpia el input para el siguiente escaneo
-      setCantidadInput(1);
-    } else {
-      console.warn("Producto no encontrado:", valorAEscanear);
-      setBuscador("");
+  const bloquearTeclasNoEnteras = (e) => {
+    if ([".", ",", "e", "E", "-", "+"].includes(e.key)) {
+      e.preventDefault();
     }
   };
-  // En modo lectora, enfocamos solo al activarlo (sin secuestrar foco global)
-  useEffect(() => {
-    if (!stateLectora) return;
-    if (buscadorRef.current) {
-      buscadorRef.current.focus();
-    }
-  }, [stateLectora]);
 
-  // --- FUNCIONES DE INTERFAZ ---
+  function agregarProductoAVenta(producto) {
+    if (!id_sucursal_seguro || !producto) return;
 
-  function focusclick() {
-    if (buscadorRef.current) {
-      buscadorRef.current.focus();
-      if (buscadorRef.current.value.trim() === "" || stateLectora) {
-        setStateListaproductos(false);
-      } else {
-        setStateListaproductos(true);
-      }
+    const cantidad = sanitizarCantidadEntera(cantidadInput);
+    const pDetalleVentas = {
+      _id_venta: 1,
+      _cantidad: cantidad,
+      _precio_venta: producto.precio_venta,
+      _total: cantidad * producto.precio_venta,
+      _descripcion: producto.nombre,
+      _id_producto: producto.id,
+      _precio_compra: producto.precio_compra,
+      _id_sucursal: id_sucursal_seguro,
+      stock: producto.stock,
+      maneja_inventarios: producto.maneja_inventarios,
+      nombre: producto.nombre,
+    };
+
+    addItem(pDetalleVentas);
+    setBuscador("");
+    setCantidadInput(1);
+    setStateListaproductos(false);
+    if (buscadorRef.current) buscadorRef.current.focus();
+  }
+
+  function buscarProductoPorCodigo(valor) {
+    return (dataProductos || []).find((p) => {
+      const cb = p.codigo_barras?.toString().trim();
+      const c = p.codigo?.toString().trim();
+      return cb === valor || c === valor;
+    });
+  }
+
+  function ejecutarBusquedaRapida(valorEntrada) {
+    const valor = valorEntrada?.toString().trim();
+    if (!valor) return;
+
+    const productoCodigo = buscarProductoPorCodigo(valor);
+    if (productoCodigo) {
+      agregarProductoAVenta(productoCodigo);
+      return;
     }
+
+    if ((dataProductos || []).length === 1) {
+      agregarProductoAVenta(dataProductos[0]);
+      return;
+    }
+
+    setStateListaproductos((dataProductos || []).length > 1);
   }
 
   function buscar(e) {
     const texto = e.target.value;
     setBuscador(texto);
-    
-    if (texto.trim() === "" || stateLectora) {
+
+    if (texto.trim() === "") {
       setStateListaproductos(false);
     } else {
       setStateListaproductos(true);
@@ -110,32 +109,15 @@ export function HeaderPos() {
 
   async function funcion_insertarventas() {
     const productosItemSelect = useProductosStore.getState().productosItemSelect;
-    if (!id_sucursal_seguro || !productosItemSelect) return;
-
-    const cantidad = parseFloat(cantidadInput) || 1;
-    const pDetalleVentas = {
-      _id_venta: 1,
-      _cantidad: cantidad,
-      _precio_venta: productosItemSelect.precio_venta,
-      _total: cantidad * productosItemSelect.precio_venta,
-      _descripcion: productosItemSelect.nombre,
-      _id_producto: productosItemSelect.id,
-      _precio_compra: productosItemSelect.precio_compra,
-      _id_sucursal: id_sucursal_seguro,
-      stock: productosItemSelect.stock,
-      maneja_inventarios: productosItemSelect.maneja_inventarios,
-      nombre: productosItemSelect.nombre,
-    };
-
-    addItem(pDetalleVentas);
-    setBuscador("");
-    setCantidadInput(1);
-    if (buscadorRef.current) buscadorRef.current.focus();
+    if (!productosItemSelect && (dataProductos || []).length === 1) {
+      agregarProductoAVenta(dataProductos[0]);
+      return;
+    }
+    agregarProductoAVenta(productosItemSelect);
   }
 
   const ValidarCantidad = (e) => {
-    const value = Math.max(0, parseFloat(e.target.value));
-    setCantidadInput(value);
+    setCantidadInput(sanitizarCantidadEntera(e.target.value));
   };
 
   useEffect(() => {
@@ -179,8 +161,12 @@ export function HeaderPos() {
               <input
                 type="number"
                 min="1"
+                step="1"
+                inputMode="numeric"
                 value={cantidadInput}
                 onChange={ValidarCantidad}
+                onBlur={() => setCantidadInput(sanitizarCantidadEntera(cantidadInput))}
+                onKeyDown={bloquearTeclasNoEnteras}
                 placeholder="cantidad..."
                 className="form__field"
               />
@@ -195,14 +181,11 @@ export function HeaderPos() {
               onChange={buscar}
               className="form__field"
               type="search"
-              placeholder={stateLectora ? "Escanee producto..." : "Buscar producto..."}
+              placeholder="Buscar o escanear producto..."
               onKeyDown={(e) => {
-                // Capturar el Enter de la lectora
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  if (stateLectora) {
-                    ejecutarVentaPorLectora(buscador);
-                  }
+                  ejecutarBusquedaRapida(buscador);
                 }
                 if (e.key === "ArrowDown" && stateListaproductos) {
                   e.preventDefault();
@@ -220,46 +203,17 @@ export function HeaderPos() {
             />
           </InputText2>
         </article>
-
-        <article className="area2">
-          <Btn1
-            funcion={() => {
-              setStateLectora(true);
-              setStateTeclado(false);
-              setStateListaproductos(false);
-              focusclick();
-            }}
-            bgcolor={stateLectora ? "#ffbd59" : ({ theme }) => theme.bgtotal}
-            color={stateLectora ? "#fff" : ({ theme }) => theme.text}
-            border="2px"
-            titulo="Lectora"
-            icono={<Icon icon="material-symbols:barcode-reader-outline" />}
-          />
-          <Btn1
-            funcion={() => {
-              setStateLectora(false);
-              setStateTeclado(true);
-              focusclick();
-            }}
-            bgcolor={stateTeclado ? "#ffbd59" : ({ theme }) => theme.bgtotal}
-            color={stateTeclado ? "#fff" : ({ theme }) => theme.text}
-            border="2px"
-            titulo="Teclado"
-            icono={<Icon icon="icon-park:enter-the-keyboard" />}
-          />
-        </article>
       </section>
     </Header>
   );
 }
 
-// Estilos se mantienen iguales...
 const Header = styled.div`
   grid-area: header;
   display: flex;
   height: 100%;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
   @media ${Device.desktop} {
     border-bottom: 1px solid ${({ theme }) => theme.color2};
   }
@@ -300,52 +254,38 @@ const Header = styled.div`
     }
   }
   .contentbuscador {
-    display: grid;
-    grid-template: "area2 area2" "area1 area1";
-    gap: 10px;
-    height: 100%;
+    display: flex;
     align-items: center;
     position: relative;
     .area1 {
-      grid-area: area1;
+      width: 100%;
       display: flex;
       gap: 30px;
       .contentCantidad { width: 150px; }
     }
-    .area2 { grid-area: area2; display: flex; gap: 10px; }
     @media ${Device.desktop} {
-      display: flex;
-      justify-content: flex-start;
-      gap: 10px;
       .area1 { width: 40vw; }
     }
     @media (max-width: 640px) {
       .area1 {
         gap: 10px;
-        width: 100%;
         .contentCantidad {
           width: 95px;
         }
-      }
-      .area2 {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
   }
 `;
 
 const ContentSucursal = styled.section`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 45px;
+  min-height: 38px;
+  padding: 4px 8px 8px;
   border-bottom: 1px solid ${({ theme }) => theme.color2};
+  text-align: center;
 `;
 
 const Contentuser = styled.div`
@@ -367,4 +307,3 @@ const Contentuser = styled.div`
     .usuario { font-weight: 700; }
   }
 `;
-

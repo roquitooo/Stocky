@@ -219,6 +219,8 @@ export const useCierreCajaStore = create((set) => ({
           metodos_pago(nombre),
           ventas(
             nro_comprobante,
+            sub_total,
+            monto_total,
             detalle_venta(
               cantidad,
               descripcion,
@@ -266,6 +268,16 @@ export const useCierreCajaStore = create((set) => ({
           usuario_nombre: item?.usuarios?.nombres || "-",
           metodo_pago: item?.metodos_pago?.nombre || "-",
           comprobante: item?.ventas?.nro_comprobante || "-",
+          descuento_monto:
+            Number(item?.ventas?.sub_total || 0) > Number(item?.ventas?.monto_total || 0)
+              ? Number(item?.ventas?.sub_total || 0) - Number(item?.ventas?.monto_total || 0)
+              : 0,
+          descuento_porcentaje:
+            Number(item?.ventas?.sub_total || 0) > 0 &&
+            Number(item?.ventas?.sub_total || 0) > Number(item?.ventas?.monto_total || 0)
+              ? ((Number(item?.ventas?.sub_total || 0) - Number(item?.ventas?.monto_total || 0)) * 100) /
+                Number(item?.ventas?.sub_total || 0)
+              : 0,
         };
       });
     } catch (error) {

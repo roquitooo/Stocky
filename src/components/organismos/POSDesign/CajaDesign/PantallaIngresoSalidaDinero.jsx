@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import { useCierreCajaStore } from "../../../../store/CierreCajaStore";
 import { VolverBtn } from "../../../moleculas/VolverBtn";
 import { InputText2 } from "../../formularios/InputText2";
@@ -92,7 +92,7 @@ export function PantallaIngresoSalidaDinero() {
       </span>
       
       <section className="areatipopago">
-        {/* CORRECCIÓN AQUÍ: FILTRO ESTRICTO */}
+        {/* CORRECCIÃ“N AQUÃ: FILTRO ESTRICTO */}
         {dataMetodosPago
           ?.filter((item) => item.nombre === "Efectivo" || item.nombre === "Tarjeta")
           .map((item, index) => {
@@ -132,7 +132,7 @@ export function PantallaIngresoSalidaDinero() {
             <textarea
               className="form__field"
               rows="3"
-              placeholder="Descripcion del motivo..."
+              placeholder="Descripción del motivo..."
               {...register("motivo")}
             />
           </InputText2>
@@ -195,3 +195,4 @@ const Container = styled.div`
     }
   }
 `;
+

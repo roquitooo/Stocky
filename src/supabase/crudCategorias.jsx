@@ -21,6 +21,7 @@ export async function InsertarCategorias(p, file) {
     };
     await EditarIconoCategorias(piconoeditar);
   }
+  return data;
 }
 
 async function subirImagen(idcategoria, file) {

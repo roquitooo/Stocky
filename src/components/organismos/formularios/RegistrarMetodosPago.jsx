@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { v } from "../../../styles/variables";
 import {
@@ -38,7 +38,7 @@ export function RegistrarMetodosPago({
       toast.error(`Error: ${error.message}`);
     },
     onSuccess: () => {
-      toast.success("Metodo de pago guardado exitosamente");
+      toast.success("Método de pago guardado exitosamente");
       queryClient.invalidateQueries(["mostrar metodos pago"]);
       cerrarFormulario();
     },
@@ -53,7 +53,7 @@ export function RegistrarMetodosPago({
   };
 
   async function insertar(data) {
-     // 🛡️ PROTECCIÓN
+     // ðŸ›¡ï¸ PROTECCIÃ“N
     if (!dataempresa?.id) {
         toast.error("No se detectó la empresa. Recarga la página.");
         return;
@@ -100,15 +100,15 @@ export function RegistrarMetodosPago({
   return (
     <Container>
       {isPending ? (
-        <span>...🔼</span>
+        <span>...ðŸ”¼</span>
       ) : (
         <div className="sub-contenedor">
           <div className="headers">
             <section>
               <h1>
                 {accion == "Editar"
-                  ? "Editar metodo pago"
-                  : "Registrar metodo pago"}
+                  ? "Editar método de pago"
+                  : "Registrar método de pago"}
               </h1>
             </section>
 
@@ -127,7 +127,7 @@ export function RegistrarMetodosPago({
 
             <Btn1
               funcion={abrirImagenes}
-              titulo="+imagen"
+              titulo="+ imagen"
               color="#5f5f5f"
               bgcolor="rgb(183, 183, 182)"
               icono={<v.iconosupabase />}
@@ -146,12 +146,12 @@ export function RegistrarMetodosPago({
                     className="form__field"
                     defaultValue={dataSelect.nombre}
                     type="text"
-                    placeholder="categoria"
+                    placeholder="método de pago"
                     {...register("nombre", {
                       required: true,
                     })}
                   />
-                  <label className="form__label">categoria</label>
+                  <label className="form__label">método de pago</label>
                   {errors.nombre?.type === "required" && <p>Campo requerido</p>}
                 </InputText>
               </article>
@@ -205,3 +205,5 @@ const Container = styled.div`
 `;
 const ContentTitle = styled.div` display: flex; justify-content: start; align-items: center; gap: 20px; svg { font-size: 25px; } input { border: none; outline: none; background: transparent; padding: 2px; width: 40px; font-size: 28px; } `;
 const PictureContainer = styled.div` display: flex; align-items: center; justify-content: start; border: 2px dashed #f9d70b; border-radius: 5px; background-color: rgba(249, 215, 11, 0.1); padding: 8px; position: relative; gap: 3px; margin-bottom: 8px; .ContentImage { overflow: hidden; img { width: 100%; object-fit: contain; } } input { display: none; } `;
+
+

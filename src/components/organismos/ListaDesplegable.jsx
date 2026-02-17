@@ -60,7 +60,7 @@ export function ListaDesplegable({
               key={index}
               onClick={() => seleccionar(item)}
             >
-              <span>🌫️</span>
+              <span>{"\u{1F3EC}"}</span>
               <span>{item?.nombre}</span>
             </ItemContainer>
           );
@@ -110,3 +110,4 @@ const ItemContainer = styled.div`
     background-color: ${({ theme }) => theme.bgtotal};
   }
 `;
+

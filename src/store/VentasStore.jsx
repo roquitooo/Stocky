@@ -32,10 +32,38 @@ export const useVentasStore = create((set, get) => ({
   },
 
   // --- FUNCIÓN DE VALIDACIÓN (SOLO UNA VEZ) ---
-  validarStockCarrito: (carrito) => {
+  validarStockCarrito: async (carrito) => {
     if (!Array.isArray(carrito) || carrito.length === 0) {
       Swal.fire({ icon: "warning", title: "Carrito vacío", text: "Agrega productos." });
       return false;
+    }
+
+    const idSucursal = carrito[0]?._id_sucursal ?? null;
+    const idsProductos = [
+      ...new Set(
+        carrito
+          .map((item) => item?._id_producto)
+          .filter((id) => Number.isFinite(Number(id)))
+      ),
+    ];
+
+    let stockActualPorProducto = new Map();
+    if (idSucursal && idsProductos.length > 0) {
+      try {
+        const { data, error } = await supabase
+          .from("almacenes")
+          .select("id_producto, stock")
+          .eq("id_sucursal", idSucursal)
+          .in("id_producto", idsProductos);
+
+        if (!error && Array.isArray(data)) {
+          stockActualPorProducto = new Map(
+            data.map((row) => [Number(row.id_producto), Number(row.stock || 0)])
+          );
+        }
+      } catch (_) {
+        // Fallback: si falla la consulta, validamos con el stock guardado en carrito.
+      }
     }
 
     let productosSinStock = [];
@@ -43,7 +71,11 @@ export const useVentasStore = create((set, get) => ({
     carrito.forEach((item) => {
       // 1. Leemos '_cantidad' (que es como viene del carrito)
       const cantidadSolicitada = parseFloat(item._cantidad || item.cantidad || 0);
-      const stockActual = parseFloat(item.stock || 0);
+      const idProducto = Number(item?._id_producto);
+      const stockDesdeDb = stockActualPorProducto.get(idProducto);
+      const stockActual = Number.isFinite(stockDesdeDb)
+        ? stockDesdeDb
+        : parseFloat(item.stock || 0);
       // 2. Convertimos el booleano
       const manejaInventario = String(item.maneja_inventarios) === "true";
 
@@ -190,7 +222,13 @@ export const useVentasStore = create((set, get) => ({
     try {
       let query = supabase
         .from("detalle_venta")
-        .select("cantidad, precio_venta, precio_compra, ventas!inner(id_empresa, estado)")
+        .select(`
+          cantidad,
+          precio_venta,
+          precio_compra,
+          total,
+          ventas!inner(id, id_empresa, estado, monto_total, sub_total, fecha)
+        `)
         .eq("ventas.id_empresa", p.id_empresa)
         .neq("ventas.estado", "nueva");
 
@@ -205,11 +243,48 @@ export const useVentasStore = create((set, get) => ({
 
       if (error || !Array.isArray(data)) return 0;
 
-      const total = data.reduce((acc, item) => {
+      const ventasMap = new Map();
+
+      data.forEach((item) => {
+        const ventaId = Number(item?.ventas?.id);
+        if (!Number.isFinite(ventaId)) return;
+
         const cantidad = Number(item?.cantidad || 0);
         const precioVenta = Number(item?.precio_venta || 0);
         const precioCompra = Number(item?.precio_compra || 0);
-        return acc + (precioVenta - precioCompra) * cantidad;
+        const totalLinea = Number(item?.total);
+        const ingresoLinea = Number.isFinite(totalLinea)
+          ? totalLinea
+          : cantidad * precioVenta;
+        const costoLinea = cantidad * precioCompra;
+
+        if (!ventasMap.has(ventaId)) {
+          ventasMap.set(ventaId, {
+            ingresoBase: 0,
+            costo: 0,
+            montoTotalVenta: Number(item?.ventas?.monto_total),
+          });
+        }
+
+        const venta = ventasMap.get(ventaId);
+        venta.ingresoBase += Number(ingresoLinea || 0);
+        venta.costo += Number(costoLinea || 0);
+      });
+
+      const total = Array.from(ventasMap.values()).reduce((acc, venta) => {
+        const ingresoBase = Number(venta?.ingresoBase || 0);
+        const costo = Number(venta?.costo || 0);
+        const montoTotalVenta = Number(venta?.montoTotalVenta);
+
+        // Prorratea descuentos/recargos de la venta completa sobre sus lineas.
+        // Si no hay monto_total, usa el ingreso base como fallback.
+        const factor =
+          ingresoBase > 0 && Number.isFinite(montoTotalVenta)
+            ? montoTotalVenta / ingresoBase
+            : 1;
+
+        const ingresoAjustado = ingresoBase * factor;
+        return acc + (ingresoAjustado - costo);
       }, 0);
 
       return Number.isFinite(total) ? total : 0;

@@ -120,11 +120,17 @@ const Container = styled.div`
   flex-direction: column;
   min-height: 100%;
   max-width: 1400px;
+  width: 100%;
   margin: auto;
   gap: 22px;
   padding: clamp(14px, 2.4vw, 24px);
   position: relative;
   z-index: 1;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+    gap: 14px;
+  }
 
   &::before {
     content: "";
@@ -166,6 +172,7 @@ const Area1 = styled.section`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: clamp(14px, 1.8vw, 20px);
+  min-width: 0;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -174,6 +181,7 @@ const Area1 = styled.section`
 
 const Area2 = styled.section`
   grid-area: area2;
+  min-width: 0;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 18px;
   background: linear-gradient(
@@ -190,6 +198,7 @@ const Area2 = styled.section`
 
 const Area3 = styled.section`
   grid-area: area3;
+  min-width: 0;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 18px;
   background: linear-gradient(
@@ -209,4 +218,5 @@ const Area4 = styled.section`
   display: flex;
   gap: clamp(14px, 1.8vw, 20px);
   width: 100%;
+  min-width: 0;
 `;

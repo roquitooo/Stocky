@@ -17,7 +17,6 @@ import { PantallaCobro } from "../organismos/POSDesign/PantallaCobro";
 
 import { PantallaIngresoSalidaDinero } from "../organismos/POSDesign/CajaDesign/PantallaIngresoSalidaDinero";
 import { useCierreCajaStore } from "../../store/CierreCajaStore";
-import { MenuFlotante } from "../organismos/POSDesign/MenuFlotante";
 export function POSTemplate() {
   const { statePantallaCobro } = useCartVentasStore();
   const { stateIngresoSalida, stateCierreCaja } = useCierreCajaStore();
@@ -32,7 +31,6 @@ export function POSTemplate() {
         <AreaTecladoPos />
       </Main>
       <FooterPos />
-      <MenuFlotante />
       {stateIngresoSalida && <PantallaIngresoSalidaDinero />}
       {stateCierreCaja && <PantallaCierreCaja />}
     </Container>
@@ -46,8 +44,8 @@ const Container = styled.div`
   display: grid;
   gap: 10px;
   grid-template:
-    "header" 220px
-    "main" auto;
+    "header" auto
+    "main" minmax(0, 1fr);
 
   animation: ${blur_in} 0.5s linear both;
   @media ${Device.desktop} {
@@ -68,8 +66,10 @@ const Main = styled.div`
   overflow: hidden;
   min-height: 0;
   gap: 10px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 74px);
 
   @media ${Device.desktop} {
     flex-direction: row;
+    padding-bottom: 0;
   }
 `;

@@ -80,6 +80,12 @@ const Container = styled.div`
   transition: all 0.3s ease;
   border-top: 1px solid ${({ theme }) => theme.bg4};
 
+  @media (max-width: 900px) {
+    top: 64px;
+    height: calc(100vh - 64px);
+    padding: 14px;
+  }
+
   /* Scrollbar personalizado */
   &::-webkit-scrollbar {
     width: 6px;

@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import { useCartVentasStore } from "../../../store/CartVentasStore";
 import { InputText } from "../formularios/InputText";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
@@ -115,7 +115,7 @@ export const IngresoCobro = forwardRef((props, ref) => {
   async function insertarventas() {
     if (restante <= 0) {
       if (!idSucursalSeguro) {
-        toast.error("No se detecto sucursal activa. Selecciona una sucursal antes de cobrar.");
+        toast.error("No se detectó sucursal activa. Selecciona una sucursal antes de cobrar.");
         return;
       }
 
@@ -166,21 +166,33 @@ export const IngresoCobro = forwardRef((props, ref) => {
         }
 
         if (result?.id > 0) {
-          for (const [tipo, monto] of Object.entries(valoresPago)) {
-            if (monto > 0) {
-              const metodoPago = dataMetodosPago.find((item) => item.nombre === tipo);
-              const pmovcaja = {
-                tipo_movimiento: "ingreso",
-                monto: monto,
-                id_metodo_pago: metodoPago?.id,
-                descripcion: `Pago de venta con ${tipo}`,
-                id_usuario: datausuarios?.id,
-                id_cierre_caja: dataCierreCaja?.id,
-                id_ventas: result?.id,
-                vuelto: tipo === "Efectivo" ? vuelto : 0,
-              };
-              await insertarMovCaja(pmovcaja);
-            }
+          const pagosConMonto = Object.entries(valoresPago).filter(
+            ([, monto]) => Number(monto || 0) > 0
+          );
+
+          const ventaBonificada = Number(total || 0) === 0 && pagosConMonto.length === 0;
+          const metodoFallback =
+            tipocobro && tipocobro !== "Mixto" ? tipocobro : "Efectivo";
+
+          const pagosARegistrar = ventaBonificada
+            ? [[metodoFallback, 0]]
+            : pagosConMonto;
+
+          for (const [tipo, monto] of pagosARegistrar) {
+            const metodoPago = dataMetodosPago?.find((item) => item.nombre === tipo);
+            const pmovcaja = {
+              tipo_movimiento: "ingreso",
+              monto: Number(monto || 0),
+              id_metodo_pago: metodoPago?.id,
+              descripcion: ventaBonificada
+                ? `Pago de venta bonificada con ${tipo}`
+                : `Pago de venta con ${tipo}`,
+              id_usuario: datausuarios?.id,
+              id_cierre_caja: dataCierreCaja?.id,
+              id_ventas: result?.id,
+              vuelto: tipo === "Efectivo" ? vuelto : 0,
+            };
+            await insertarMovCaja(pmovcaja);
           }
         }
       }
@@ -213,7 +225,7 @@ export const IngresoCobro = forwardRef((props, ref) => {
           <section className="area1">
             <span className="tipocobro">{tipocobro}</span>
             <span className="kicker">Comprobante de venta</span>
-            <span className="cliente">CLIENTE GENERICO</span>
+            <span className="cliente">CLIENTE GENÉRICO</span>
             <span className="meta">Caja activa</span>
           </section>
 
@@ -266,26 +278,30 @@ export const IngresoCobro = forwardRef((props, ref) => {
           <Linea />
 
           <section className="area3">
-            <article className="etiquetas">
-              {descuento > 0 && <span className="muted">Subtotal: </span>}
-              <span className="total">Total a Pagar: </span>
-              <span>Vuelto: </span>
-              <span>Restante: </span>
-            </article>
-
-            <article>
-              {descuento > 0 && (
-                <span className="muted strike">
+            {descuento > 0 && (
+              <article className="fila">
+                <span className="label muted">Subtotal:</span>
+                <span className="value muted strike">
                   {FormatearNumeroDinero(subtotal, dataempresa?.currency, dataempresa?.iso)}
                 </span>
-              )}
+              </article>
+            )}
 
-              <span className="total">
+            <article className="fila total-row">
+              <span className="label total-label">Total a pagar:</span>
+              <span className="value total-value">
                 {FormatearNumeroDinero(total, dataempresa?.currency, dataempresa?.iso)}
               </span>
+            </article>
 
-              <span>{FormatearNumeroDinero(vuelto, dataempresa?.currency, dataempresa?.iso)}</span>
-              <span>{FormatearNumeroDinero(restante, dataempresa?.currency, dataempresa?.iso)}</span>
+            <article className="fila">
+              <span className="label">Vuelto:</span>
+              <span className="value">{FormatearNumeroDinero(vuelto, dataempresa?.currency, dataempresa?.iso)}</span>
+            </article>
+
+            <article className="fila">
+              <span className="label">Restante:</span>
+              <span className="value">{FormatearNumeroDinero(restante, dataempresa?.currency, dataempresa?.iso)}</span>
             </article>
           </section>
 
@@ -295,7 +311,7 @@ export const IngresoCobro = forwardRef((props, ref) => {
             <Btn1
               funcion={() => mutation.mutateAsync()}
               border="2px"
-              titulo="COBRAR (enter)"
+              titulo="COBRAR (Enter)"
               bgcolor="#ffbd58"
               color="#ffffff"
               width="100%"
@@ -467,29 +483,50 @@ const Container = styled.div`
   }
 
   .area3 {
-    display: flex;
-    justify-content: space-between;
     width: 100%;
-    padding: 8px 2px;
+    padding: 8px 2px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 
-    article {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .total {
-      font-weight: 900;
-      font-size: 31px;
-      line-height: 1.05;
-      color: #0f172a;
-    }
-
-    .etiquetas {
-      text-align: end;
-      margin-right: 8px;
+    .fila {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 12px;
       font-weight: 700;
       color: #1f2937;
+    }
+
+    .label {
+      text-align: left;
+    }
+
+    .value {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .total-row {
+      margin-top: 2px;
+      padding-top: 2px;
+      border-top: 1px solid #ececec;
+    }
+
+    .total-label {
+      font-weight: 900;
+      font-size: 20px;
+      line-height: 1.1;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+
+    .total-value {
+      font-weight: 900;
+      font-size: clamp(26px, 5.4vw, 34px);
+      line-height: 1.05;
+      color: #0f172a;
+      white-space: nowrap;
     }
 
     .muted {
@@ -514,3 +551,5 @@ const Linea = styled.span`
   border-bottom: dashed 1px #d9d9d9;
   margin: 3px 0;
 `;
+
+

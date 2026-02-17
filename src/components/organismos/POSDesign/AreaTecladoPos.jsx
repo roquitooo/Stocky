@@ -7,34 +7,19 @@ import { useMetodosPagoStore } from "../../../store/MetodosPagoStore";
 import { useVentasStore } from "../../../store/VentasStore";
 
 export function AreaTecladoPos() {
-  const { setStatePantallaCobro, stateMetodosPago, items } = useCartVentasStore();
+  const { setStatePantallaCobro, items } = useCartVentasStore();
   const { dataMetodosPago: datametodospago } = useMetodosPagoStore();
   const { validarStockCarrito } = useVentasStore();
 
-  const handleSeleccionarPago = (nombreMetodo) => {
-    // --- 🕵️‍♂️ MODO DETECTIVE: Ver qué hay en el carrito ---
-    console.log("--- INTENTO DE COBRO ---");
-    console.log("Items en carrito:", items);
-    
-    // Verificamos item por item en la consola
-    items.forEach((item, index) => {
-       console.log(`Producto ${index}: ${item.nombre}`);
-       console.log(`- Stock: ${item.stock}`);
-       console.log(`- Cantidad pedida: ${item._cantidad}`);
-       console.log(`- Maneja Inventarios: ${item.maneja_inventarios}`);
-    });
-
-    // Validamos
-    const esValido = validarStockCarrito(items);
-    console.log("Resultado Validación:", esValido ? "APROBADO ✅" : "RECHAZADO ❌");
-
+  const handleSeleccionarPago = async (nombreMetodo) => {
+    const esValido = await validarStockCarrito(items);
     if (esValido) {
       setStatePantallaCobro({ tipocobro: nombreMetodo });
     }
   };
 
   return (
-    <Container $stateMetodosPago={stateMetodosPago}>
+    <Container>
       <section className="areatipopago">
         {datametodospago
           ?.filter((item) => item.nombre === "Efectivo" || item.nombre === "Tarjeta")
@@ -66,26 +51,22 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  position: absolute;
-  bottom: 10px;
-  width: calc(100% - 5px);
+  position: relative;
+  bottom: initial;
+  width: 100%;
   border-radius: 15px;
+  flex-shrink: 0;
+  z-index: 2;
   @media ${Device.desktop} {
     position: relative;
     width: clamp(320px, 34vw, 450px);
     bottom: initial;
   }
   .areatipopago {
-    display: ${({ $stateMetodosPago }) => ($stateMetodosPago ? "flex" : "none")};
+    display: flex;
     flex-wrap: wrap;
     gap: 10px;
     padding: 10px;
-    @media ${Device.desktop} {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 10px;
-    }
     .box {
       flex: 1 1 40%;
       display: flex;
@@ -110,3 +91,4 @@ const Container = styled.div`
     }
   }
 `;
+

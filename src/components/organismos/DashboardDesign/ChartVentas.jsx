@@ -45,10 +45,10 @@ export const ChartVentas = () => {
         {fechaInicio && <SubTitle>{fechaInicio} al {fechaFin}</SubTitle>}
       </Header>
       
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={220}>
         <AreaChart
           data={data}
-          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+          margin={{ top: 10, right: 8, left: -12, bottom: 0 }}
         >
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -57,7 +57,14 @@ export const ChartVentas = () => {
             </linearGradient>
           </defs>
           <CartesianGrid strokeOpacity={0.1} vertical={false} />
-          <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#888" }} />
+          <XAxis
+            dataKey="fecha"
+            axisLine={false}
+            tickLine={false}
+            interval="preserveStartEnd"
+            minTickGap={18}
+            tick={{ fontSize: 11, fill: "#888" }}
+          />
           <YAxis hide />
           <Tooltip content={<CustomTooltip />} />
           <Area type="monotone" dataKey="total" stroke={themeStyle.text} strokeWidth={2} fill="url(#colorValue)" activeDot={{ r: 6 }} />
@@ -83,8 +90,21 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 // --- ESTILOS ---
-const Container = styled.div` padding: 15px; height: 100%; display: flex; flex-direction: column; `;
-const Header = styled.div` margin-bottom: 20px; padding-left: 5px; `;
+const Container = styled.div`
+  padding: 15px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
+`;
+const Header = styled.div`
+  margin-bottom: 12px;
+  padding-left: 2px;
+`;
 const Title = styled.h3`
   font-size: 18px;
   font-weight: 700;

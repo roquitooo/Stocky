@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import { Icon } from "@iconify/react";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { useVentasStore } from "../../../store/VentasStore";
@@ -13,6 +13,7 @@ export const CardHistorialVentas = () => {
   const { dataempresa } = useEmpresaStore();
   const { datausuarios } = useUsuariosStore();
   const { mostrarVentasRecientes } = useVentasStore();
+
   const esAdmin = String(datausuarios?.roles?.nombre || "")
     .toLowerCase()
     .includes("admin");
@@ -24,7 +25,14 @@ export const CardHistorialVentas = () => {
     refetchOnWindowFocus: false,
   });
 
-  if (isLoading) return <LoadingContainer><BarLoader color="#888" /></LoadingContainer>;
+  if (isLoading) {
+    return (
+      <LoadingContainer>
+        <BarLoader color="#888" />
+      </LoadingContainer>
+    );
+  }
+
   if (error) return <span>Error al cargar historial</span>;
 
   return (
@@ -33,17 +41,14 @@ export const CardHistorialVentas = () => {
         <Title>Historial de Ventas Recientes</Title>
         <HeaderActions>
           {esAdmin && (
-            <ActionButton
-              type="button"
-              onClick={() => navigate("/dashboard/cierres-caja")}
-            >
+            <ActionButton type="button" onClick={() => navigate("/dashboard/cierres-caja")}>
               Ver historial de cierres de caja
             </ActionButton>
           )}
           <Icon icon="mdi:history" width="24" color="#888" />
         </HeaderActions>
       </Header>
-      
+
       <TableContainer>
         <Table>
           <thead>
@@ -71,8 +76,13 @@ export const CardHistorialVentas = () => {
                 </td>
               </tr>
             ))}
+
             {(!data || data.length === 0) && (
-               <tr><td colSpan="6" style={{textAlign:"center", padding:"20px"}}>Sin ventas recientes</td></tr>
+              <tr>
+                <td colSpan="6" style={{ textAlign: "center", padding: "20px" }}>
+                  Sin ventas recientes
+                </td>
+              </tr>
             )}
           </tbody>
         </Table>
@@ -81,8 +91,6 @@ export const CardHistorialVentas = () => {
   );
 };
 
-// --- ESTILOS ---
-// (Tus estilos se mantienen exactamente igual, no hace falta tocarlos)
 const Container = styled.div`
   background-color: ${({ theme }) => theme.body};
   border-radius: 12px;
@@ -93,6 +101,11 @@ const Container = styled.div`
   min-height: 300px;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 768px) {
+    padding: 14px 12px;
+    min-height: 220px;
+  }
 `;
 
 const LoadingContainer = styled.div`
@@ -116,6 +129,11 @@ const HeaderActions = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: space-between;
+  }
 `;
 
 const Title = styled.h3`
@@ -186,13 +204,40 @@ const Table = styled.table`
   .align-right {
     text-align: right;
   }
-  
+
   .align-center {
     text-align: center;
   }
 
   .font-bold {
     font-weight: 700;
+  }
+
+  @media (max-width: 768px) {
+    min-width: 0;
+
+    th,
+    td {
+      font-size: 12px;
+      padding: 10px 4px;
+    }
+
+    th:nth-child(3),
+    td:nth-child(3),
+    th:nth-child(4),
+    td:nth-child(4),
+    th:nth-child(5),
+    td:nth-child(5) {
+      display: none;
+    }
+
+    .productos-col {
+      max-width: 160px;
+    }
+
+    .fecha-col {
+      font-size: 11px;
+    }
   }
 `;
 
@@ -202,12 +247,12 @@ const Badge = styled.span`
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
-  background-color: ${(props) => 
-    props.$tipo === 'Efectivo' ? 'rgba(34, 197, 94, 0.1)' : 
-    props.$tipo === 'Tarjeta' ? 'rgba(59, 130, 246, 0.1)' : 
-    'rgba(128, 128, 128, 0.1)'};
-  color: ${(props) => 
-    props.$tipo === 'Efectivo' ? '#22c55e' : 
-    props.$tipo === 'Tarjeta' ? '#3b82f6' : 
-    '#888'};
+  background-color: ${(props) =>
+    props.$tipo === "Efectivo"
+      ? "rgba(34, 197, 94, 0.1)"
+      : props.$tipo === "Tarjeta"
+      ? "rgba(59, 130, 246, 0.1)"
+      : "rgba(128, 128, 128, 0.1)"};
+  color: ${(props) =>
+    props.$tipo === "Efectivo" ? "#22c55e" : props.$tipo === "Tarjeta" ? "#3b82f6" : "#888"};
 `;
