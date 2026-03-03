@@ -192,6 +192,8 @@ export function ProductosTemplate({
 
   function limpiarFiltroBajoStock() {
     setBuscador("");
+    setCategoriasSeleccionadas([]);
+    setOpenCategoriasFiltro(false);
     navigate("/configuracion/productos");
   }
 

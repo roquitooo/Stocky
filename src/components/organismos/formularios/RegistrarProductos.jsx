@@ -138,6 +138,14 @@ export function RegistrarProductos({
     );
   }
 
+  function normalizarEntero(valor) {
+    const texto = String(valor ?? "").trim().replace(",", ".");
+    if (texto === "") return 0;
+    const numero = Number(texto);
+    if (!Number.isFinite(numero)) return 0;
+    return Math.trunc(numero);
+  }
+
   function onSelectCategoria(categoria) {
     setCategoriaEditadaManualmente(true);
     selectCategoria(categoria);
@@ -173,8 +181,8 @@ export function RegistrarProductos({
   useEffect(() => {
     if (accion === "Editar" && stateInventarios) {
         // Si hay data, la ponemos. Si no, asumimos 0 para evitar undefined
-        setValue("stock", dataalmacen?.stock || 0);
-        setValue("stock_minimo", dataalmacen?.stock_minimo || 0);
+        setValue("stock", normalizarEntero(dataalmacen?.stock));
+        setValue("stock_minimo", normalizarEntero(dataalmacen?.stock_minimo));
     }
   }, [dataalmacen, stateInventarios, accion, setValue]);
 
@@ -298,12 +306,14 @@ export function RegistrarProductos({
       await editarProductos(p);
 
       if (stateInventarios) {
+        const stock = normalizarEntero(data.stock);
+        const stockMinimo = normalizarEntero(data.stock_minimo);
         // Validamos si existe dataalmacen (si ya tenÃ­a registro previo en BD)
         if (dataalmacen?.id) {
              const palmacenes = {
             _id: dataalmacen.id,
-            _stock: parseFloat(data.stock),
-            _stock_minimo: parseFloat(data.stock_minimo),
+            _stock: stock,
+            _stock_minimo: stockMinimo,
           };
           await editarStock(palmacenes);
         } else {
@@ -311,8 +321,8 @@ export function RegistrarProductos({
            const palmacenes = {
             id_sucursal: sucursalesItemSelect.id,
             id_producto: dataSelect.id,
-            stock: parseFloat(data.stock),
-            stock_minimo: parseFloat(data.stock_minimo),
+            stock: stock,
+            stock_minimo: stockMinimo,
           };
           await insertarStockAlmacenes(palmacenes);
         }
@@ -334,11 +344,13 @@ export function RegistrarProductos({
 
       const id_producto_nuevo = await insertarProductos(p);
       if (stateInventarios) {
+        const stock = normalizarEntero(data.stock);
+        const stockMinimo = normalizarEntero(data.stock_minimo);
         const palmacenes = {
           id_sucursal: sucursalesItemSelect.id,
           id_producto: id_producto_nuevo,
-          stock: parseFloat(data.stock),
-          stock_minimo: parseFloat(data.stock_minimo),
+          stock: stock,
+          stock_minimo: stockMinimo,
         };
         await insertarStockAlmacenes(palmacenes);
       }
@@ -384,8 +396,8 @@ export function RegistrarProductos({
     if (data.precio_venta.toString().trim() === "") data.precio_venta = 0;
     if (!esCajero && data.precio_compra?.toString().trim() === "") data.precio_compra = 0;
     if (stateInventarios) {
-      if (!data.stock || data.stock.toString().trim() === "") data.stock = 0;
-      if (!data.stock_minimo || data.stock_minimo.toString().trim() === "") data.stock_minimo = 0;
+      data.stock = normalizarEntero(data.stock);
+      data.stock_minimo = normalizarEntero(data.stock_minimo);
     }
   }
 
@@ -595,10 +607,11 @@ export function RegistrarProductos({
                           <input
                             className="form__field"
                             // defaultValue ELIMINADO: Controlado por setValue en useEffect
-                            step="0.01"
+                            step="1"
+                            inputMode="numeric"
                             type="number"
                             placeholder="stock"
-                            {...register("stock")}
+                            {...register("stock", { setValueAs: normalizarEntero })}
                           />
                           <label className="form__label">Stock Actual:</label>
                         </InputText>
@@ -608,10 +621,11 @@ export function RegistrarProductos({
                           <input
                             className="form__field"
                              // defaultValue ELIMINADO
-                            step="0.01"
+                            step="1"
+                            inputMode="numeric"
                             type="number"
                             placeholder="stock mínimo"
-                            {...register("stock_minimo")}
+                            {...register("stock_minimo", { setValueAs: normalizarEntero })}
                           />
                           <label className="form__label">Alerta de stock crítico:</label>
                         </InputText>

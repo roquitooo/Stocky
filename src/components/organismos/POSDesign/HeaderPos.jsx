@@ -3,6 +3,7 @@ import {
   InputText2,
   ListaDesplegable,
   Reloj,
+  useEmpresaStore,
   useProductosStore,
   useSucursalesStore,
   useUsuariosStore,
@@ -16,11 +17,17 @@ export function HeaderPos() {
   const [cantidadInput, setCantidadInput] = useState(1);
   const [stateListaproductos, setStateListaproductos] = useState(false);
 
-  const { setBuscador, dataProductos, selectProductos, buscador } =
-    useProductosStore();
+  const {
+    setBuscador,
+    dataProductos,
+    selectProductos,
+    buscador,
+    buscarProductos: buscarProductosStore,
+  } = useProductosStore();
 
   const { sucursalesItemSelect } = useSucursalesStore();
   const { datausuarios } = useUsuariosStore();
+  const { dataempresa } = useEmpresaStore();
 
   const asignacionActiva = Array.isArray(sucursalesItemSelect)
     ? sucursalesItemSelect[0]
@@ -70,21 +77,67 @@ export function HeaderPos() {
     if (buscadorRef.current) buscadorRef.current.focus();
   }
 
-  function buscarProductoPorCodigo(valor) {
-    return (dataProductos || []).find((p) => {
-      const cb = p.codigo_barras?.toString().trim();
-      const c = p.codigo?.toString().trim();
-      return cb === valor || c === valor;
+  function buscarProductoPorCodigo(valor, listaProductos = dataProductos) {
+    const codigoEscaneado = String(valor ?? "").trim();
+    if (!codigoEscaneado) return null;
+
+    const codigoEscaneadoMayus = codigoEscaneado.toUpperCase();
+    const codigoEscaneadoNumerico = codigoEscaneado.replace(/\D/g, "");
+
+    return (listaProductos || []).find((p) => {
+      const codigosProducto = [
+        p?.codigo_barras,
+        p?.codigo_interno,
+        p?.codigo,
+      ]
+        .map((codigo) => String(codigo ?? "").trim())
+        .filter(Boolean);
+
+      return codigosProducto.some((codigo) => {
+        if (codigo === codigoEscaneado) return true;
+        if (codigo.toUpperCase() === codigoEscaneadoMayus) return true;
+
+        const codigoNumerico = codigo.replace(/\D/g, "");
+        return (
+          codigoEscaneadoNumerico &&
+          codigoNumerico &&
+          codigoNumerico === codigoEscaneadoNumerico
+        );
+      });
     });
   }
 
-  function ejecutarBusquedaRapida(valorEntrada) {
+  async function ejecutarBusquedaRapida(valorEntrada) {
     const valor = valorEntrada?.toString().trim();
     if (!valor) return;
 
-    const productoCodigo = buscarProductoPorCodigo(valor);
-    if (productoCodigo) {
-      agregarProductoAVenta(productoCodigo);
+    const productoCodigoLocal = buscarProductoPorCodigo(valor, dataProductos);
+    if (productoCodigoLocal) {
+      agregarProductoAVenta(productoCodigoLocal);
+      return;
+    }
+
+    if (dataempresa?.id && id_sucursal_seguro) {
+      const resultadoRemoto = await buscarProductosStore({
+        id_empresa: dataempresa.id,
+        buscador: valor,
+        id_sucursal: id_sucursal_seguro,
+      });
+
+      const dataRemota = Array.isArray(resultadoRemoto) ? resultadoRemoto : [];
+
+      const productoCodigoRemoto = buscarProductoPorCodigo(valor, dataRemota);
+      if (productoCodigoRemoto) {
+        agregarProductoAVenta(productoCodigoRemoto);
+        return;
+      }
+
+      if (dataRemota.length === 1) {
+        agregarProductoAVenta(dataRemota[0]);
+        return;
+      }
+
+      setStateListaproductos(dataRemota.length > 1);
       return;
     }
 
@@ -185,7 +238,7 @@ export function HeaderPos() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  ejecutarBusquedaRapida(buscador);
+                  ejecutarBusquedaRapida(e.currentTarget.value);
                 }
                 if (e.key === "ArrowDown" && stateListaproductos) {
                   e.preventDefault();
