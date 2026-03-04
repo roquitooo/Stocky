@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled from "styled-components";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Icon } from "@iconify/react";
@@ -12,8 +12,6 @@ const parseFechaLocal = (valor) => {
   if (valor instanceof Date) return valor;
   const txt = String(valor).trim();
 
-  // Maneja timestamp sin zona horaria (Postgres/Supabase) como UTC
-  // y lo convierte a la zona local del navegador.
   const m = txt.match(
     /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/
   );
@@ -57,16 +55,51 @@ const formatDuracion = (inicio, fin) => {
   return `${horas}h ${String(min).padStart(2, "0")}m`;
 };
 
-export function HistorialCierresCajaTemplate() {
+const parseDetalleFiado = (valor) => {
+  const texto = String(valor || "").trim();
+  if (!texto) {
+    return { motivo: "-", descripcion: "-" };
+  }
+
+  const partes = texto
+    .split("|")
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  let motivo = "-";
+  let descripcion = "-";
+
+  partes.forEach((parte) => {
+    if (/^motivo\s*:/i.test(parte)) {
+      motivo = parte.replace(/^motivo\s*:/i, "").trim() || "-";
+      return;
+    }
+    if (/^productos\s*:/i.test(parte)) {
+      descripcion = parte.replace(/^productos\s*:/i, "").trim() || "-";
+    }
+  });
+
+  if (descripcion === "-") {
+    const resto = partes
+      .filter((parte) => !/^fiado/i.test(parte) && !/^motivo\s*:/i.test(parte))
+      .join(" | ")
+      .trim();
+    descripcion = resto || texto || "-";
+  }
+
+  return { motivo, descripcion };
+};
+
+export function HistorialFiadosCajaTemplate() {
   const { dataempresa } = useEmpresaStore();
-  const { mostrarHistorialCierres, mostrarMovimientosPorCierre } = useCierreCajaStore();
+  const { mostrarHistorialCierres, mostrarFiadosPorCierre } = useCierreCajaStore();
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
   const [cierreSeleccionado, setCierreSeleccionado] = useState(null);
 
   const { data: cierres, isLoading } = useQuery({
     queryKey: [
-      "historial cierres caja",
+      "historial cierres caja fiados",
       { id_empresa: dataempresa?.id, fechaInicio, fechaFin },
     ],
     queryFn: () =>
@@ -88,13 +121,13 @@ export function HistorialCierresCajaTemplate() {
 
   const cierreActivo = (cierres || []).find((item) => item.id === cierreSeleccionado) || null;
 
-  const { data: movimientos, isLoading: loadingMovimientos } = useQuery({
+  const { data: fiados, isLoading: loadingFiados } = useQuery({
     queryKey: [
-      "movimientos por cierre",
+      "fiados por cierre vista",
       { id_cierre_caja: cierreSeleccionado, fechaInicio, fechaFin },
     ],
     queryFn: () =>
-      mostrarMovimientosPorCierre({
+      mostrarFiadosPorCierre({
         id_cierre_caja: cierreSeleccionado,
         fechaInicio: fechaInicio || null,
         fechaFin: fechaFin || null,
@@ -103,39 +136,23 @@ export function HistorialCierresCajaTemplate() {
     refetchOnWindowFocus: false,
   });
 
-  const resumenMovimientos = useMemo(() => {
-    const base = { total: 0, ventas: 0, ingresos: 0, salidas: 0 };
-    return (movimientos || []).reduce((acc, item) => {
-      const monto = Number(item?.monto || 0);
-      acc.total += monto;
-      const tipo = String(item?.tipo_movimiento || "").toLowerCase();
-      const idVentaRaw = item?.id_ventas;
-      const idVentaNum = Number(idVentaRaw);
-      const esMovimientoDeVenta =
-        idVentaRaw !== null &&
-        idVentaRaw !== undefined &&
-        String(idVentaRaw).trim() !== "" &&
-        Number.isFinite(idVentaNum) &&
-        idVentaNum > 0;
-
-      // Ventas: cualquier movimiento generado por una venta (id_ventas cargado).
-      if (esMovimientoDeVenta) {
-        acc.ventas += monto;
-      }
-
-      // Ingresos/Salidas: solo movimientos manuales de caja (sin id_ventas).
-      if (!esMovimientoDeVenta && tipo === "ingreso") acc.ingresos += monto;
-      if (!esMovimientoDeVenta && tipo === "salida") acc.salidas += monto;
-      return acc;
-    }, base);
-  }, [movimientos]);
+  const resumenFiados = useMemo(() => {
+    const total = (fiados || []).reduce(
+      (acc, item) => acc + Number(item?.monto || 0),
+      0
+    );
+    return {
+      cantidad: Array.isArray(fiados) ? fiados.length : 0,
+      total,
+    };
+  }, [fiados]);
 
   return (
     <Container>
       <Header>
         <div className="left">
-          <h1>Historial de cierres de caja</h1>
-          <p>Revisa cierres y movimientos por turno de caja con filtro de fechas.</p>
+          <h1>Historial de fiados</h1>
+          <p>Revisa fiados por cierre de caja con filtro de fechas.</p>
         </div>
         <BackButton to="/">
           <Icon icon="mdi:arrow-left" width={16} />
@@ -169,7 +186,7 @@ export function HistorialCierresCajaTemplate() {
         >
           Limpiar filtro
         </button>
-        <FilterLink to="/dashboard/fiados-caja">Ver fiados</FilterLink>
+        <FilterLink to="/dashboard/cierres-caja">Ver movimientos de caja</FilterLink>
       </Filters>
 
       <Card>
@@ -185,74 +202,47 @@ export function HistorialCierresCajaTemplate() {
                 <th>Caja</th>
                 <th>Cajero</th>
                 <th>Estado</th>
-                <th className="align-right">Efectivo calc.</th>
-                <th className="align-right">Efectivo real</th>
-                <th className="align-right">Diferencia</th>
-                <th className="align-center">Movimientos</th>
+                <th className="align-center">Fiados</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan="11" className="empty">Cargando historial...</td>
+                  <td colSpan="8" className="empty">Cargando historial...</td>
                 </tr>
               )}
 
               {!isLoading && (!cierres || cierres.length === 0) && (
                 <tr>
-                  <td colSpan="11" className="empty">Sin cierres para ese rango de fechas.</td>
+                  <td colSpan="8" className="empty">Sin cierres para ese rango de fechas.</td>
                 </tr>
               )}
 
               {!isLoading &&
-                (cierres || []).map((item) => {
-                  const diferencia = Number(item?.diferencia_efectivo || 0);
-                  return (
-                    <tr key={item.id}>
-                      <td>{formatFecha(item.fechainicio)}</td>
-                      <td>{item.fechacierre ? formatFecha(item.fechacierre) : "-"}</td>
-                      <td>{formatDuracion(item.fechainicio, item.fechacierre)}</td>
-                      <td>{item.sucursal_nombre}</td>
-                      <td>{item.caja_nombre}</td>
-                      <td>{item.usuario_nombre}</td>
-                      <td>
-                        <Badge $open={Number(item.estado) === 0}>
-                          {Number(item.estado) === 0 ? "Abierta" : "Cerrada"}
-                        </Badge>
-                      </td>
-                      <td className="align-right">
-                        {FormatearNumeroDinero(
-                          item.total_efectivo_calculado || 0,
-                          dataempresa?.currency,
-                          dataempresa?.iso
-                        )}
-                      </td>
-                      <td className="align-right">
-                        {FormatearNumeroDinero(
-                          item.total_efectivo_real || 0,
-                          dataempresa?.currency,
-                          dataempresa?.iso
-                        )}
-                      </td>
-                      <td className={`align-right ${diferencia < 0 ? "neg" : diferencia > 0 ? "pos" : ""}`}>
-                        {FormatearNumeroDinero(
-                          diferencia,
-                          dataempresa?.currency,
-                          dataempresa?.iso
-                        )}
-                      </td>
-                      <td className="align-center">
-                        <SelectButton
-                          type="button"
-                          onClick={() => setCierreSeleccionado(item.id)}
-                          $active={item.id === cierreSeleccionado}
-                        >
-                          Ver movimientos
-                        </SelectButton>
-                      </td>
-                    </tr>
-                  );
-                })}
+                (cierres || []).map((item) => (
+                  <tr key={item.id}>
+                    <td>{formatFecha(item.fechainicio)}</td>
+                    <td>{item.fechacierre ? formatFecha(item.fechacierre) : "-"}</td>
+                    <td>{formatDuracion(item.fechainicio, item.fechacierre)}</td>
+                    <td>{item.sucursal_nombre}</td>
+                    <td>{item.caja_nombre}</td>
+                    <td>{item.usuario_nombre}</td>
+                    <td>
+                      <Badge $open={Number(item.estado) === 0}>
+                        {Number(item.estado) === 0 ? "Abierta" : "Cerrada"}
+                      </Badge>
+                    </td>
+                    <td className="align-center">
+                      <SelectButton
+                        type="button"
+                        onClick={() => setCierreSeleccionado(item.id)}
+                        $active={item.id === cierreSeleccionado}
+                      >
+                        Ver fiados
+                      </SelectButton>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </Table>
         </TableContainer>
@@ -261,7 +251,7 @@ export function HistorialCierresCajaTemplate() {
       <Card>
         <CardTop>
           <CardTitle>
-            Movimientos del cierre {cierreActivo ? `#${cierreActivo.id}` : ""}
+            Fiados del cierre {cierreActivo ? `#${cierreActivo.id}` : ""}
           </CardTitle>
           {cierreActivo && (
             <small>
@@ -272,40 +262,14 @@ export function HistorialCierresCajaTemplate() {
 
         <ResumeRow>
           <Stat>
-            <span>Total mov.</span>
-            <strong>
-              {FormatearNumeroDinero(
-                resumenMovimientos.total,
-                dataempresa?.currency,
-                dataempresa?.iso
-              )}
-            </strong>
+            <span>Cantidad de fiados</span>
+            <strong>{resumenFiados.cantidad}</strong>
           </Stat>
           <Stat>
-            <span>Ventas</span>
+            <span>Total fiado</span>
             <strong>
               {FormatearNumeroDinero(
-                resumenMovimientos.ventas,
-                dataempresa?.currency,
-                dataempresa?.iso
-              )}
-            </strong>
-          </Stat>
-          <Stat>
-            <span>Ingresos</span>
-            <strong>
-              {FormatearNumeroDinero(
-                resumenMovimientos.ingresos,
-                dataempresa?.currency,
-                dataempresa?.iso
-              )}
-            </strong>
-          </Stat>
-          <Stat>
-            <span>Salidas</span>
-            <strong>
-              {FormatearNumeroDinero(
-                resumenMovimientos.salidas,
+                resumenFiados.total,
                 dataempresa?.currency,
                 dataempresa?.iso
               )}
@@ -318,65 +282,47 @@ export function HistorialCierresCajaTemplate() {
             <thead>
               <tr>
                 <th>Fecha</th>
-                <th>Tipo</th>
-                <th>M&eacute;todo</th>
-                <th>Descripci&oacute;n</th>
                 <th className="align-right">Monto</th>
+                <th>Motivo</th>
                 <th>Cajero</th>
-                <th>Productos</th>
-                <th>Comprobante</th>
+                <th>Descripcion</th>
               </tr>
             </thead>
             <tbody>
               {!cierreSeleccionado && (
                 <tr>
-                  <td colSpan="8" className="empty">Selecciona un cierre para ver sus movimientos.</td>
+                  <td colSpan="5" className="empty">Selecciona un cierre para ver sus fiados.</td>
                 </tr>
               )}
-              {cierreSeleccionado && loadingMovimientos && (
+              {cierreSeleccionado && loadingFiados && (
                 <tr>
-                  <td colSpan="8" className="empty">Cargando movimientos...</td>
+                  <td colSpan="5" className="empty">Cargando fiados...</td>
                 </tr>
               )}
-              {cierreSeleccionado && !loadingMovimientos && (!movimientos || movimientos.length === 0) && (
+              {cierreSeleccionado && !loadingFiados && (!fiados || fiados.length === 0) && (
                 <tr>
-                  <td colSpan="8" className="empty">No hay movimientos en ese cierre para el filtro aplicado.</td>
+                  <td colSpan="5" className="empty">No hay fiados en ese cierre para el filtro aplicado.</td>
                 </tr>
               )}
-              {cierreSeleccionado && !loadingMovimientos &&
-                (movimientos || []).map((item) => (
-                  <tr key={item.id}>
-                    <td>{formatFecha(item.fecha_movimiento)}</td>
-                    <td>{item.tipo_movimiento || "-"}</td>
-                    <td>{item.metodo_pago}</td>
-                    <td>
-                      <div className="desc-wrap">
-                        <span>{item.descripcion || "-"}</span>
-                        {Number(item?.descuento_monto || 0) > 0 && (
-                          <small className="discount-note">
-                            Descuento aplicado:{" "}
-                            {FormatearNumeroDinero(
-                              item.descuento_monto || 0,
-                              dataempresa?.currency,
-                              dataempresa?.iso
-                            )}{" "}
-                            ({Number(item.descuento_porcentaje || 0).toFixed(2)}%)
-                          </small>
+              {cierreSeleccionado && !loadingFiados &&
+                (fiados || []).map((item) => {
+                  const detalle = parseDetalleFiado(item.descripcion);
+                  return (
+                    <tr key={item.id}>
+                      <td>{formatFecha(item.fecha_movimiento)}</td>
+                      <td className="align-right">
+                        {FormatearNumeroDinero(
+                          item.monto || 0,
+                          dataempresa?.currency,
+                          dataempresa?.iso
                         )}
-                      </div>
-                    </td>
-                    <td className="align-right">
-                      {FormatearNumeroDinero(
-                        item.monto || 0,
-                        dataempresa?.currency,
-                        dataempresa?.iso
-                      )}
-                    </td>
-                    <td>{item.usuario_nombre}</td>
-                    <td>{item.productos_vendidos || "-"}</td>
-                    <td>{item.comprobante}</td>
-                  </tr>
-                ))}
+                      </td>
+                      <td>{detalle.motivo}</td>
+                      <td>{item.usuario_nombre}</td>
+                      <td>{detalle.descripcion}</td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </Table>
         </TableContainer>
@@ -510,13 +456,9 @@ const CardTitle = styled.h3`
 
 const ResumeRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 12px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
   @media (max-width: 520px) {
     grid-template-columns: 1fr;
@@ -544,7 +486,7 @@ const TableContainer = styled.div`
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  min-width: 1020px;
+  min-width: 860px;
 
   th {
     text-align: left;
@@ -563,18 +505,6 @@ const Table = styled.table`
     white-space: nowrap;
   }
 
-  .desc-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .discount-note {
-    color: #f59e0b;
-    font-size: 11px;
-    font-weight: 700;
-  }
-
   .align-right {
     text-align: right;
   }
@@ -587,15 +517,6 @@ const Table = styled.table`
     text-align: center;
     padding: 22px 8px;
     opacity: 0.8;
-  }
-
-  .neg {
-    color: #ef4444;
-    font-weight: 700;
-  }
-  .pos {
-    color: #22c55e;
-    font-weight: 700;
   }
 `;
 

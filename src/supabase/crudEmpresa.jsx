@@ -2,9 +2,29 @@ import Swal from "sweetalert2";
 import { supabase } from "../index";
 const tabla = "empresa";
 export async function InsertarEmpresa(p) {
+  const payload = {
+    simbolo_moneda:
+      typeof p?.simbolo_moneda === "string" && p.simbolo_moneda.trim() !== ""
+        ? p.simbolo_moneda
+        : "$",
+    iso:
+      typeof p?.iso === "string" && p.iso.trim() !== ""
+        ? p.iso
+        : "AR",
+    pais:
+      typeof p?.pais === "string" && p.pais.trim() !== ""
+        ? p.pais
+        : "Argentina",
+    currency:
+      typeof p?.currency === "string" && p.currency.trim() !== ""
+        ? p.currency
+        : "ARS",
+    ...p,
+  };
+
   const { data, error } = await supabase
     .from(tabla)
-    .insert(p)
+    .insert(payload)
     .select()
     .maybeSingle();
   if (error) {

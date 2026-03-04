@@ -61,7 +61,14 @@ export const AuthContextProvider = ({ children }) => {
       }
 
       // Flujo original: crear empresa inicial (si tu BD tiene trigger, puede crear usuario aquí).
-      await InsertarEmpresa({ id_auth, correo });
+      await InsertarEmpresa({
+        id_auth,
+        correo,
+        simbolo_moneda: "$",
+        iso: "AR",
+        pais: "Argentina",
+        currency: "ARS",
+      });
 
       // Re-validamos por si el trigger ya creó usuario/permisos.
       const usuarioPostEmpresa = await MostrarUsuarios({ id_auth });

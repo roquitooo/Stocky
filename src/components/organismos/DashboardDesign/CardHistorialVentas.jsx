@@ -252,7 +252,15 @@ const Badge = styled.span`
       ? "rgba(34, 197, 94, 0.1)"
       : props.$tipo === "Tarjeta"
       ? "rgba(59, 130, 246, 0.1)"
+      : props.$tipo === "Mixto"
+      ? "rgba(236, 72, 153, 0.14)"
       : "rgba(128, 128, 128, 0.1)"};
   color: ${(props) =>
-    props.$tipo === "Efectivo" ? "#22c55e" : props.$tipo === "Tarjeta" ? "#3b82f6" : "#888"};
+    props.$tipo === "Efectivo"
+      ? "#22c55e"
+      : props.$tipo === "Tarjeta"
+      ? "#3b82f6"
+      : props.$tipo === "Mixto"
+      ? "#ec4899"
+      : "#888"};
 `;

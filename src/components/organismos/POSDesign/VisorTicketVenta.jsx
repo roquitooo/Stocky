@@ -7,7 +7,7 @@ import { useUsuariosStore } from "../../../store/UsuariosStore";
 import { useSucursalesStore } from "../../../store/SucursalesStore";
 import { useClientesProveedoresStore } from "../../../store/ClientesProveedoresStore";
 
-export function VisorTicketVenta({ setState }) {
+export function VisorTicketVenta() {
   const [base64, setBase64] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -16,7 +16,9 @@ export function VisorTicketVenta({ setState }) {
     total,
     subtotal,
     descuento,
+    recargo,
     tipoDescuento,
+    tipoRecargo,
     tipocobro,
   } = useCartVentasStore();
   const { dataempresa } = useEmpresaStore();
@@ -38,7 +40,7 @@ export function VisorTicketVenta({ setState }) {
     );
 
     const dataParaTicket = {
-      logo: dataempresa?.logo || "https://i.ibb.co/xKv00pwB/Stocky-logo.png",
+      logo: dataempresa?.logo,
       nombre_empresa: dataempresa?.nombre,
       direccion_empresa: dataempresa?.direccion_fiscal || dataempresa?.direccion,
       ruc_empresa: dataempresa?.id_fiscal || dataempresa?.identificador_fiscal,
@@ -46,7 +48,9 @@ export function VisorTicketVenta({ setState }) {
       total,
       subtotal,
       descuento,
+      recargo,
       tipo_descuento: tipoDescuento,
+      tipo_recargo: tipoRecargo,
       currency: dataempresa?.currency || "$",
       iso: dataempresa?.iso || "USD",
       vendedor: datausuarios?.nombres || "Cajero",
@@ -76,7 +80,9 @@ export function VisorTicketVenta({ setState }) {
     total,
     subtotal,
     descuento,
+    recargo,
     tipoDescuento,
+    tipoRecargo,
     tipocobro,
     dataempresa,
     datausuarios,

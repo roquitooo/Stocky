@@ -1,6 +1,6 @@
 ﻿import styled from "styled-components";
 import { DatePicker } from "antd";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import dayjs from "dayjs";
 import { useDashboardStore } from "../../../store/DashboardStore";
 
@@ -13,9 +13,9 @@ export const DateRangeFilter = () => {
     return [startDate, endDate];
   };
 
-  const [dates, setDates] = useState([...getAllRange()]);
-  const [singleDate, setSingleDate] = useState(null);
-  const [activeRange, setActiveRange] = useState("Todo");
+  const [dates, setDates] = useState(null);
+  const [singleDate, setSingleDate] = useState(dayjs().startOf("day"));
+  const [activeRange, setActiveRange] = useState("Hoy");
 
   const { setRangoFechas, limpiarFechas } = useDashboardStore();
 
@@ -60,10 +60,6 @@ export const DateRangeFilter = () => {
     setRangoFechas(today.format("YYYY-MM-DD"), today.format("YYYY-MM-DD"));
     setActiveRange("Hoy");
   };
-
-  useEffect(() => {
-    setSiempreRange();
-  }, []);
 
   return (
     <Container>

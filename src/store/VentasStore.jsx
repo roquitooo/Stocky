@@ -24,6 +24,235 @@ export const useVentasStore = create((set, get) => ({
     await EliminarVentasIncompletas(p);
   },
 
+  descontarStockSinVenta: async (input) => {
+    try {
+      const payload =
+        Array.isArray(input) ? { carrito: input } : (input ?? {});
+      const carrito = Array.isArray(payload.carrito) ? payload.carrito : [];
+      const descripcionFiado = String(payload?.descripcion || "").trim();
+      const idCierreCaja = Number(payload?.id_cierre_caja);
+      const idUsuario = Number(payload?.id_usuario);
+      const idEmpresa = Number(payload?.id_empresa);
+      let idMetodoPago = Number(payload?.id_metodo_pago);
+
+      if (!Array.isArray(carrito) || carrito.length === 0) {
+        Swal.fire({
+          icon: "warning",
+          title: "Carrito vacio",
+          text: "Agrega productos antes de descontar stock.",
+        });
+        return { ok: false };
+      }
+
+      if (!Number.isFinite(idCierreCaja) || idCierreCaja <= 0) {
+        Swal.fire({
+          icon: "error",
+          title: "Caja no detectada",
+          text: "No hay un cierre de caja activo para registrar el fiado.",
+        });
+        return { ok: false };
+      }
+
+      if (!Number.isFinite(idMetodoPago) || idMetodoPago <= 0) {
+        if (Number.isFinite(idEmpresa) && idEmpresa > 0) {
+          const { data: metodosPagoData, error: metodosPagoError } = await supabase
+            .from("metodos_pago")
+            .select("id, nombre")
+            .eq("id_empresa", idEmpresa);
+
+          if (!metodosPagoError && Array.isArray(metodosPagoData)) {
+            const metodoEfectivo = metodosPagoData.find((item) =>
+              String(item?.nombre || "").toLowerCase().includes("efectivo")
+            );
+            const metodoFallback = metodoEfectivo ?? metodosPagoData[0];
+            idMetodoPago = Number(metodoFallback?.id);
+          }
+        }
+      }
+
+      if (!Number.isFinite(idMetodoPago) || idMetodoPago <= 0) {
+        Swal.fire({
+          icon: "error",
+          title: "Metodo de pago no disponible",
+          text: "Configura al menos un metodo de pago para registrar fiados.",
+        });
+        return { ok: false };
+      }
+
+      const stockValido = await get().validarStockCarrito(carrito);
+      if (!stockValido) {
+        return { ok: false };
+      }
+
+      const idSucursal = carrito[0]?._id_sucursal ?? carrito[0]?.id_sucursal ?? null;
+      if (!idSucursal) {
+        Swal.fire({
+          icon: "error",
+          title: "Sucursal no detectada",
+          text: "No se pudo detectar la sucursal activa para descontar stock.",
+        });
+        return { ok: false };
+      }
+
+      const porProducto = new Map();
+      carrito.forEach((item) => {
+        const idProducto = Number(item?._id_producto);
+        const cantidad = Number(item?._cantidad ?? item?.cantidad ?? 0);
+        const manejaInventario =
+          item?.maneja_inventarios === true ||
+          String(item?.maneja_inventarios).toLowerCase() === "true";
+
+        if (!manejaInventario) return;
+        if (!Number.isFinite(idProducto) || idProducto <= 0) return;
+        if (!Number.isFinite(cantidad) || cantidad <= 0) return;
+
+        const actual = porProducto.get(idProducto);
+        porProducto.set(idProducto, {
+          idProducto,
+          nombre: item?.nombre || item?._descripcion || `Producto ${idProducto}`,
+          cantidad: (actual?.cantidad || 0) + cantidad,
+        });
+      });
+
+      const productos = Array.from(porProducto.values());
+      if (productos.length === 0) {
+        return { ok: true, actualizados: 0 };
+      }
+
+      const idsProductos = productos.map((p) => p.idProducto);
+      const { data: stockRows, error: stockError } = await supabase
+        .from("almacenes")
+        .select("id, id_producto, stock")
+        .eq("id_sucursal", idSucursal)
+        .in("id_producto", idsProductos);
+
+      if (stockError) {
+        throw stockError;
+      }
+
+      const stockMap = new Map(
+        (stockRows || []).map((row) => [Number(row.id_producto), row])
+      );
+
+      const faltantes = [];
+      const updates = [];
+
+      productos.forEach((producto) => {
+        const row = stockMap.get(producto.idProducto);
+        const stockActual = Number(row?.stock || 0);
+
+        if (!row || producto.cantidad > stockActual) {
+          faltantes.push({
+            nombre: producto.nombre,
+            solicitado: producto.cantidad,
+            stock: stockActual,
+          });
+          return;
+        }
+
+        updates.push({
+          idAlmacen: row.id,
+          nuevoStock: stockActual - producto.cantidad,
+        });
+      });
+
+      if (faltantes.length > 0) {
+        const detalle = faltantes
+          .map(
+            (item) =>
+              `- ${item.nombre} (Solicitado: ${item.solicitado} | Stock: ${item.stock})`
+          )
+          .join("<br>");
+
+        Swal.fire({
+          icon: "error",
+          title: "Stock insuficiente",
+          html: `<div style="text-align:left">${detalle}</div>`,
+        });
+        return { ok: false };
+      }
+
+      for (const item of updates) {
+        const { error: updateError } = await supabase
+          .from("almacenes")
+          .update({ stock: item.nuevoStock })
+          .eq("id", item.idAlmacen);
+
+        if (updateError) {
+          throw updateError;
+        }
+      }
+
+      const totalFiado = carrito.reduce((acc, item) => {
+        const totalLinea = Number(item?._total);
+        if (Number.isFinite(totalLinea) && totalLinea >= 0) {
+          return acc + totalLinea;
+        }
+
+        const cantidad = Number(item?._cantidad ?? item?.cantidad ?? 0);
+        const precioVenta = Number(item?._precio_venta ?? item?.precio_venta ?? 0);
+        if (!Number.isFinite(cantidad) || !Number.isFinite(precioVenta)) {
+          return acc;
+        }
+        return acc + Math.max(0, cantidad * precioVenta);
+      }, 0);
+
+      const productosDetalle = carrito
+        .map((item) => {
+          const nombre = item?._descripcion || item?.nombre || "Producto";
+          const cantidad = Number(item?._cantidad ?? item?.cantidad ?? 0);
+          if (!Number.isFinite(cantidad) || cantidad <= 0) return null;
+          const cantidadTxt = Number.isInteger(cantidad)
+            ? String(cantidad)
+            : String(Number(cantidad.toFixed(2)));
+          return `${nombre} x${cantidadTxt}`;
+        })
+        .filter(Boolean)
+        .join(", ");
+
+      const partesDescripcion = ["Fiado (solo stock)"];
+      if (descripcionFiado) {
+        partesDescripcion.push(`Motivo: ${descripcionFiado}`);
+      }
+      if (productosDetalle) {
+        partesDescripcion.push(`Productos: ${productosDetalle}`);
+      }
+
+      const movimientoFiado = {
+        fecha_movimiento: new Date().toISOString(),
+        tipo_movimiento: "fiado",
+        monto: Number.isFinite(totalFiado) ? totalFiado : 0,
+        descripcion: partesDescripcion.join(" | "),
+        id_metodo_pago: idMetodoPago,
+        id_usuario: Number.isFinite(idUsuario) && idUsuario > 0 ? idUsuario : null,
+        id_cierre_caja: idCierreCaja,
+        id_ventas: null,
+      };
+
+      const { error: fiadoError } = await supabase
+        .from("movimientos_caja")
+        .insert(movimientoFiado);
+
+      if (fiadoError) {
+        return {
+          ok: true,
+          actualizados: updates.length,
+          fiado_registrado: false,
+          error_detalle: fiadoError?.message || null,
+        };
+      }
+
+      return { ok: true, actualizados: updates.length, fiado_registrado: true };
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error al descontar stock",
+        text: error?.message || "No se pudo completar la operacion.",
+      });
+      return { ok: false, error };
+    }
+  },
+
   mostrarventasxsucursal: async (p) => {
     const response = await MostrarVentasXsucursal(p);
     set({ dataventas: response });
@@ -31,10 +260,10 @@ export const useVentasStore = create((set, get) => ({
     return response;
   },
 
-  // --- FUNCIÓN DE VALIDACIÓN (SOLO UNA VEZ) ---
+  // --- FUNCION DE VALIDACION (SOLO UNA VEZ) ---
   validarStockCarrito: async (carrito) => {
     if (!Array.isArray(carrito) || carrito.length === 0) {
-      Swal.fire({ icon: "warning", title: "Carrito vacío", text: "Agrega productos." });
+      Swal.fire({ icon: "warning", title: "Carrito vacio", text: "Agrega productos." });
       return false;
     }
 
@@ -92,7 +321,7 @@ export const useVentasStore = create((set, get) => ({
 
     if (productosSinStock.length > 0) {
       const listaErrores = productosSinStock
-        .map(p => `• ${p.nombre} (Pides: ${p.falta + p.stock} | Hay: ${p.stock})`)
+        .map((p) => `- ${p.nombre} (Pides: ${p.falta + p.stock} | Hay: ${p.stock})`)
         .join("<br>");
 
       Swal.fire({
@@ -166,7 +395,17 @@ export const useVentasStore = create((set, get) => ({
         const movimientos = Array.isArray(venta.movimientos_caja)
           ? venta.movimientos_caja
           : [];
-        const metodo = movimientos?.[0]?.metodos_pago?.nombre || "-";
+        const metodosUnicos = [
+          ...new Set(
+            movimientos
+              .map((mov) => String(mov?.metodos_pago?.nombre || "").trim())
+              .filter(Boolean)
+          ),
+        ];
+        const metodo =
+          metodosUnicos.length > 1
+            ? "Mixto"
+            : metodosUnicos[0] || "-";
 
         return {
           id: venta.id,
@@ -293,3 +532,4 @@ export const useVentasStore = create((set, get) => ({
     }
   },
 }));
+

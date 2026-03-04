@@ -16,10 +16,12 @@ export function PantallaCierreCaja() {
     mostrarVentasMetodoPagoMovCaja,
     totalVentasMetodoPago,
     totalVentasEfectivo,
+    totalVentasTarjeta,
     totalAperturaCaja,
     totalGastosVariosCaja,
     totalIngresosVariosCaja,
-    totalEfectivoCajaSinVentas,
+    totalGastosVariosTarjeta,
+    totalIngresosVariosTarjeta,
     totalEfectivoTotalCaja,
   } = useMovCajaStore();
   const { dataempresa } = useEmpresaStore();
@@ -46,7 +48,6 @@ export function PantallaCierreCaja() {
     enabled: !!dataCierreCaja?.id,
   });
   const {
-    data: dataventasmetodopago,
     isLoading: isloading2,
     isError: iserror2,
     error: error2,
@@ -59,7 +60,7 @@ export function PantallaCierreCaja() {
   const isLoading = isloading1 || isloading2;
   const isError = iserror1 || iserror2;
   const error = error1 || error2;
-  if (isloading1) {
+  if (isLoading) {
     return <span>cargando datos...</span>;
   }
   if (isError) {
@@ -73,6 +74,8 @@ export function PantallaCierreCaja() {
       </Container>
     );
   }
+  const totalDebito =
+    totalVentasTarjeta + totalIngresosVariosTarjeta - totalGastosVariosTarjeta;
 
   return (
     <Container>
@@ -108,7 +111,7 @@ export function PantallaCierreCaja() {
       <Resumen>
         <Tablas>
           <Tabla>
-            <h4>Dinero en CAJA</h4>
+            <h4>Dinero en EFECTIVO</h4>
             <ul>
               <li>
                 Fondo de caja:{" "}
@@ -143,7 +146,7 @@ export function PantallaCierreCaja() {
                 </span>
               </li>
               <li>
-                Gastos varios:{" "}
+                Egresos varios:{" "}
                 <span style={{ color: "#f15050", fontWeight: "bold" }}>-
                   {FormatearNumeroDinero(
                     totalGastosVariosCaja,
@@ -164,22 +167,72 @@ export function PantallaCierreCaja() {
           </Tabla>
           <DivisionY />
           <Tabla>
+            <h4>Dinero en DEBITO</h4>
+            <ul>
+              <li>
+                Ventas en debito:{" "}
+                <span>
+                  {FormatearNumeroDinero(
+                    totalVentasTarjeta,
+                    dataempresa?.currency,
+                    dataempresa?.iso
+                  )}
+                </span>
+              </li>
+              <li>
+                Ingresos varios:{" "}
+                <span>
+                  {FormatearNumeroDinero(
+                    totalIngresosVariosTarjeta,
+                    dataempresa?.currency,
+                    dataempresa?.iso
+                  )}
+                </span>
+              </li>
+              <li>
+                Egresos varios:{" "}
+                <span style={{ color: "#f15050", fontWeight: "bold" }}>-
+                  {FormatearNumeroDinero(
+                    totalGastosVariosTarjeta,
+                    dataempresa?.currency,
+                    dataempresa?.iso
+                  )}
+                </span>
+              </li>
+              <li className="total">
+                <Divider />
+                {FormatearNumeroDinero(
+                  totalDebito,
+                  dataempresa?.currency,
+                  dataempresa?.iso
+                )}
+              </li>
+            </ul>
+          </Tabla>
+          <DivisionY />
+          <Tabla>
             <h4>Ventas Totales</h4>
             <ul>
-              {dataventasmetodopago?.map((item, index) => {
-                return (
-                  <li key={index}>
-                    En {item?.metodo_pago}:{" "}
-                    <span>
-                      {FormatearNumeroDinero(
-                        item?.monto,
-                        dataempresa?.currency,
-                        dataempresa?.iso
-                      )}{" "}
-                    </span>
-                  </li>
-                );
-              })}
+              <li>
+                En efectivo:{" "}
+                <span>
+                  {FormatearNumeroDinero(
+                    totalVentasEfectivo,
+                    dataempresa?.currency,
+                    dataempresa?.iso
+                  )}
+                </span>
+              </li>
+              <li>
+                En debito:{" "}
+                <span>
+                  {FormatearNumeroDinero(
+                    totalVentasTarjeta,
+                    dataempresa?.currency,
+                    dataempresa?.iso
+                  )}
+                </span>
+              </li>
               <li className="total">
                 <Divider />
                 {FormatearNumeroDinero(
@@ -190,7 +243,6 @@ export function PantallaCierreCaja() {
               </li>
             </ul>
           </Tabla>
-          <DivisionY />
         </Tablas>
       </Resumen>
       <Btn1 funcion={()=>setStateConteoCaja(true)}
@@ -250,10 +302,6 @@ const Container = styled.div`
   z-index: 10;
 `;
 
-const VolverWrapper = styled.div`
-  align-self: flex-start;
-`;
-
 const Fechas = styled.p`
   font-size: 14px;
 
@@ -284,10 +332,15 @@ const Datos = styled.div`
 
 const Tablas = styled.div`
   display: flex;
+  align-items: stretch;
+  justify-content: center;
   gap: 20px;
+  width: min(100%, 1100px);
+  padding: 0 12px;
 
   @media (max-width: 768px) {
     flex-direction: column;
+    width: 100%;
   }
 `;
 
@@ -295,7 +348,7 @@ const Tabla = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 120%;
+  width: min(100%, 320px);
   h4 {
     font-size: 18px;
     font-weight: bold;

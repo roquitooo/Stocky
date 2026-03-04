@@ -3,7 +3,7 @@ import { supabase } from "../supabase/supabase.config";
 
 export const useCierreCajaStore = create((set) => ({
   // ---------------------------------------------------------
-  // 🔽 PARTE VISUAL (LO QUE FALTABA)
+  // ðŸ”½ PARTE VISUAL (LO QUE FALTABA)
   // ---------------------------------------------------------
   stateCierreCaja: false,
   setStateCierraCaja: (p) => set({ stateCierreCaja: p }),
@@ -18,7 +18,7 @@ export const useCierreCajaStore = create((set) => ({
   setTipoRegistro: (p) => set({ tipoRegistro: p }),
 
   // ---------------------------------------------------------
-  // 🔽 PARTE BASE DE DATOS (LA QUE YA FUNCIONA)
+  // ðŸ”½ PARTE BASE DE DATOS (LA QUE YA FUNCIONA)
   // ---------------------------------------------------------
   dataCierreCaja: null,
 
@@ -229,6 +229,7 @@ export const useCierreCajaStore = create((set) => ({
           )
         `)
         .eq("id_cierre_caja", p.id_cierre_caja)
+        .neq("tipo_movimiento", "fiado")
         .order("fecha_movimiento", { ascending: false });
 
       if (p?.fechaInicio) {
@@ -282,6 +283,44 @@ export const useCierreCajaStore = create((set) => ({
       });
     } catch (error) {
       console.error("Error al obtener movimientos por cierre:", error);
+      return [];
+    }
+  },
+
+  mostrarFiadosPorCierre: async (p) => {
+    try {
+      if (!p?.id_cierre_caja) return [];
+
+      let query = supabase
+        .from("movimientos_caja")
+        .select(`
+          id,
+          fecha_movimiento,
+          tipo_movimiento,
+          monto,
+          descripcion,
+          usuarios(nombres)
+        `)
+        .eq("id_cierre_caja", p.id_cierre_caja)
+        .eq("tipo_movimiento", "fiado")
+        .order("fecha_movimiento", { ascending: false });
+
+      if (p?.fechaInicio) {
+        query = query.gte("fecha_movimiento", `${p.fechaInicio} 00:00:00`);
+      }
+      if (p?.fechaFin) {
+        query = query.lte("fecha_movimiento", `${p.fechaFin} 23:59:59`);
+      }
+
+      const { data, error } = await query;
+      if (error || !Array.isArray(data)) return [];
+
+      return data.map((item) => ({
+        ...item,
+        usuario_nombre: item?.usuarios?.nombres || "-",
+      }));
+    } catch (error) {
+      console.error("Error al obtener fiados por cierre:", error);
       return [];
     }
   },

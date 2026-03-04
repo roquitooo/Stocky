@@ -18,6 +18,7 @@ import { MetodosPago } from "../pages/MetodosPago";
 import { Dashboard } from "../pages/Dashboard";
 import {Usuarios} from "../pages/Usuarios"
 import { HistorialCierresCaja } from "../pages/HistorialCierresCaja";
+import { HistorialFiadosCaja } from "../pages/HistorialFiadosCaja";
 
 
 export function MyRoutes() {
@@ -162,6 +163,17 @@ export function MyRoutes() {
           <Layout>
             <ProtectedRoute accessBy="authenticated">
               <HistorialCierresCaja />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+
+      <Route
+        path="/dashboard/fiados-caja"
+        element={
+          <Layout>
+            <ProtectedRoute accessBy="authenticated">
+              <HistorialFiadosCaja />
             </ProtectedRoute>
           </Layout>
         }

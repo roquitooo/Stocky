@@ -11,6 +11,32 @@ export function AreaTecladoPos() {
   const { dataMetodosPago: datametodospago } = useMetodosPagoStore();
   const { validarStockCarrito } = useVentasStore();
 
+  const normalizarMetodo = (valor) =>
+    String(valor || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const esMetodoEfectivo = (item) =>
+    normalizarMetodo(item?.nombre).includes("efectivo");
+  const esMetodoTarjeta = (item) => {
+    const key = normalizarMetodo(item?.nombre);
+    return key.includes("tarjeta") || key.includes("debito");
+  };
+  const esMetodoMixto = (item) =>
+    normalizarMetodo(item?.nombre).includes("mixto");
+
+  const metodoEfectivo = (datametodospago || []).find(esMetodoEfectivo);
+  const metodoTarjeta = (datametodospago || []).find(esMetodoTarjeta);
+  const metodoMixto = (datametodospago || []).find(esMetodoMixto);
+  const puedeUsarMixto = Boolean(metodoEfectivo && metodoTarjeta);
+  const metodoMixtoRender =
+    puedeUsarMixto && (metodoMixto || { nombre: "Mixto", icono: "-" });
+  const metodosRender = [metodoEfectivo, metodoTarjeta, metodoMixtoRender].filter(
+    Boolean
+  );
+
   const handleSeleccionarPago = async (nombreMetodo) => {
     const esValido = await validarStockCarrito(items);
     if (esValido) {
@@ -21,9 +47,7 @@ export function AreaTecladoPos() {
   return (
     <Container>
       <section className="areatipopago">
-        {datametodospago
-          ?.filter((item) => item.nombre === "Efectivo" || item.nombre === "Tarjeta")
-          .map((item, index) => {
+        {metodosRender?.map((item, index) => {
             return (
               <article className="box" key={index}>
                 <Btn1

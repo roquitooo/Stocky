@@ -1,5 +1,6 @@
 import { urlToBase64, FormatearNumeroDinero } from "../utils/Conversiones";
 import createPdf from "../utils/CreatePdf";
+import logoDefaultStocky from "../assets/logo.svg";
 
 const formatFecha = (value) => {
   const d = new Date(value || Date.now());
@@ -42,12 +43,44 @@ const divider = {
   margin: [0, 6, 0, 6],
 };
 
+const esLogoValido = (valor) => {
+  if (typeof valor !== "string") return false;
+  const limpio = valor.trim();
+  return limpio !== "" && limpio !== "-";
+};
+
+const resolverLogoTicket = async (data) => {
+  const candidatoEmpresa = [data?.logo, data?.logo_empresa, data?.empresa?.logo].find(
+    esLogoValido
+  );
+  const fuente = candidatoEmpresa || logoDefaultStocky;
+
+  if (!esLogoValido(fuente)) return null;
+  if (String(fuente).startsWith("data:")) return fuente;
+
+  try {
+    return await urlToBase64(fuente);
+  } catch (_) {
+    if (fuente === logoDefaultStocky) return null;
+    try {
+      return await urlToBase64(logoDefaultStocky);
+    } catch (_) {
+      return null;
+    }
+  }
+};
+
 const TicketVenta = async (output, data) => {
-  const logoempresa = data?.logo ? await urlToBase64(data.logo) : null;
+  const logoempresa = await resolverLogoTicket(data);
   const productos = Array.isArray(data?.productos) ? data.productos : [];
   const subtotal = Number(data?.subtotal || 0);
   const total = Number(data?.total || 0);
   const descuento = Number(data?.descuento || 0);
+  const recargo = Number(data?.recargo || 0);
+  const descuentoAplicado =
+    data?.tipo_descuento === "porcentaje" ? subtotal * (descuento / 100) : descuento;
+  const recargoAplicado =
+    data?.tipo_recargo === "porcentaje" ? subtotal * (recargo / 100) : recargo;
   const cantidadItems =
     Number(data?.cantidad_items || 0) ||
     productos.reduce((acc, item) => acc + Number(item?._cantidad || 0), 0);
@@ -57,16 +90,25 @@ const TicketVenta = async (output, data) => {
     String(data?.sucursal || "").length +
     String(data?.vendedor || "").length +
     String(data?.cliente || "").length;
-  const extraMetaHeight = Math.ceil(textLenMeta / 45) * 9;
+  const extraMetaHeight = Math.ceil(textLenMeta / 40) * 10;
   const estimatedProductLines = productos.reduce((acc, item) => {
     const name = String(item?.nombre || item?._descripcion || "Producto");
-    const lines = Math.max(1, Math.ceil(name.length / 18));
+    // Estimacion conservadora: columna de producto angosta en ticket termico.
+    const lines = Math.max(1, Math.ceil(name.length / 16));
     return acc + lines;
   }, 0);
-  const estimatedTableHeight = 20 + estimatedProductLines * 10 + productos.length * 3;
+  const estimatedTableHeight = 24 + estimatedProductLines * 12 + productos.length * 5;
+  const resumenRows =
+    2 + // Items + Subtotal
+    (descuentoAplicado > 0 ? 1 : 0) +
+    (recargoAplicado > 0 ? 1 : 0) +
+    3; // Total + Vuelto + Restante (visualmente equivalente en bloque final)
+  const estimatedResumeHeight = 22 + resumenRows * 12;
+  // Antes estaba limitado a 900 y truncaba tickets largos.
+  // Se deja margen alto para mantener una sola pagina en la mayoria de casos.
   const pageHeight = Math.max(
-    360,
-    Math.min(900, 300 + extraMetaHeight + estimatedTableHeight + 96)
+    420,
+    Math.min(5000, 250 + extraMetaHeight + estimatedTableHeight + estimatedResumeHeight + 120)
   );
 
   const productTableBody = [
@@ -166,8 +208,26 @@ const TicketVenta = async (output, data) => {
             { text: "Descuento:", style: "resumeLabel" },
             {
               text:
-                descuento > 0
-                  ? `${FormatearNumeroDinero(descuento, data?.currency, data?.iso)} (${data?.tipo_descuento === "porcentaje" ? "%" : "$"})`
+                descuentoAplicado > 0
+                  ? `${FormatearNumeroDinero(
+                      descuentoAplicado,
+                      data?.currency,
+                      data?.iso
+                    )} (${data?.tipo_descuento === "porcentaje" ? "%" : "$"})`
+                  : FormatearNumeroDinero(0, data?.currency, data?.iso),
+              style: "resumeValue",
+            },
+          ],
+          [
+            { text: "Recargo:", style: "resumeLabel" },
+            {
+              text:
+                recargoAplicado > 0
+                  ? `${FormatearNumeroDinero(
+                      recargoAplicado,
+                      data?.currency,
+                      data?.iso
+                    )} (${data?.tipo_recargo === "porcentaje" ? "%" : "$"})`
                   : FormatearNumeroDinero(0, data?.currency, data?.iso),
               style: "resumeValue",
             },

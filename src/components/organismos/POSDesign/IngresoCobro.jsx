@@ -29,14 +29,20 @@ export const IngresoCobro = forwardRef((props, ref) => {
     setStatePantallaCobro,
     resetState,
     aplicarDescuento,
+    aplicarRecargo,
     descuento,
+    recargo,
     tipoDescuento,
+    tipoRecargo,
   } = useCartVentasStore();
 
   const [valoresPago, setValoresPago] = useState({});
   const [vuelto, setVuelto] = useState(0);
   const [restante, setRestante] = useState(0);
   const [esPorcentaje, setEsPorcentaje] = useState(tipoDescuento === "porcentaje");
+  const [esPorcentajeRecargo, setEsPorcentajeRecargo] = useState(
+    tipoRecargo === "porcentaje"
+  );
 
   const { dataMetodosPago } = useMetodosPagoStore();
   const { datausuarios } = useUsuariosStore();
@@ -57,16 +63,104 @@ export const IngresoCobro = forwardRef((props, ref) => {
   const { insertarMovCaja } = useMovCajaStore();
   const { cliproItemSelect } = useClientesProveedoresStore();
 
+  const normalizarMetodo = (valor) =>
+    String(valor || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const esMetodoEfectivo = (item) =>
+    normalizarMetodo(item?.nombre).includes("efectivo");
+  const esMetodoTarjeta = (item) => {
+    const key = normalizarMetodo(item?.nombre);
+    return key.includes("tarjeta") || key.includes("debito");
+  };
+
+  const metodosCobroDisponibles = (dataMetodosPago || []).filter(
+    (item) => esMetodoEfectivo(item) || esMetodoTarjeta(item)
+  );
+
+  const sanitizarEntero = (value, { maxDigitos, maxValor } = {}) => {
+    const soloDigitos = String(value ?? "").replace(/\D/g, "");
+    if (!soloDigitos) return "";
+
+    const truncado = maxDigitos ? soloDigitos.slice(0, maxDigitos) : soloDigitos;
+    let numero = Number.parseInt(truncado, 10);
+    if (!Number.isFinite(numero)) return "";
+
+    if (Number.isFinite(maxValor)) {
+      numero = Math.min(numero, maxValor);
+    }
+
+    return String(numero);
+  };
+
+  const bloquearTeclasNoEnteras = (e) => {
+    if ([".", ",", "e", "E", "-", "+"].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const limitesDescuento = {
+    maxDigitos: esPorcentaje ? 3 : 10,
+    maxValor: esPorcentaje ? 100 : undefined,
+  };
+  const limitesRecargo = {
+    maxDigitos: esPorcentajeRecargo ? 3 : 10,
+    maxValor: esPorcentajeRecargo ? 100 : undefined,
+  };
+
   const handleDescuentoChange = (e) => {
-    const valor = e.target.value;
-    aplicarDescuento(valor, esPorcentaje ? "porcentaje" : "monto");
+    const valorSanitizado = sanitizarEntero(e.target.value, limitesDescuento);
+    aplicarDescuento(
+      valorSanitizado === "" ? 0 : Number(valorSanitizado),
+      esPorcentaje ? "porcentaje" : "monto"
+    );
   };
 
   const toggleTipoDescuento = () => {
     const nuevoTipo = !esPorcentaje;
     setEsPorcentaje(nuevoTipo);
-    aplicarDescuento(descuento, nuevoTipo ? "porcentaje" : "monto");
+    const valorNormalizado = sanitizarEntero(descuento, {
+      maxDigitos: nuevoTipo ? 3 : 10,
+      maxValor: nuevoTipo ? 100 : undefined,
+    });
+    aplicarDescuento(
+      valorNormalizado === "" ? 0 : Number(valorNormalizado),
+      nuevoTipo ? "porcentaje" : "monto"
+    );
   };
+
+  const handleRecargoChange = (e) => {
+    const valorSanitizado = sanitizarEntero(e.target.value, limitesRecargo);
+    aplicarRecargo(
+      valorSanitizado === "" ? 0 : Number(valorSanitizado),
+      esPorcentajeRecargo ? "porcentaje" : "monto"
+    );
+  };
+
+  const toggleTipoRecargo = () => {
+    const nuevoTipo = !esPorcentajeRecargo;
+    setEsPorcentajeRecargo(nuevoTipo);
+    const valorNormalizado = sanitizarEntero(recargo, {
+      maxDigitos: nuevoTipo ? 3 : 10,
+      maxValor: nuevoTipo ? 100 : undefined,
+    });
+    aplicarRecargo(
+      valorNormalizado === "" ? 0 : Number(valorNormalizado),
+      nuevoTipo ? "porcentaje" : "monto"
+    );
+  };
+
+  const descuentoAplicado =
+    tipoDescuento === "porcentaje"
+      ? Number(subtotal || 0) * (Number(descuento || 0) / 100)
+      : Number(descuento || 0);
+  const recargoAplicado =
+    tipoRecargo === "porcentaje"
+      ? Number(subtotal || 0) * (Number(recargo || 0) / 100)
+      : Number(recargo || 0);
 
   const calcularVueltoYRestante = () => {
     const totalPagado = Object.values(valoresPago).reduce((acc, curr) => acc + curr, 0);
@@ -103,8 +197,8 @@ export const IngresoCobro = forwardRef((props, ref) => {
   const mutation = useMutation({
     mutationKey: "insertar ventas",
     mutationFn: insertarventas,
-    onSuccess: () => {
-      if (restante > 0) return;
+    onSuccess: (result) => {
+      if (!result?.ok) return;
       setStatePantallaCobro({ tipocobro: "" });
       resetState();
       resetearventas();
@@ -113,102 +207,142 @@ export const IngresoCobro = forwardRef((props, ref) => {
   });
 
   async function insertarventas() {
-    if (restante <= 0) {
-      if (!idSucursalSeguro) {
-        toast.error("No se detectó sucursal activa. Selecciona una sucursal antes de cobrar.");
-        return;
+    if (restante !== 0) {
+      if (restante > 0) {
+        toast.warning("Falta completar el pago");
+      } else {
+        toast.warning("El pago en tarjeta/debito no puede superar el total.");
       }
-
-      const totalPagado = Object.values(valoresPago).reduce(
-        (acc, curr) => acc + Number(curr || 0),
-        0
-      );
-      const cantidadProductosVendidos = (items || []).reduce(
-        (acc, item) => acc + Number(item?._cantidad || 0),
-        0
-      );
-      const subTotalVenta = Number(subtotal || 0);
-
-      const pventas = {
-        fecha: fechaActual,
-        id_cliente: cliproItemSelect?.id,
-        id_usuario: datausuarios?.id,
-        id_sucursal: idSucursalSeguro,
-        id_empresa: dataempresa?.id,
-        estado: "confirmada",
-        saldo: 0,
-        pago_con: totalPagado,
-        cantidad_productos: cantidadProductosVendidos,
-        sub_total: subTotalVenta,
-        vuelto: vuelto,
-        monto_total: total,
-        id_cierre_caja: dataCierreCaja?.id,
-      };
-
-      if (idventa === 0) {
-        const result = await insertarVentas(pventas);
-
-        for (const item of items) {
-          if (result?.id > 0) {
-            const detalleLimpio = {
-              _id_venta: result.id,
-              _cantidad: item._cantidad,
-              _precio_venta: item._precio_venta,
-              _total: item._total,
-              _descripcion: item._descripcion,
-              _id_producto: item._id_producto,
-              _precio_compra: item._precio_compra,
-              _id_sucursal: idSucursalSeguro,
-            };
-
-            await insertarDetalleVentas(detalleLimpio);
-          }
-        }
-
-        if (result?.id > 0) {
-          const pagosConMonto = Object.entries(valoresPago).filter(
-            ([, monto]) => Number(monto || 0) > 0
-          );
-
-          const ventaBonificada = Number(total || 0) === 0 && pagosConMonto.length === 0;
-          const metodoFallback =
-            tipocobro && tipocobro !== "Mixto" ? tipocobro : "Efectivo";
-
-          const pagosARegistrar = ventaBonificada
-            ? [[metodoFallback, 0]]
-            : pagosConMonto;
-
-          for (const [tipo, monto] of pagosARegistrar) {
-            const metodoPago = dataMetodosPago?.find((item) => item.nombre === tipo);
-            const pmovcaja = {
-              tipo_movimiento: "ingreso",
-              monto: Number(monto || 0),
-              id_metodo_pago: metodoPago?.id,
-              descripcion: ventaBonificada
-                ? `Pago de venta bonificada con ${tipo}`
-                : `Pago de venta con ${tipo}`,
-              id_usuario: datausuarios?.id,
-              id_cierre_caja: dataCierreCaja?.id,
-              id_ventas: result?.id,
-              vuelto: tipo === "Efectivo" ? vuelto : 0,
-            };
-            await insertarMovCaja(pmovcaja);
-          }
-        }
-      }
-    } else {
-      toast.warning("Falta completar el pago");
+      return { ok: false };
     }
+
+    if (!idSucursalSeguro) {
+      toast.error("No se detectó sucursal activa. Selecciona una sucursal antes de cobrar.");
+      return { ok: false };
+    }
+
+    const totalPagado = Object.values(valoresPago).reduce(
+      (acc, curr) => acc + Number(curr || 0),
+      0
+    );
+    const cantidadProductosVendidos = (items || []).reduce(
+      (acc, item) => acc + Number(item?._cantidad || 0),
+      0
+    );
+    const subTotalVenta = Number(subtotal || 0);
+
+    const pventas = {
+      fecha: fechaActual,
+      id_cliente: cliproItemSelect?.id,
+      id_usuario: datausuarios?.id,
+      id_sucursal: idSucursalSeguro,
+      id_empresa: dataempresa?.id,
+      estado: "confirmada",
+      saldo: 0,
+      pago_con: totalPagado,
+      cantidad_productos: cantidadProductosVendidos,
+      sub_total: subTotalVenta,
+      vuelto: vuelto,
+      monto_total: total,
+      id_cierre_caja: dataCierreCaja?.id,
+    };
+
+    if (idventa === 0) {
+      const result = await insertarVentas(pventas);
+
+      for (const item of items) {
+        if (result?.id > 0) {
+          const detalleLimpio = {
+            _id_venta: result.id,
+            _cantidad: item._cantidad,
+            _precio_venta: item._precio_venta,
+            _total: item._total,
+            _descripcion: item._descripcion,
+            _id_producto: item._id_producto,
+            _precio_compra: item._precio_compra,
+            _id_sucursal: idSucursalSeguro,
+          };
+
+          await insertarDetalleVentas(detalleLimpio);
+        }
+      }
+
+      if (result?.id > 0) {
+        const pagosConMonto = Object.entries(valoresPago).filter(
+          ([, monto]) => Number(monto || 0) > 0
+        );
+
+        const ventaBonificada = Number(total || 0) === 0 && pagosConMonto.length === 0;
+        const metodoEfectivo = metodosCobroDisponibles.find(esMetodoEfectivo);
+        const metodoTarjeta = metodosCobroDisponibles.find(esMetodoTarjeta);
+        const metodoFallbackNombre = (() => {
+          const tipo = normalizarMetodo(tipocobro);
+          if (tipo.includes("efectivo")) return metodoEfectivo?.nombre || "Efectivo";
+          if (tipo.includes("tarjeta") || tipo.includes("debito")) {
+            return metodoTarjeta?.nombre || "Tarjeta";
+          }
+          return metodoEfectivo?.nombre || metodoTarjeta?.nombre || "Efectivo";
+        })();
+
+        const pagosARegistrar = ventaBonificada
+          ? [[metodoFallbackNombre, 0]]
+          : pagosConMonto;
+
+        for (const [tipo, monto] of pagosARegistrar) {
+          const tipoKey = normalizarMetodo(tipo);
+          const metodoPago =
+            (dataMetodosPago || []).find(
+              (item) => normalizarMetodo(item?.nombre) === tipoKey
+            ) ||
+            (tipoKey.includes("efectivo")
+              ? (dataMetodosPago || []).find(esMetodoEfectivo)
+              : (dataMetodosPago || []).find(esMetodoTarjeta));
+
+          if (!metodoPago?.id) {
+            toast.error(`No se encontro el metodo de pago para "${tipo}".`);
+            return { ok: false };
+          }
+
+          const pmovcaja = {
+            tipo_movimiento: "ingreso",
+            monto: Number(monto || 0),
+            id_metodo_pago: metodoPago.id,
+            descripcion: ventaBonificada
+              ? `Pago de venta bonificada con ${metodoPago?.nombre || tipo}`
+              : `Pago de venta con ${metodoPago?.nombre || tipo}`,
+            id_usuario: datausuarios?.id,
+            id_cierre_caja: dataCierreCaja?.id,
+            id_ventas: result?.id,
+            vuelto: esMetodoEfectivo(metodoPago) ? vuelto : 0,
+          };
+          await insertarMovCaja(pmovcaja);
+        }
+      }
+    }
+
+    return { ok: true };
   }
 
   useEffect(() => {
-    if (tipocobro !== "Mixto" && valoresPago[tipocobro] != total) {
-      setValoresPago((prev) => ({
-        ...prev,
-        [tipocobro]: total,
-      }));
+    const tipo = normalizarMetodo(tipocobro);
+    if (!tipo) return;
+
+    if (tipo.includes("mixto")) {
+      setValoresPago({});
+      return;
     }
-  }, [tipocobro, total]);
+
+    const metodoSeleccionado =
+      metodosCobroDisponibles.find(
+        (item) => normalizarMetodo(item?.nombre) === tipo
+      ) ||
+      (tipo.includes("efectivo")
+        ? metodosCobroDisponibles.find(esMetodoEfectivo)
+        : metodosCobroDisponibles.find(esMetodoTarjeta));
+
+    if (!metodoSeleccionado?.nombre) return;
+    setValoresPago({ [metodoSeleccionado.nombre]: Number(total || 0) });
+  }, [tipocobro, total, dataMetodosPago]);
 
   useEffect(() => {
     calcularVueltoYRestante();
@@ -243,10 +377,36 @@ export const IngresoCobro = forwardRef((props, ref) => {
             <div className="descuento-input-wrap">
               <input
                 className="descuento-input"
-                type="number"
-                value={descuento > 0 ? descuento : ""}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={descuento > 0 ? sanitizarEntero(descuento, limitesDescuento) : ""}
                 onChange={handleDescuentoChange}
+                onKeyDown={bloquearTeclasNoEnteras}
                 placeholder={esPorcentaje ? "Ej: 10%" : "Ej: 500"}
+              />
+            </div>
+          </section>
+
+          <section className="area-descuento">
+            <div className="descuento-head">
+              <span className="descuento-title">Recargo</span>
+              <div className="descuento-switch">
+                <span>$</span>
+                <Switch1 state={esPorcentajeRecargo} setState={toggleTipoRecargo} />
+                <span>%</span>
+              </div>
+            </div>
+            <div className="descuento-input-wrap">
+              <input
+                className="descuento-input"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={recargo > 0 ? sanitizarEntero(recargo, limitesRecargo) : ""}
+                onChange={handleRecargoChange}
+                onKeyDown={bloquearTeclasNoEnteras}
+                placeholder={esPorcentajeRecargo ? "Ej: 10%" : "Ej: 500"}
               />
             </div>
           </section>
@@ -254,20 +414,20 @@ export const IngresoCobro = forwardRef((props, ref) => {
           <Linea />
 
           <section className="area2">
-            {dataMetodosPago
-              ?.filter((item) => item.nombre === "Efectivo" || item.nombre === "Tarjeta")
+            {metodosCobroDisponibles
               .map((item, index) => {
-                return (tipocobro === "Mixto" && item.nombre !== "Mixto") ||
-                  (tipocobro === item.nombre && item.nombre !== "Mixto") ? (
+                const tipo = normalizarMetodo(tipocobro);
+                const esMixto = tipo.includes("mixto");
+                const esMetodoSeleccionado =
+                  normalizarMetodo(item?.nombre) === tipo;
+                return esMixto || esMetodoSeleccionado ? (
                   <InputText textalign="center" key={index}>
                     <input
                       onChange={(e) => handleChangePago(item.nombre, e.target.value)}
-                      defaultValue={tipocobro === item.nombre ? total : ""}
+                      value={valoresPago[item.nombre] ?? ""}
                       className="form__field"
                       type="number"
-                      disabled={
-                        tipocobro === "Mixto" || tipocobro === "Efectivo" ? false : true
-                      }
+                      disabled={false}
                     />
                     <label className="form__label">{item.nombre} </label>
                   </InputText>
@@ -278,11 +438,27 @@ export const IngresoCobro = forwardRef((props, ref) => {
           <Linea />
 
           <section className="area3">
-            {descuento > 0 && (
+            {(descuento > 0 || recargo > 0) && (
               <article className="fila">
                 <span className="label muted">Subtotal:</span>
                 <span className="value muted strike">
                   {FormatearNumeroDinero(subtotal, dataempresa?.currency, dataempresa?.iso)}
+                </span>
+              </article>
+            )}
+            {recargoAplicado > 0 && (
+              <article className="fila">
+                <span className="label">Recargo:</span>
+                <span className="value">
+                  +{FormatearNumeroDinero(recargoAplicado, dataempresa?.currency, dataempresa?.iso)}
+                </span>
+              </article>
+            )}
+            {descuentoAplicado > 0 && (
+              <article className="fila">
+                <span className="label">Descuento:</span>
+                <span className="value">
+                  -{FormatearNumeroDinero(descuentoAplicado, dataempresa?.currency, dataempresa?.iso)}
                 </span>
               </article>
             )}
@@ -500,17 +676,22 @@ const Container = styled.div`
 
     .label {
       text-align: left;
+      min-width: 0;
     }
 
     .value {
       text-align: right;
       white-space: nowrap;
+      min-width: 0;
     }
 
     .total-row {
       margin-top: 2px;
       padding-top: 2px;
       border-top: 1px solid #ececec;
+      grid-template-columns: 1fr;
+      align-items: stretch;
+      gap: 4px;
     }
 
     .total-label {
@@ -518,15 +699,19 @@ const Container = styled.div`
       font-size: 20px;
       line-height: 1.1;
       color: #0f172a;
-      white-space: nowrap;
+      white-space: normal;
     }
 
     .total-value {
       font-weight: 900;
-      font-size: clamp(26px, 5.4vw, 34px);
-      line-height: 1.05;
+      font-size: clamp(22px, 5.2vw, 32px);
+      line-height: 1.1;
       color: #0f172a;
-      white-space: nowrap;
+      width: 100%;
+      text-align: right;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .muted {

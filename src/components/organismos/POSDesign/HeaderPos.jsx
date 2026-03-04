@@ -66,6 +66,11 @@ export function HeaderPos() {
       _precio_compra: producto.precio_compra,
       _id_sucursal: id_sucursal_seguro,
       stock: producto.stock,
+      stock_minimo:
+        producto.stock_minimo ??
+        producto._stock_minimo ??
+        producto.stockminimo ??
+        0,
       maneja_inventarios: producto.maneja_inventarios,
       nombre: producto.nombre,
     };
@@ -108,7 +113,9 @@ export function HeaderPos() {
   }
 
   async function ejecutarBusquedaRapida(valorEntrada) {
-    const valor = valorEntrada?.toString().trim();
+    const valor = String(valorEntrada ?? "")
+      .replace(/[\r\n\t]+/g, "")
+      .trim();
     if (!valor) return;
 
     const productoCodigoLocal = buscarProductoPorCodigo(valor, dataProductos);

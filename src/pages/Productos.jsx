@@ -8,7 +8,7 @@ import {
   useSucursalesStore,
 } from "../index";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase/supabase.config";
 
@@ -22,6 +22,8 @@ export function Productos() {
   const { mostrarProductos, buscarProductos, buscador, setBuscador } = useProductosStore();
   const { mostrarCategorias } = useCategoriasStore();
   const { mostrarSucursales } = useSucursalesStore();
+  const [buscadorDebounced, setBuscadorDebounced] = useState("");
+  const DELAY_BUSQUEDA_PRODUCTOS_MS = 320;
 
 
  useEffect(() => {
@@ -36,6 +38,14 @@ export function Productos() {
     // ✅ al salir de la página, limpio el buscador para que no quede clavado
     return () => setBuscador("");
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setBuscadorDebounced(buscador || "");
+    }, DELAY_BUSQUEDA_PRODUCTOS_MS);
+
+    return () => clearTimeout(timer);
+  }, [buscador]);
 
 
   // --- 1. LÓGICA DE DETECCIÓN DE SUCURSAL (CRÍTICO) ---
@@ -53,13 +63,16 @@ export function Productos() {
     isLoading: isLoadingProductos,
     error: errorProductos,
   } = useQuery({
-    queryKey: ["mostrar productos", { id_empresa: dataempresa?.id, id_sucursal, buscador }],
+    queryKey: [
+      "mostrar productos",
+      { id_empresa: dataempresa?.id, id_sucursal, buscador: buscadorDebounced },
+    ],
     queryFn: () => {
       // Si hay buscador, buscamos
-      if (buscador && buscador.trim() !== "") {
+      if (buscadorDebounced && buscadorDebounced.trim() !== "") {
         return buscarProductos({
           id_empresa: dataempresa?.id,
-          buscador: buscador,
+          buscador: buscadorDebounced,
           id_sucursal: id_sucursal, // Pasamos la sucursal para ver stock real
         });
       }
