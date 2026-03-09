@@ -45,7 +45,8 @@ export function TablaCategorias({
       showCancelButton: true,
       confirmButtonColor: "#ffbd58",
       cancelButtonColor: "#d33",
-      confirmButtonText: "S\u00ed, eliminar",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
     }).then(async (result) => {
       if (result.isConfirmed) {
         await eliminarCategoria({ id: p.id });

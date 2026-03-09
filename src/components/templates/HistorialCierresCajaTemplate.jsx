@@ -57,12 +57,72 @@ const formatDuracion = (inicio, fin) => {
   return `${horas}h ${String(min).padStart(2, "0")}m`;
 };
 
+const normalizarTexto = (valor) =>
+  String(valor || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const esMetodoEfectivo = (valorMetodo) =>
+  normalizarTexto(valorMetodo).includes("efectivo");
+
+const esMetodoDebito = (valorMetodo) => {
+  const key = normalizarTexto(valorMetodo);
+  return key.includes("debito") || key.includes("tarjeta");
+};
+
+const esVenta = (item) => {
+  const idVentaRaw = item?.id_ventas;
+  const idVentaNum = Number(idVentaRaw);
+  return (
+    idVentaRaw !== null &&
+    idVentaRaw !== undefined &&
+    String(idVentaRaw).trim() !== "" &&
+    Number.isFinite(idVentaNum) &&
+    idVentaNum > 0
+  );
+};
+
+const esIngresoManual = (item) =>
+  String(item?.tipo_movimiento || "").toLowerCase() === "ingreso" && !esVenta(item);
+
+const esEgresoManual = (item) =>
+  String(item?.tipo_movimiento || "").toLowerCase() === "salida" && !esVenta(item);
+
+const filtrarMovimiento = (item, filtroMovimiento) => {
+  const metodo = item?.metodo_pago;
+  switch (filtroMovimiento) {
+    case "pagos_efectivo":
+      return esVenta(item) && esMetodoEfectivo(metodo);
+    case "pagos_debito":
+      return esVenta(item) && esMetodoDebito(metodo);
+    case "ingresos_totales":
+      return esIngresoManual(item);
+    case "ingresos_efectivo":
+      return esIngresoManual(item) && esMetodoEfectivo(metodo);
+    case "ingresos_debito":
+      return esIngresoManual(item) && esMetodoDebito(metodo);
+    case "egresos_totales":
+      return esEgresoManual(item);
+    case "egresos_efectivo":
+      return esEgresoManual(item) && esMetodoEfectivo(metodo);
+    case "egresos_debito":
+      return esEgresoManual(item) && esMetodoDebito(metodo);
+    case "todos":
+    default:
+      return true;
+  }
+};
+
 export function HistorialCierresCajaTemplate() {
   const { dataempresa } = useEmpresaStore();
   const { mostrarHistorialCierres, mostrarMovimientosPorCierre } = useCierreCajaStore();
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaFin, setFechaFin] = useState("");
   const [cierreSeleccionado, setCierreSeleccionado] = useState(null);
+  const [filtroMovimiento, setFiltroMovimiento] = useState("todos");
+  const [ordenFecha, setOrdenFecha] = useState("desc");
 
   const { data: cierres, isLoading } = useQuery({
     queryKey: [
@@ -130,6 +190,31 @@ export function HistorialCierresCajaTemplate() {
     }, base);
   }, [movimientos]);
 
+  const movimientosVista = useMemo(() => {
+    const base = Array.isArray(movimientos) ? [...movimientos] : [];
+    const filtrados = base.filter((item) => filtrarMovimiento(item, filtroMovimiento));
+
+    filtrados.sort((a, b) => {
+      const ta = parseFechaLocal(a?.fecha_movimiento)?.getTime?.() ?? 0;
+      const tb = parseFechaLocal(b?.fecha_movimiento)?.getTime?.() ?? 0;
+      return ordenFecha === "asc" ? ta - tb : tb - ta;
+    });
+
+    return filtrados;
+  }, [movimientos, filtroMovimiento, ordenFecha]);
+
+  const opcionesFiltroMovimiento = [
+    { id: "todos", label: "Todos" },
+    { id: "pagos_efectivo", label: "Pagos en efectivo" },
+    { id: "pagos_debito", label: "Pagos en debito" },
+    { id: "ingresos_totales", label: "Ingresos totales" },
+    { id: "ingresos_efectivo", label: "Ingresos en efectivo" },
+    { id: "ingresos_debito", label: "Ingresos en debito" },
+    { id: "egresos_totales", label: "Egresos totales" },
+    { id: "egresos_efectivo", label: "Egresos en efectivo" },
+    { id: "egresos_debito", label: "Egresos en debito" },
+  ];
+
   return (
     <Container>
       <Header>
@@ -169,7 +254,7 @@ export function HistorialCierresCajaTemplate() {
         >
           Limpiar filtro
         </button>
-        <FilterLink to="/dashboard/fiados-caja">Ver fiados</FilterLink>
+        <FilterLink to="/dashboard/egresos-stock-caja">Ver egresos de stock</FilterLink>
       </Filters>
 
       <Card>
@@ -270,6 +355,19 @@ export function HistorialCierresCajaTemplate() {
           )}
         </CardTop>
 
+        <SubFilters>
+          {opcionesFiltroMovimiento.map((item) => (
+            <SelectButton
+              key={item.id}
+              type="button"
+              onClick={() => setFiltroMovimiento(item.id)}
+              $active={filtroMovimiento === item.id}
+            >
+              {item.label}
+            </SelectButton>
+          ))}
+        </SubFilters>
+
         <ResumeRow>
           <Stat>
             <span>Total mov.</span>
@@ -317,7 +415,17 @@ export function HistorialCierresCajaTemplate() {
           <Table>
             <thead>
               <tr>
-                <th>Fecha</th>
+                <th>
+                  <SortButton
+                    type="button"
+                    onClick={() =>
+                      setOrdenFecha((prev) => (prev === "desc" ? "asc" : "desc"))
+                    }
+                  >
+                    Fecha
+                    <span>{ordenFecha === "desc" ? "▼" : "▲"}</span>
+                  </SortButton>
+                </th>
                 <th>Tipo</th>
                 <th>M&eacute;todo</th>
                 <th>Descripci&oacute;n</th>
@@ -338,13 +446,13 @@ export function HistorialCierresCajaTemplate() {
                   <td colSpan="8" className="empty">Cargando movimientos...</td>
                 </tr>
               )}
-              {cierreSeleccionado && !loadingMovimientos && (!movimientos || movimientos.length === 0) && (
+              {cierreSeleccionado && !loadingMovimientos && (!movimientosVista || movimientosVista.length === 0) && (
                 <tr>
-                  <td colSpan="8" className="empty">No hay movimientos en ese cierre para el filtro aplicado.</td>
+                  <td colSpan="8" className="empty">No hay movimientos para el filtro aplicado.</td>
                 </tr>
               )}
               {cierreSeleccionado && !loadingMovimientos &&
-                (movimientos || []).map((item) => (
+                (movimientosVista || []).map((item) => (
                   <tr key={item.id}>
                     <td>{formatFecha(item.fecha_movimiento)}</td>
                     <td>{item.tipo_movimiento || "-"}</td>
@@ -508,6 +616,13 @@ const CardTitle = styled.h3`
   font-weight: 700;
 `;
 
+const SubFilters = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+`;
+
 const ResumeRow = styled.div`
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -621,4 +736,21 @@ const Badge = styled.span`
   color: ${({ $open }) => ($open ? "#f59e0b" : "#22c55e")};
   background: ${({ $open }) =>
     $open ? "rgba(245, 158, 11, 0.14)" : "rgba(34, 197, 94, 0.14)"};
+`;
+
+const SortButton = styled.button`
+  border: none;
+  background: transparent;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+
+  span {
+    font-size: 10px;
+    opacity: 0.85;
+  }
 `;

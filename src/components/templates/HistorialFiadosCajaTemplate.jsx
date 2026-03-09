@@ -55,7 +55,7 @@ const formatDuracion = (inicio, fin) => {
   return `${horas}h ${String(min).padStart(2, "0")}m`;
 };
 
-const parseDetalleFiado = (valor) => {
+const parseDetalleEgresoStock = (valor) => {
   const texto = String(valor || "").trim();
   if (!texto) {
     return { motivo: "-", descripcion: "-" };
@@ -81,7 +81,12 @@ const parseDetalleFiado = (valor) => {
 
   if (descripcion === "-") {
     const resto = partes
-      .filter((parte) => !/^fiado/i.test(parte) && !/^motivo\s*:/i.test(parte))
+      .filter(
+        (parte) =>
+          !/^fiado/i.test(parte) &&
+          !/^egreso\s+de\s+stock/i.test(parte) &&
+          !/^motivo\s*:/i.test(parte)
+      )
       .join(" | ")
       .trim();
     descripcion = resto || texto || "-";
@@ -151,8 +156,8 @@ export function HistorialFiadosCajaTemplate() {
     <Container>
       <Header>
         <div className="left">
-          <h1>Historial de fiados</h1>
-          <p>Revisa fiados por cierre de caja con filtro de fechas.</p>
+          <h1>Historial de egresos de stock</h1>
+          <p>Revisa egresos de stock por cierre de caja con filtro de fechas.</p>
         </div>
         <BackButton to="/">
           <Icon icon="mdi:arrow-left" width={16} />
@@ -202,7 +207,7 @@ export function HistorialFiadosCajaTemplate() {
                 <th>Caja</th>
                 <th>Cajero</th>
                 <th>Estado</th>
-                <th className="align-center">Fiados</th>
+                <th className="align-center">Egresos de stock</th>
               </tr>
             </thead>
             <tbody>
@@ -238,7 +243,7 @@ export function HistorialFiadosCajaTemplate() {
                         onClick={() => setCierreSeleccionado(item.id)}
                         $active={item.id === cierreSeleccionado}
                       >
-                        Ver fiados
+                        Ver egresos
                       </SelectButton>
                     </td>
                   </tr>
@@ -251,7 +256,7 @@ export function HistorialFiadosCajaTemplate() {
       <Card>
         <CardTop>
           <CardTitle>
-            Fiados del cierre {cierreActivo ? `#${cierreActivo.id}` : ""}
+            Egresos de stock del cierre {cierreActivo ? `#${cierreActivo.id}` : ""}
           </CardTitle>
           {cierreActivo && (
             <small>
@@ -262,11 +267,11 @@ export function HistorialFiadosCajaTemplate() {
 
         <ResumeRow>
           <Stat>
-            <span>Cantidad de fiados</span>
+            <span>Cantidad de egresos</span>
             <strong>{resumenFiados.cantidad}</strong>
           </Stat>
           <Stat>
-            <span>Total fiado</span>
+            <span>Total egresado</span>
             <strong>
               {FormatearNumeroDinero(
                 resumenFiados.total,
@@ -291,22 +296,22 @@ export function HistorialFiadosCajaTemplate() {
             <tbody>
               {!cierreSeleccionado && (
                 <tr>
-                  <td colSpan="5" className="empty">Selecciona un cierre para ver sus fiados.</td>
+                  <td colSpan="5" className="empty">Selecciona un cierre para ver sus egresos de stock.</td>
                 </tr>
               )}
               {cierreSeleccionado && loadingFiados && (
                 <tr>
-                  <td colSpan="5" className="empty">Cargando fiados...</td>
+                  <td colSpan="5" className="empty">Cargando egresos de stock...</td>
                 </tr>
               )}
               {cierreSeleccionado && !loadingFiados && (!fiados || fiados.length === 0) && (
                 <tr>
-                  <td colSpan="5" className="empty">No hay fiados en ese cierre para el filtro aplicado.</td>
+                  <td colSpan="5" className="empty">No hay egresos de stock en ese cierre para el filtro aplicado.</td>
                 </tr>
               )}
               {cierreSeleccionado && !loadingFiados &&
                 (fiados || []).map((item) => {
-                  const detalle = parseDetalleFiado(item.descripcion);
+                  const detalle = parseDetalleEgresoStock(item.descripcion);
                   return (
                     <tr key={item.id}>
                       <td>{formatFecha(item.fecha_movimiento)}</td>

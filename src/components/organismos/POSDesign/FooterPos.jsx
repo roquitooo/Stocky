@@ -30,10 +30,10 @@ export function FooterPos() {
     if (isProcesandoFiado) return;
 
     const result = await Swal.fire({
-      title: "Descontar stock sin generar venta?",
-      text: "Esta accion se usa para fiado: no registra venta ni cobro, solo descuenta stock.",
+      title: "Registrar egreso de stock?",
+      text: "Esta accion no registra venta ni cobro, solo descuenta stock.",
       input: "textarea",
-      inputLabel: "Descripcion del fiado (opcional)",
+      inputLabel: "Descripcion del egreso de stock (opcional)",
       inputPlaceholder: "Motivo",
       inputAttributes: {
         maxlength: "240",
@@ -75,8 +75,8 @@ export function FooterPos() {
       title: "Stock descontado",
       text:
         operacion?.fiado_registrado === false
-          ? `Se desconto el stock, pero no se pudo guardar el fiado en historial.${operacion?.error_detalle ? ` Detalle: ${operacion.error_detalle}` : ""}`
-          : "Se desconto el stock sin registrar venta.",
+          ? `Se desconto el stock, pero no se pudo guardar el egreso de stock en historial.${operacion?.error_detalle ? ` Detalle: ${operacion.error_detalle}` : ""}`
+          : "Se desconto el stock y el egreso de stock quedo registrado en historial.",
       confirmButtonColor: "#ffbd58",
     });
   };
@@ -119,7 +119,7 @@ export function FooterPos() {
           color="#2d2d2d"
           funcion={handleFiadoSoloStock}
           disabled={isProcesandoFiado}
-          titulo={isProcesandoFiado ? "Procesando..." : "Solo stock"}
+          titulo={isProcesandoFiado ? "Procesando..." : "Egreso de stock"}
         />
       </article>
     </Footer>

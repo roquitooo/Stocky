@@ -6,14 +6,19 @@ import {
   TablaProductos,
   Title,
   useCategoriasStore,
+  useEmpresaStore,
   useProductosStore,
+  useSucursalesStore,
   useUsuariosStore,
+  supabase,
 } from "../../index";
 import { v } from "../../styles/variables";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AumentarPrecio } from "../organismos/formularios/AumentarPrecio";
 import { BarLoader } from "react-spinners";
 import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import PropTypes from "prop-types";
 
 function obtenerIdCategoriaProducto(producto, categoriasPorNombre = new Map()) {
   if (!producto || typeof producto !== "object") return "";
@@ -52,6 +57,173 @@ function obtenerIdCategoriaProducto(producto, categoriasPorNombre = new Map()) {
   return "";
 }
 
+function normalizarHeaderCsv(valor) {
+  return String(valor || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+}
+
+function detectarDelimitadorCsv(lineaCabecera = "") {
+  const linea = String(lineaCabecera || "");
+  const countPuntoComa = (linea.match(/;/g) || []).length;
+  const countComa = (linea.match(/,/g) || []).length;
+  return countPuntoComa > countComa ? ";" : ",";
+}
+
+function parsearLineaCsv(linea = "", delimitador = ",") {
+  const resultado = [];
+  let actual = "";
+  let enComillas = false;
+
+  for (let i = 0; i < linea.length; i += 1) {
+    const char = linea[i];
+    const siguiente = linea[i + 1];
+
+    if (char === '"') {
+      if (enComillas && siguiente === '"') {
+        actual += '"';
+        i += 1;
+      } else {
+        enComillas = !enComillas;
+      }
+      continue;
+    }
+
+    if (char === delimitador && !enComillas) {
+      resultado.push(actual.trim());
+      actual = "";
+      continue;
+    }
+
+    actual += char;
+  }
+
+  resultado.push(actual.trim());
+  return resultado;
+}
+
+function parsearArchivoCsv(texto = "") {
+  const contenido = String(texto || "").replace(/\uFEFF/g, "");
+  const lineas = contenido
+    .split(/\r?\n/)
+    .map((linea) => linea.trim())
+    .filter((linea) => linea.length > 0);
+
+  if (lineas.length < 2) {
+    return { delimitador: ",", encabezados: [], filas: [] };
+  }
+
+  const delimitador = detectarDelimitadorCsv(lineas[0]);
+  const encabezadosRaw = parsearLineaCsv(lineas[0], delimitador);
+  const encabezados = encabezadosRaw.map(normalizarHeaderCsv);
+
+  const filas = lineas.slice(1).map((linea, index) => {
+    const columnas = parsearLineaCsv(linea, delimitador);
+    const row = {};
+    encabezados.forEach((key, colIndex) => {
+      row[key] = String(columnas[colIndex] ?? "").trim();
+    });
+    return {
+      rowNumber: index + 2,
+      raw: row,
+    };
+  });
+
+  return { delimitador, encabezados, filas };
+}
+
+function obtenerValorCsv(raw = {}, claves = []) {
+  for (const clave of claves) {
+    const normalizada = normalizarHeaderCsv(clave);
+    const valor = raw?.[normalizada];
+    if (valor !== undefined && String(valor).trim() !== "") {
+      return String(valor).trim();
+    }
+  }
+  return "";
+}
+
+function parsearNumeroCsv(valor) {
+  const original = String(valor ?? "").trim();
+  if (!original) return null;
+
+  let limpio = original.replace(/\s/g, "");
+
+  if (limpio.includes(",") && limpio.includes(".")) {
+    if (limpio.lastIndexOf(",") > limpio.lastIndexOf(".")) {
+      limpio = limpio.replace(/\./g, "").replace(",", ".");
+    } else {
+      limpio = limpio.replace(/,/g, "");
+    }
+  } else {
+    limpio = limpio.replace(",", ".");
+  }
+
+  const numero = Number(limpio);
+  return Number.isFinite(numero) ? numero : null;
+}
+
+function parsearBooleanCsv(valor) {
+  const key = String(valor || "").trim().toLowerCase();
+  if (!key) return false;
+  return ["1", "true", "si", "sí", "yes", "y", "x", "on"].includes(key);
+}
+
+function normalizarSeVendePorCsv(valor) {
+  const key = String(valor || "").trim().toLowerCase();
+  if (!key) return "UNIDAD";
+  if (key.includes("gram")) return "GRAMOS";
+  return "UNIDAD";
+}
+
+function generarCodigoAleatorio(sufijo = "") {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let prefijo = "";
+  for (let i = 0; i < 4; i += 1) {
+    prefijo += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `${prefijo}${String(sufijo || "").slice(-6)}369`;
+}
+
+function validarFilaPreviewCsv(fila, { idSucursalActiva }) {
+  const errors = [];
+
+  const nombre = String(fila?.nombre || "").trim();
+  const precioVentaNumero = parsearNumeroCsv(fila?.precioVenta);
+  const stockNumero = parsearNumeroCsv(fila?.stock);
+  const stockMinimoNumero = parsearNumeroCsv(fila?.stockMinimo);
+  const manejaInventarios = Boolean(fila?.manejaInventarios);
+
+  if (!nombre) errors.push("Falta nombre");
+  if (!Number.isFinite(precioVentaNumero) || precioVentaNumero < 0) {
+    errors.push("Precio venta inválido");
+  }
+  if (!String(fila?.idCategoria || "").trim()) {
+    errors.push("Categoría no encontrada");
+  }
+
+  if (manejaInventarios && !idSucursalActiva) {
+    errors.push("No hay sucursal activa para cargar stock");
+  }
+  if (manejaInventarios && (!Number.isFinite(stockNumero) || stockNumero < 0)) {
+    errors.push("Stock inválido");
+  }
+  if (
+    manejaInventarios &&
+    (!Number.isFinite(stockMinimoNumero) || stockMinimoNumero < 0)
+  ) {
+    errors.push("Stock mínimo inválido");
+  }
+
+  return {
+    ...fila,
+    errors,
+  };
+}
+
 export function ProductosTemplate({
   isLoading,
   lowStockProductIds = [],
@@ -61,22 +233,36 @@ export function ProductosTemplate({
   const navigate = useNavigate();
   const [openRegistro, SetopenRegistro] = useState(false);
   const { datausuarios } = useUsuariosStore();
-  const { dataProductos, setBuscador, generarCodigo } = useProductosStore();
+  const { dataempresa } = useEmpresaStore();
+  const { sucursalesItemSelect } = useSucursalesStore();
+  const { dataProductos, setBuscador, generarCodigo, mostrarProductos, parametros } =
+    useProductosStore();
   const { datacategorias } = useCategoriasStore();
   const [accion, setAccion] = useState("");
   const [dataSelect, setdataSelect] = useState([]);
-  const [isExploding, setIsExploding] = useState(false);
+  const [, setIsExploding] = useState(false);
   const [openCategoriasFiltro, setOpenCategoriasFiltro] = useState(false);
   const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState([]);
   const filtroCategoriasRef = useRef(null);
   const [rowSelection, setRowSelection] = useState({});
   const [openAumento, setOpenAumento] = useState(false);
+  const [csvPreviewOpen, setCsvPreviewOpen] = useState(false);
+  const [csvFileName, setCsvFileName] = useState("");
+  const [csvRowsPreview, setCsvRowsPreview] = useState([]);
+  const [csvDelimitador, setCsvDelimitador] = useState(",");
+  const [csvProcesando, setCsvProcesando] = useState(false);
+  const [csvImportando, setCsvImportando] = useState(false);
+  const csvInputRef = useRef(null);
   const selectedIds = Object.keys(rowSelection).map((key) => parseInt(key, 10));
   const filtroBajoStock =
     new URLSearchParams(location.search).get("filtro") === "bajo-stock";
   const esCajero = String(datausuarios?.roles?.nombre || "")
     .toLowerCase()
     .includes("cajero");
+  const sucursalActiva = Array.isArray(sucursalesItemSelect)
+    ? sucursalesItemSelect[0]
+    : sucursalesItemSelect;
+  const idSucursalActiva = sucursalActiva?.id ?? sucursalActiva?.id_sucursal ?? null;
 
   const categoriasDisponibles = useMemo(() => {
     if (!Array.isArray(datacategorias)) return [];
@@ -197,6 +383,242 @@ export function ProductosTemplate({
     navigate("/configuracion/productos");
   }
 
+  const csvRowsValidas = useMemo(
+    () => csvRowsPreview.filter((row) => row.errors.length === 0),
+    [csvRowsPreview]
+  );
+  const csvRowsConErrores = useMemo(
+    () => csvRowsPreview.filter((row) => row.errors.length > 0),
+    [csvRowsPreview]
+  );
+
+  function abrirImportadorCsv() {
+    if (csvInputRef.current) {
+      csvInputRef.current.value = "";
+      csvInputRef.current.click();
+    }
+  }
+
+  async function onSelectCsvFile(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setCsvProcesando(true);
+    setCsvFileName(file.name);
+    try {
+      const texto = await file.text();
+      const { delimitador, filas } = parsearArchivoCsv(texto);
+
+      if (!filas.length) {
+        toast.warning("El CSV no tiene filas para importar.");
+        setCsvRowsPreview([]);
+        setCsvPreviewOpen(false);
+        return;
+      }
+
+      const categoriasById = new Set(
+        (categoriasDisponibles || []).map((cat) => String(cat.id))
+      );
+
+      const preview = filas.map((fila) => {
+        const raw = fila.raw;
+
+        const nombre = obtenerValorCsv(raw, ["nombre", "producto", "descripcion"]);
+        const precioVentaRaw = obtenerValorCsv(raw, [
+          "precio_venta",
+          "precio venta",
+          "precio",
+        ]);
+        const precioCompraRaw = obtenerValorCsv(raw, [
+          "precio_compra",
+          "precio compra",
+          "costo",
+        ]);
+        const categoriaRaw = obtenerValorCsv(raw, [
+          "id_categoria",
+          "categoria_id",
+          "categoria",
+          "rubro",
+        ]);
+        const sevendePorRaw = obtenerValorCsv(raw, ["sevende_por", "unidad_medida"]);
+        const manejaInventariosRaw = obtenerValorCsv(raw, [
+          "maneja_inventarios",
+          "controlar_stock",
+          "stock_activo",
+        ]);
+        const stockRaw = obtenerValorCsv(raw, ["stock", "stock_inicial"]);
+        const stockMinimoRaw = obtenerValorCsv(raw, ["stock_minimo", "stock_min"]);
+        const codigoBarrasRaw = obtenerValorCsv(raw, ["codigo_barras", "cod_barras"]);
+        const codigoInternoRaw = obtenerValorCsv(raw, ["codigo_interno", "cod_interno"]);
+
+        const precioVenta = parsearNumeroCsv(precioVentaRaw);
+        const precioCompra = parsearNumeroCsv(precioCompraRaw);
+        const manejaInventarios = parsearBooleanCsv(manejaInventariosRaw);
+        const stockNumero = parsearNumeroCsv(stockRaw);
+        const stockMinimoNumero = parsearNumeroCsv(stockMinimoRaw);
+
+        let idCategoria = "";
+        if (categoriaRaw) {
+          const categoriaAsId = String(categoriaRaw).trim();
+          if (categoriasById.has(categoriaAsId)) {
+            idCategoria = categoriaAsId;
+          } else {
+            idCategoria = categoriasPorNombre.get(categoriaAsId.toLowerCase()) || "";
+          }
+        }
+
+        return validarFilaPreviewCsv({
+          rowNumber: fila.rowNumber,
+          nombre: nombre || "",
+          precioVenta: Number.isFinite(precioVenta) ? Number(precioVenta) : "",
+          precioCompra: Number.isFinite(precioCompra) ? Number(precioCompra) : 0,
+          idCategoria,
+          categoriaRaw: categoriaRaw || "",
+          sevendePor: normalizarSeVendePorCsv(sevendePorRaw),
+          manejaInventarios,
+          stock: manejaInventarios
+            ? (Number.isFinite(stockNumero) ? Math.trunc(stockNumero) : "")
+            : 0,
+          stockMinimo: manejaInventarios
+            ? (Number.isFinite(stockMinimoNumero) ? Math.trunc(stockMinimoNumero) : 0)
+            : 0,
+          codigoBarras: codigoBarrasRaw,
+          codigoInterno: codigoInternoRaw,
+        }, { idSucursalActiva });
+      });
+
+      setCsvRowsPreview(preview);
+      setCsvDelimitador(delimitador);
+      setCsvPreviewOpen(true);
+    } catch (error) {
+      toast.error(`No se pudo leer el archivo CSV. ${error?.message || ""}`);
+      setCsvRowsPreview([]);
+      setCsvPreviewOpen(false);
+    } finally {
+      setCsvProcesando(false);
+    }
+  }
+
+  function editarCampoPreviewCsv(rowNumber, field, value) {
+    setCsvRowsPreview((prev) =>
+      prev.map((row) => {
+        if (row.rowNumber !== rowNumber) return row;
+
+        let nextValue = value;
+        if (field === "stock") {
+          if (value === "") {
+            nextValue = "";
+          } else {
+            const parsed = Number(value);
+            nextValue = Number.isFinite(parsed) ? Math.trunc(Math.max(0, parsed)) : "";
+          }
+        }
+
+        if (field === "precioVenta") {
+          if (value === "") {
+            nextValue = "";
+          } else {
+            const parsed = parsearNumeroCsv(value);
+            nextValue = Number.isFinite(parsed) ? parsed : value;
+          }
+        }
+
+        if (field === "precioCompra") {
+          if (value === "") {
+            nextValue = "";
+          } else {
+            const parsed = parsearNumeroCsv(value);
+            nextValue = Number.isFinite(parsed) ? parsed : value;
+          }
+        }
+
+        const filaEditada = {
+          ...row,
+          [field]: nextValue,
+        };
+
+        return validarFilaPreviewCsv(filaEditada, { idSucursalActiva });
+      })
+    );
+  }
+
+  async function confirmarCargaCsv() {
+    if (!dataempresa?.id) {
+      toast.error("No se detectó la empresa activa.");
+      return;
+    }
+
+    if (csvRowsValidas.length === 0) {
+      toast.warning("No hay filas válidas para importar.");
+      return;
+    }
+
+    setCsvImportando(true);
+    let ok = 0;
+    let fail = 0;
+
+    for (let i = 0; i < csvRowsValidas.length; i += 1) {
+      const item = csvRowsValidas[i];
+      const codigoBase = String(Date.now() + i);
+      const payloadProducto = {
+        _nombre: String(item.nombre || "").trim().toLowerCase(),
+        _precio_venta: Number(item.precioVenta || 0),
+        _precio_compra: Number(item.precioCompra || 0),
+        _id_categoria: item.idCategoria,
+        _codigo_barras: item.codigoBarras || generarCodigoAleatorio(codigoBase),
+        _codigo_interno: item.codigoInterno || generarCodigoAleatorio(`${codigoBase}i`),
+        _id_empresa: dataempresa.id,
+        _sevende_por: item.sevendePor,
+        _maneja_inventarios: item.manejaInventarios,
+        _maneja_multiprecios: false,
+      };
+
+      try {
+        const { data: idProductoNuevo, error: productoError } = await supabase.rpc(
+          "insertarproductos",
+          payloadProducto
+        );
+        if (productoError) throw productoError;
+
+        const idProducto = Number(idProductoNuevo);
+        if (!Number.isFinite(idProducto) || idProducto <= 0) {
+          throw new Error("No se pudo obtener el ID del producto insertado.");
+        }
+
+        if (item.manejaInventarios) {
+          const { error: stockError } = await supabase.from("almacenes").insert({
+            id_sucursal: idSucursalActiva,
+            id_producto: idProducto,
+            stock: Math.trunc(Number(item.stock || 0)),
+            stock_minimo: Math.trunc(Number(item.stockMinimo || 0)),
+          });
+          if (stockError) throw stockError;
+        }
+
+        ok += 1;
+      } catch (error) {
+        fail += 1;
+        console.error(`Error importando fila ${item.rowNumber}:`, error);
+      }
+    }
+
+    if (parametros?.id_empresa) {
+      await mostrarProductos(parametros);
+    }
+
+    setCsvImportando(false);
+    setCsvPreviewOpen(false);
+    setCsvRowsPreview([]);
+
+    if (ok > 0 && fail === 0) {
+      toast.success(`Importación completada: ${ok} producto(s) cargado(s).`);
+    } else if (ok > 0 && fail > 0) {
+      toast.warning(`Importación parcial: ${ok} cargados, ${fail} con error.`);
+    } else {
+      toast.error("No se pudo cargar ningún producto.");
+    }
+  }
+
   return (
     <Container>
       {openRegistro && (
@@ -222,6 +644,143 @@ export function ProductosTemplate({
         />
       )}
 
+      <input
+        ref={csvInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        style={{ display: "none" }}
+        onChange={onSelectCsvFile}
+      />
+
+      {csvPreviewOpen && (
+        <div className="csv-overlay">
+          <div className="csv-modal">
+            <div className="csv-header">
+              <h3>Vista previa CSV</h3>
+              <button
+                type="button"
+                className="csv-close"
+                onClick={() => setCsvPreviewOpen(false)}
+                disabled={csvImportando}
+              >
+                x
+              </button>
+            </div>
+
+            <div className="csv-meta">
+              <span><strong>Archivo:</strong> {csvFileName || "-"}</span>
+              <span><strong>Delimitador:</strong> {csvDelimitador === ";" ? "Punto y coma (;)" : "Coma (,)"}</span>
+              <span><strong>Total filas:</strong> {csvRowsPreview.length}</span>
+              <span><strong>Válidas:</strong> {csvRowsValidas.length}</span>
+              <span><strong>Con error:</strong> {csvRowsConErrores.length}</span>
+            </div>
+
+            <div className="csv-table-wrap">
+              <table className="csv-table">
+                <thead>
+                  <tr>
+                    <th>Fila</th>
+                    <th>Nombre</th>
+                    <th>Precio venta</th>
+                    <th>Precio compra</th>
+                    <th>Categoría</th>
+                    <th>Inventario</th>
+                    <th>Stock</th>
+                    <th>Stock min.</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {csvRowsPreview.map((item) => (
+                    <tr key={`csv-row-${item.rowNumber}`}>
+                      <td>{item.rowNumber}</td>
+                      <td>{item.nombre || "-"}</td>
+                      <td>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          className="csv-edit-input"
+                          value={item.precioVenta ?? ""}
+                          onChange={(e) =>
+                            editarCampoPreviewCsv(
+                              item.rowNumber,
+                              "precioVenta",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          className="csv-edit-input"
+                          value={item.precioCompra ?? ""}
+                          onChange={(e) =>
+                            editarCampoPreviewCsv(
+                              item.rowNumber,
+                              "precioCompra",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </td>
+                      <td>{item.categoriaRaw || "-"}</td>
+                      <td>{item.manejaInventarios ? "Sí" : "No"}</td>
+                      <td>
+                        {item.manejaInventarios ? (
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            className="csv-edit-input"
+                            value={item.stock ?? ""}
+                            onChange={(e) =>
+                              editarCampoPreviewCsv(
+                                item.rowNumber,
+                                "stock",
+                                e.target.value
+                              )
+                            }
+                          />
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td>{item.manejaInventarios ? item.stockMinimo : "-"}</td>
+                      <td className={item.errors.length ? "csv-error" : "csv-ok"}>
+                        {item.errors.length ? item.errors.join(" | ") : "OK"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="csv-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setCsvPreviewOpen(false)}
+                disabled={csvImportando}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={confirmarCargaCsv}
+                disabled={csvImportando || csvRowsValidas.length === 0}
+              >
+                {csvImportando ? "Importando..." : `Cargar válidas (${csvRowsValidas.length})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="area1">
         <Title>Productos</Title>
         {selectedIds.length > 0 && (
@@ -232,6 +791,14 @@ export function ProductosTemplate({
             titulo={`Aumentar precios (${selectedIds.length})`}
           />
         )}
+        <button
+          type="button"
+          className="btn-csv"
+          onClick={abrirImportadorCsv}
+          disabled={csvProcesando || csvImportando}
+        >
+          {csvProcesando ? "Leyendo CSV..." : "Importar CSV"}
+        </button>
         <Btn1
           funcion={nuevoRegistro}
           bgcolor={v.colorPrincipal}
@@ -337,6 +904,12 @@ export function ProductosTemplate({
   );
 }
 
+ProductosTemplate.propTypes = {
+  isLoading: PropTypes.bool.isRequired,
+  lowStockProductIds: PropTypes.arrayOf(PropTypes.number),
+  isLoadingLowStock: PropTypes.bool,
+};
+
 const Container = styled.div`
   min-height: calc(100dvh - 80px);
   margin-top: 50px;
@@ -355,6 +928,22 @@ const Container = styled.div`
     align-items: center;
     flex-wrap: wrap;
     gap: 15px;
+  }
+
+  .btn-csv {
+    border: 1px solid #1f9f58;
+    background: linear-gradient(180deg, #34d67b 0%, #1f9f58 100%);
+    color: #ffffff;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    min-height: 40px;
+  }
+
+  .btn-csv:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 
   .area2 {
@@ -487,6 +1076,139 @@ const Container = styled.div`
     color: ${({ theme }) => theme.text};
   }
 
+  .csv-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .csv-modal {
+    width: min(1200px, 96vw);
+    max-height: calc(100vh - 40px);
+    background: ${({ theme }) => theme.bgtotal};
+    border: 1px solid ${({ theme }) => theme.color2};
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .csv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid ${({ theme }) => theme.color2};
+  }
+
+  .csv-header h3 {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .csv-close {
+    border: none;
+    background: transparent;
+    color: ${({ theme }) => theme.text};
+    font-size: 22px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .csv-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    padding: 10px 14px;
+    border-bottom: 1px solid ${({ theme }) => theme.color2};
+    font-size: 12px;
+  }
+
+  .csv-table-wrap {
+    overflow: auto;
+    padding: 8px 14px;
+    flex: 1;
+  }
+
+  .csv-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+  }
+
+  .csv-table th,
+  .csv-table td {
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    padding: 8px 6px;
+    text-align: left;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .csv-table th {
+    font-weight: 700;
+  }
+
+  .csv-edit-input {
+    width: 100%;
+    min-width: 90px;
+    border: 1px solid ${({ theme }) => theme.color2};
+    background: ${({ theme }) => theme.bgtotal};
+    color: ${({ theme }) => theme.text};
+    border-radius: 8px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .csv-ok {
+    color: #16a34a;
+    font-weight: 700;
+  }
+
+  .csv-error {
+    color: #dc2626;
+    font-weight: 700;
+  }
+
+  .csv-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 14px;
+    border-top: 1px solid ${({ theme }) => theme.color2};
+  }
+
+  .csv-actions .btn-secondary,
+  .csv-actions .btn-primary {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .csv-actions .btn-secondary {
+    background: #e5e7eb;
+    color: #111827;
+  }
+
+  .csv-actions .btn-primary {
+    background: linear-gradient(180deg, #34d67b 0%, #1f9f58 100%);
+    color: #fff;
+  }
+
+  .csv-actions button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
   @media (max-width: 768px) {
     margin-top: 10px;
     padding: 10px;
@@ -518,6 +1240,10 @@ const Container = styled.div`
       width: 100%;
       white-space: normal;
       line-height: 1.2;
+    }
+
+    .btn-csv {
+      width: 100%;
     }
 
     .categorias-popover {

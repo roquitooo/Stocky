@@ -38,7 +38,7 @@ export function UsuariosTemplate({ isLoading }) {
       <section className="area1">
         <ContentFiltros>
           <Title>Usuarios</Title>
-          <Btn1 titulo="Nuevo Usuario" funcion={nuevoRegistro} bgcolor="#0047ff" color="#fff" />
+          <Btn1 titulo="Nuevo Usuario" funcion={nuevoRegistro} bgcolor="#ffbd58" color="#fff" />
         </ContentFiltros>
       </section>
       

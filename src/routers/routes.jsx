@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import {
   Categorias,
   Configuraciones,
-  Home,
   Login,
   Productos,
   ProtectedRoute,
@@ -169,7 +168,7 @@ export function MyRoutes() {
       />
 
       <Route
-        path="/dashboard/fiados-caja"
+        path="/dashboard/egresos-stock-caja"
         element={
           <Layout>
             <ProtectedRoute accessBy="authenticated">
@@ -178,6 +177,8 @@ export function MyRoutes() {
           </Layout>
         }
       />
+
+      <Route path="/dashboard/fiados-caja" element={<Navigate to="/dashboard/egresos-stock-caja" replace />} />
       
       <Route path="*" element={<PageNot />} />
       

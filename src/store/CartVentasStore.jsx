@@ -44,6 +44,19 @@ function normalizarValorAjuste(valor) {
   return numero;
 }
 
+function redondearHaciaArriba(valor, paso = 50) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero) || numero <= 0) return 0;
+  if (!Number.isFinite(paso) || paso <= 0) return numero;
+
+  // Evita saltos de +50 por ruido de punto flotante (ej: 1800.0000001).
+  // Se redondea a centavos antes de aplicar el techo al "paso".
+  const centavos = Math.round(numero * 100);
+  const pasoCentavos = Math.round(paso * 100);
+  const bloques = Math.ceil(centavos / pasoCentavos);
+  return (bloques * pasoCentavos) / 100;
+}
+
 function calcularTotalLinea(item) {
   const cantidad = normalizarCantidadEntera(item?._cantidad, {
     fallback: 1,
@@ -109,7 +122,7 @@ function calcularStateConDescuento(items, descuento, tipoDescuento, recargo, tip
   return {
     items: itemsNormalizados,
     subtotal,
-    total: Math.max(0, totalFinal),
+    total: redondearHaciaArriba(Math.max(0, totalFinal), 50),
   };
 }
 

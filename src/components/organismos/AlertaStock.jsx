@@ -1,72 +1,71 @@
 import { useEffect } from "react";
-import { supabase } from "../../supabase/supabase.config";
-import { toast } from "sonner";
-import { useProductosStore } from "../../store/ProductosStore";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "../../supabase/supabase.config";
+import { useEmpresaStore } from "../../store/EmpresaStore";
+import { useProductosStore } from "../../store/ProductosStore";
 
-// 🔴 TRUCO FINAL: Declaramos la variable AQUÍ, fuera de la función.
-// Esto hace que sea compartida por todas las instancias del componente.
-// No importa si tienes 1 o 10 AlertaStock, todos leerán este mismo objeto.
-const historialGlobalAlertas = {}; 
+// Shared across component mounts to avoid duplicated alerts in bursts.
+const historialGlobalAlertas = {};
 
 export const AlertaStock = () => {
   const { setBuscador } = useProductosStore();
+  const idEmpresaActiva = Number(useEmpresaStore((s) => s.dataempresa?.id) || 0);
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!idEmpresaActiva) return undefined;
+
     const channel = supabase
       .channel("almacenes-stock-alerta")
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "almacenes" },
         async (payload) => {
-          const { stock, stock_minimo, id_producto } = payload.new;
+          const stock = Number(payload?.new?.stock ?? 0);
+          const stockMinimo = Number(payload?.new?.stock_minimo ?? 0);
+          const idProducto = Number(payload?.new?.id_producto ?? 0);
 
-          if (stock <= stock_minimo) {
-            
-            const now = Date.now();
-            // Leemos del objeto global externo
-            const lastTime = historialGlobalAlertas[id_producto] || 0;
+          if (!Number.isFinite(idProducto) || idProducto <= 0) return;
+          if (stock > stockMinimo) return;
 
-            // Si pasó menos de 2 segundos, adiós.
-            if (now - lastTime < 2000) {
-              return; 
-            }
+          const { data: producto, error: productoError } = await supabase
+            .from("productos")
+            .select("nombre, id_empresa")
+            .eq("id", idProducto)
+            .maybeSingle();
 
-            // Guardamos en el objeto global
-            historialGlobalAlertas[id_producto] = now;
+          // Ignore alerts from other companies.
+          if (productoError || !producto) return;
+          if (Number(producto.id_empresa) !== idEmpresaActiva) return;
 
-            const toastId = `alerta-stock-${id_producto}`;
+          const now = Date.now();
+          const alertaKey = `${idEmpresaActiva}-${idProducto}`;
+          const lastTime = historialGlobalAlertas[alertaKey] || 0;
+          if (now - lastTime < 2000) return;
+          historialGlobalAlertas[alertaKey] = now;
 
-            const { data: producto } = await supabase
-              .from("productos")
-              .select("nombre")
-              .eq("id", id_producto)
-              .single();
+          const nombreProducto = producto?.nombre || "Producto desconocido";
 
-            const nombreProducto = producto?.nombre || "Producto desconocido";
-
-            toast.warning(
-              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                <span style={{ fontWeight: "bold" }}>⚠️ STOCK ⚠️ requieren reposición </span>
-                <span>{nombreProducto} tiene solo {stock} unidades.</span>
-              </div>,
-              {
-                id: toastId,
-                duration: 6000,
-                action: {
-                  label: "VER",
-                  onClick: () => {
-                    navigate("/configuracion/productos", {
-                      state: { fromStockAlert: true, search: nombreProducto }
-                    });
-                    setBuscador(nombreProducto); // Esto hará que el buscador filtre por ese producto al entrar a la página.
-                    
-                  },
+          toast.warning(
+            <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+              <span style={{ fontWeight: "bold" }}>Stock bajo: requiere reposicion</span>
+              <span>{nombreProducto} tiene solo {stock} unidades.</span>
+            </div>,
+            {
+              id: `alerta-stock-${alertaKey}`,
+              duration: 6000,
+              action: {
+                label: "VER",
+                onClick: () => {
+                  navigate("/configuracion/productos", {
+                    state: { fromStockAlert: true, search: nombreProducto },
+                  });
+                  setBuscador(nombreProducto);
                 },
-              }
-            );
-          }
+              },
+            }
+          );
         }
       )
       .subscribe();
@@ -74,7 +73,7 @@ export const AlertaStock = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [idEmpresaActiva, navigate, setBuscador]);
 
   return null;
 };

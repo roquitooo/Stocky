@@ -9,7 +9,7 @@ import {
   useProductosStore,
 } from "../../../index";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Device } from "../../../styles/breakpoints";
 import { Switch1 } from "../../atomos/Switch1";
 export function AreaDetalleventaPos() {
@@ -24,12 +24,14 @@ export function AreaDetalleventaPos() {
   } = useCartVentasStore();
   const { dataProductos } = useProductosStore();
   const { dataempresa } = useEmpresaStore();
-  const [editIndex, setEditIndex] = useState(null);
+  const [editItemId, setEditItemId] = useState(null);
   const [newCantidad, setNewCantidad] = useState("1");
-  const [ajusteIndex, setAjusteIndex] = useState(null);
+  const [ajusteItemId, setAjusteItemId] = useState(null);
   const [ajusteValorInput, setAjusteValorInput] = useState("");
   const [ajusteEsRecargo, setAjusteEsRecargo] = useState(true);
   const [ajusteEsPorcentaje, setAjusteEsPorcentaje] = useState(true);
+
+  const itemsVista = useMemo(() => [...(items || [])].reverse(), [items]);
 
   const sanitizarCantidadEntera = (value) => {
     const soloDigitos = String(value ?? "").replace(/\D/g, "");
@@ -43,8 +45,8 @@ export function AreaDetalleventaPos() {
       e.preventDefault();
     }
   };
-  const handleEditClick = (index, cantidad) => {
-    setEditIndex(index);
+  const handleEditClick = (item, cantidad) => {
+    setEditItemId(item?._id_producto);
     setNewCantidad(String(sanitizarCantidadEntera(cantidad)));
   };
   const handleInputChange = (e) => {
@@ -55,7 +57,7 @@ export function AreaDetalleventaPos() {
     const cantidadNormalizada = sanitizarCantidadEntera(newCantidad);
     updateCantidadItem(item, cantidadNormalizada);
     setNewCantidad("1");
-    setEditIndex(null); // Salir del modo edicion
+    setEditItemId(null); // Salir del modo edicion
   };
   const handleKeyDown = (e, item) => {
     bloquearTeclasNoEnteras(e);
@@ -99,12 +101,12 @@ export function AreaDetalleventaPos() {
     );
   };
 
-  const abrirEditorAjuste = (index, item) => {
+  const abrirEditorAjuste = (item) => {
     const valor = Number(item?._ajuste_valor || 0);
     const tipo = valor > 0 ? item?._ajuste_tipo || "recargo" : "recargo";
     const modo = valor > 0 ? item?._ajuste_modo || "porcentaje" : "porcentaje";
 
-    setAjusteIndex(index);
+    setAjusteItemId(item?._id_producto);
     setAjusteEsRecargo(tipo === "recargo");
     setAjusteEsPorcentaje(modo === "porcentaje");
     setAjusteValorInput(
@@ -124,7 +126,7 @@ export function AreaDetalleventaPos() {
       modo: ajusteEsPorcentaje ? "porcentaje" : "monto",
       valor: valorSanitizado === "" ? 0 : Number(valorSanitizado),
     });
-    setAjusteIndex(null);
+    setAjusteItemId(null);
   };
 
   const limpiarAjuste = (item) => {
@@ -133,7 +135,7 @@ export function AreaDetalleventaPos() {
       modo: "porcentaje",
       valor: 0,
     });
-    setAjusteIndex(null);
+    setAjusteItemId(null);
   };
 
   const formatearResumenAjuste = (item) => {
@@ -159,7 +161,7 @@ export function AreaDetalleventaPos() {
   return (
     <AreaDetalleventa className={items.length > 0 ? "" : "animacion"}>
       {items.length > 0 ? (
-        items.map((item, index) => {
+        itemsVista.map((item, index) => {
           const resumenAjuste = formatearResumenAjuste(item);
           const manejaInventario =
             item?.maneja_inventarios === true ||
@@ -180,7 +182,7 @@ export function AreaDetalleventaPos() {
             ? formatearStock(item?.stock)
             : "Sin control";
           return (
-            <Itemventa key={index}>
+            <Itemventa key={item?._id_producto ?? `${item?._descripcion}-${index}`}>
               <article className="contentdescripcion">
                 <span className="descripcion">{item._descripcion}</span>
                 <span className="importe">
@@ -207,7 +209,7 @@ export function AreaDetalleventaPos() {
                   height="35px"
                   icono={<Icon icon="mdi:add-bold" />}
                 ></Btn1>
-                {editIndex === index ? (
+                {editItemId === item?._id_producto ? (
                   <InputText2>
                     <input
                       type="number"
@@ -228,7 +230,7 @@ export function AreaDetalleventaPos() {
                     <span className="cantidad">{item._cantidad}</span>
                     <Icon
                       icon="mdi:pencil"
-                      onClick={() => handleEditClick(index, item._cantidad)}
+                      onClick={() => handleEditClick(item, item._cantidad)}
                       className="edit-icon"
                     />
                   </>
@@ -263,7 +265,7 @@ export function AreaDetalleventaPos() {
                 <button
                   type="button"
                   className="adjust-toggle"
-                  onClick={() => abrirEditorAjuste(index, item)}
+                  onClick={() => abrirEditorAjuste(item)}
                   aria-label="Configurar recargo o descuento"
                   title="Recargo / Descuento"
                 >
@@ -279,7 +281,7 @@ export function AreaDetalleventaPos() {
                   <Icon icon="gravity-ui:trash-bin" />
                 </button>
               </article>
-              {ajusteIndex === index && (
+              {ajusteItemId === item?._id_producto && (
                 <article className="ajuste-panel">
                   <section className="fila-switch">
                     <span>Desc.</span>
@@ -312,7 +314,7 @@ export function AreaDetalleventaPos() {
                     <button
                       type="button"
                       className="btn btn-cancel"
-                      onClick={() => setAjusteIndex(null)}
+                      onClick={() => setAjusteItemId(null)}
                     >
                       Cancelar
                     </button>

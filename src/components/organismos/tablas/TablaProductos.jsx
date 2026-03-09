@@ -75,6 +75,7 @@ export function TablaProductos({
       confirmButtonColor: "#ffbd58",
       cancelButtonColor: "#d33",
       confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
     }).then(async (result) => {
       if (result.isConfirmed) {
         await eliminarProductos({ id: p.id });

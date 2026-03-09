@@ -34,13 +34,14 @@ export function TablaUsuarios({
   function eliminar(p) {
   
     Swal.fire({
-      title: "Â¿EstÃ¡s seguro/a?",
-      text: "Una vez eliminado, Â¡no podrÃ¡ recuperar este registro!",
+      title: "¿Estás seguro/a?",
+      text: "Una vez eliminado, ¡no podrás recuperar este registro!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
+      confirmButtonColor: "#ffbd58",
       cancelButtonColor: "#d33",
-      confirmButtonText: "SÃ­, eliminar",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
     }).then(async (result) => {
       if (result.isConfirmed) {
         await eliminarUsuarioAsignado({ id: p.id_usuario });

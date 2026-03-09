@@ -47,6 +47,7 @@ export function TablaClientesProveedores({
       confirmButtonColor: "#ffbd58",
       cancelButtonColor: "#d33",
       confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
     }).then(async (result) => {
       if (result.isConfirmed) {
         await eliminarCliPro({ id: p.id });

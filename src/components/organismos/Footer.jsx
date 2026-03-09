@@ -6,7 +6,7 @@ export function Footer() {
       <section className="lock">
         <span>Todos los derechos reservados |</span>
         <div className="separador"></div>
-        <span>© 2025 STOCKY</span>
+        <span>© 2026 STOCKY</span>
       </section>
     </Container>
   );

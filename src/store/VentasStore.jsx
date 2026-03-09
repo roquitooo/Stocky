@@ -48,7 +48,7 @@ export const useVentasStore = create((set, get) => ({
         Swal.fire({
           icon: "error",
           title: "Caja no detectada",
-          text: "No hay un cierre de caja activo para registrar el fiado.",
+          text: "No hay un cierre de caja activo para registrar el egreso de stock.",
         });
         return { ok: false };
       }
@@ -74,23 +74,13 @@ export const useVentasStore = create((set, get) => ({
         Swal.fire({
           icon: "error",
           title: "Metodo de pago no disponible",
-          text: "Configura al menos un metodo de pago para registrar fiados.",
+          text: "Configura al menos un metodo de pago para registrar egresos de stock.",
         });
         return { ok: false };
       }
 
       const stockValido = await get().validarStockCarrito(carrito);
       if (!stockValido) {
-        return { ok: false };
-      }
-
-      const idSucursal = carrito[0]?._id_sucursal ?? carrito[0]?.id_sucursal ?? null;
-      if (!idSucursal) {
-        Swal.fire({
-          icon: "error",
-          title: "Sucursal no detectada",
-          text: "No se pudo detectar la sucursal activa para descontar stock.",
-        });
         return { ok: false };
       }
 
@@ -115,75 +105,82 @@ export const useVentasStore = create((set, get) => ({
       });
 
       const productos = Array.from(porProducto.values());
-      if (productos.length === 0) {
-        return { ok: true, actualizados: 0 };
-      }
-
-      const idsProductos = productos.map((p) => p.idProducto);
-      const { data: stockRows, error: stockError } = await supabase
-        .from("almacenes")
-        .select("id, id_producto, stock")
-        .eq("id_sucursal", idSucursal)
-        .in("id_producto", idsProductos);
-
-      if (stockError) {
-        throw stockError;
-      }
-
-      const stockMap = new Map(
-        (stockRows || []).map((row) => [Number(row.id_producto), row])
-      );
-
-      const faltantes = [];
       const updates = [];
-
-      productos.forEach((producto) => {
-        const row = stockMap.get(producto.idProducto);
-        const stockActual = Number(row?.stock || 0);
-
-        if (!row || producto.cantidad > stockActual) {
-          faltantes.push({
-            nombre: producto.nombre,
-            solicitado: producto.cantidad,
-            stock: stockActual,
+      if (productos.length > 0) {
+        const idSucursal = carrito[0]?._id_sucursal ?? carrito[0]?.id_sucursal ?? null;
+        if (!idSucursal) {
+          Swal.fire({
+            icon: "error",
+            title: "Sucursal no detectada",
+            text: "No se pudo detectar la sucursal activa para descontar stock.",
           });
-          return;
+          return { ok: false };
         }
 
-        updates.push({
-          idAlmacen: row.id,
-          nuevoStock: stockActual - producto.cantidad,
-        });
-      });
-
-      if (faltantes.length > 0) {
-        const detalle = faltantes
-          .map(
-            (item) =>
-              `- ${item.nombre} (Solicitado: ${item.solicitado} | Stock: ${item.stock})`
-          )
-          .join("<br>");
-
-        Swal.fire({
-          icon: "error",
-          title: "Stock insuficiente",
-          html: `<div style="text-align:left">${detalle}</div>`,
-        });
-        return { ok: false };
-      }
-
-      for (const item of updates) {
-        const { error: updateError } = await supabase
+        const idsProductos = productos.map((p) => p.idProducto);
+        const { data: stockRows, error: stockError } = await supabase
           .from("almacenes")
-          .update({ stock: item.nuevoStock })
-          .eq("id", item.idAlmacen);
+          .select("id, id_producto, stock")
+          .eq("id_sucursal", idSucursal)
+          .in("id_producto", idsProductos);
 
-        if (updateError) {
-          throw updateError;
+        if (stockError) {
+          throw stockError;
+        }
+
+        const stockMap = new Map(
+          (stockRows || []).map((row) => [Number(row.id_producto), row])
+        );
+
+        const faltantes = [];
+        productos.forEach((producto) => {
+          const row = stockMap.get(producto.idProducto);
+          const stockActual = Number(row?.stock || 0);
+
+          if (!row || producto.cantidad > stockActual) {
+            faltantes.push({
+              nombre: producto.nombre,
+              solicitado: producto.cantidad,
+              stock: stockActual,
+            });
+            return;
+          }
+
+          updates.push({
+            idAlmacen: row.id,
+            nuevoStock: stockActual - producto.cantidad,
+          });
+        });
+
+        if (faltantes.length > 0) {
+          const detalle = faltantes
+            .map(
+              (item) =>
+                `- ${item.nombre} (Solicitado: ${item.solicitado} | Stock: ${item.stock})`
+            )
+            .join("<br>");
+
+          Swal.fire({
+            icon: "error",
+            title: "Stock insuficiente",
+            html: `<div style="text-align:left">${detalle}</div>`,
+          });
+          return { ok: false };
+        }
+
+        for (const item of updates) {
+          const { error: updateError } = await supabase
+            .from("almacenes")
+            .update({ stock: item.nuevoStock })
+            .eq("id", item.idAlmacen);
+
+          if (updateError) {
+            throw updateError;
+          }
         }
       }
 
-      const totalFiado = carrito.reduce((acc, item) => {
+      const totalEgresoStock = carrito.reduce((acc, item) => {
         const totalLinea = Number(item?._total);
         if (Number.isFinite(totalLinea) && totalLinea >= 0) {
           return acc + totalLinea;
@@ -210,7 +207,7 @@ export const useVentasStore = create((set, get) => ({
         .filter(Boolean)
         .join(", ");
 
-      const partesDescripcion = ["Fiado (solo stock)"];
+      const partesDescripcion = ["Egreso de stock"];
       if (descripcionFiado) {
         partesDescripcion.push(`Motivo: ${descripcionFiado}`);
       }
@@ -221,7 +218,7 @@ export const useVentasStore = create((set, get) => ({
       const movimientoFiado = {
         fecha_movimiento: new Date().toISOString(),
         tipo_movimiento: "fiado",
-        monto: Number.isFinite(totalFiado) ? totalFiado : 0,
+        monto: Number.isFinite(totalEgresoStock) ? totalEgresoStock : 0,
         descripcion: partesDescripcion.join(" | "),
         id_metodo_pago: idMetodoPago,
         id_usuario: Number.isFinite(idUsuario) && idUsuario > 0 ? idUsuario : null,

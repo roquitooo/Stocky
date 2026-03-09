@@ -49,6 +49,35 @@ const esLogoValido = (valor) => {
   return limpio !== "" && limpio !== "-";
 };
 
+const esDataUrlImagenCompatiblePdfmake = (valor) => {
+  if (typeof valor !== "string") return false;
+  return /^data:image\/(png|jpe?g);base64,/i.test(valor.trim());
+};
+
+const pareceSvg = (valor) => {
+  if (typeof valor !== "string") return false;
+  const limpio = valor.trim().toLowerCase();
+  return (
+    limpio.startsWith("data:image/svg+xml") ||
+    limpio.includes(".svg") ||
+    limpio.includes("image/svg+xml")
+  );
+};
+
+const resolverDataUrlCompatible = async (fuente) => {
+  if (!esLogoValido(fuente)) return null;
+
+  const valor = String(fuente).trim();
+  if (valor.startsWith("data:")) {
+    return esDataUrlImagenCompatiblePdfmake(valor) ? valor : null;
+  }
+
+  if (pareceSvg(valor)) return null;
+
+  const dataUrl = await urlToBase64(valor);
+  return esDataUrlImagenCompatiblePdfmake(dataUrl) ? dataUrl : null;
+};
+
 const resolverLogoTicket = async (data) => {
   const candidatoEmpresa = [data?.logo, data?.logo_empresa, data?.empresa?.logo].find(
     esLogoValido
@@ -56,17 +85,18 @@ const resolverLogoTicket = async (data) => {
   const fuente = candidatoEmpresa || logoDefaultStocky;
 
   if (!esLogoValido(fuente)) return null;
-  if (String(fuente).startsWith("data:")) return fuente;
 
   try {
-    return await urlToBase64(fuente);
+    const candidato = await resolverDataUrlCompatible(fuente);
+    if (candidato) return candidato;
+  } catch (_) {}
+
+  if (fuente === logoDefaultStocky) return null;
+
+  try {
+    return await resolverDataUrlCompatible(logoDefaultStocky);
   } catch (_) {
-    if (fuente === logoDefaultStocky) return null;
-    try {
-      return await urlToBase64(logoDefaultStocky);
-    } catch (_) {
-      return null;
-    }
+    return null;
   }
 };
 
@@ -85,31 +115,6 @@ const TicketVenta = async (output, data) => {
     Number(data?.cantidad_items || 0) ||
     productos.reduce((acc, item) => acc + Number(item?._cantidad || 0), 0);
   const nroTicket = getNumeroTicket();
-
-  const textLenMeta =
-    String(data?.sucursal || "").length +
-    String(data?.vendedor || "").length +
-    String(data?.cliente || "").length;
-  const extraMetaHeight = Math.ceil(textLenMeta / 40) * 10;
-  const estimatedProductLines = productos.reduce((acc, item) => {
-    const name = String(item?.nombre || item?._descripcion || "Producto");
-    // Estimacion conservadora: columna de producto angosta en ticket termico.
-    const lines = Math.max(1, Math.ceil(name.length / 16));
-    return acc + lines;
-  }, 0);
-  const estimatedTableHeight = 24 + estimatedProductLines * 12 + productos.length * 5;
-  const resumenRows =
-    2 + // Items + Subtotal
-    (descuentoAplicado > 0 ? 1 : 0) +
-    (recargoAplicado > 0 ? 1 : 0) +
-    3; // Total + Vuelto + Restante (visualmente equivalente en bloque final)
-  const estimatedResumeHeight = 22 + resumenRows * 12;
-  // Antes estaba limitado a 900 y truncaba tickets largos.
-  // Se deja margen alto para mantener una sola pagina en la mayoria de casos.
-  const pageHeight = Math.max(
-    420,
-    Math.min(5000, 250 + extraMetaHeight + estimatedTableHeight + estimatedResumeHeight + 120)
-  );
 
   const productTableBody = [
     [
@@ -273,7 +278,9 @@ const TicketVenta = async (output, data) => {
     {
       content,
       styles,
-      pageSize: { width: 226, height: pageHeight },
+      // 🚀 MAGIA AQUÍ: Usar height: "auto" hace que no haya saltos de página nunca. 
+      // Quedará como un rollo térmico continuo perfecto de una sola tira.
+      pageSize: { width: 226, height: "auto" },
       pageMargins: [8, 8, 8, 8],
     },
     output

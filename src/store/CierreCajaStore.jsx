@@ -320,7 +320,7 @@ export const useCierreCajaStore = create((set) => ({
         usuario_nombre: item?.usuarios?.nombres || "-",
       }));
     } catch (error) {
-      console.error("Error al obtener fiados por cierre:", error);
+      console.error("Error al obtener egresos de stock por cierre:", error);
       return [];
     }
   },
