@@ -32,7 +32,7 @@ export const CardTotales = ({
       )}
 
       <FooterSection>
-        {percentage && (
+        {percentage !== undefined && percentage !== null && (
           <span className="percent">
             {percentage > 0 ? "+" : ""}
             {percentage}%

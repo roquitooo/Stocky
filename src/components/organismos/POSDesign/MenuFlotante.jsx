@@ -3,14 +3,40 @@ import styled, { keyframes } from "styled-components";
 import { useCierreCajaStore } from "../../../store/CierreCajaStore";
 import { Device } from "../../../styles/breakpoints";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import Swal from "sweetalert2";
+import { useCartVentasStore } from "../../../store/CartVentasStore";
 
 export function MenuFlotante() {
   const [isOpen, setIsOpen] = useState(false);
+  const { items, resetState } = useCartVentasStore();
   const { setStateIngresoSalida, setTipoRegistro, setStateCierraCaja } =
     useCierreCajaStore();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const confirmarEliminarVenta = async () => {
+    if (!Array.isArray(items) || items.length === 0) {
+      toggleMenu();
+      return;
+    }
+
+    const confirmacion = await Swal.fire({
+      title: "Eliminar venta actual?",
+      text: "Se quitaran todos los productos cargados en el carrito.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#f44141",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Si, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (confirmacion.isConfirmed) {
+      resetState();
+    }
+    toggleMenu();
   };
 
   return (
@@ -60,7 +86,7 @@ export function MenuFlotante() {
         <MenuItem 
           $isOpen={isOpen} // <--- Corregido
           $delay="0.3s" 
-          onClick={toggleMenu}
+          onClick={confirmarEliminarVenta}
         >
           <Text>Eliminar venta</Text>
         </MenuItem>

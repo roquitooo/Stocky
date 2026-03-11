@@ -27,9 +27,11 @@ export const CardHistorialVentas = () => {
 
   if (isLoading) {
     return (
-      <LoadingContainer>
-        <BarLoader color="#888" />
-      </LoadingContainer>
+      <Container>
+        <LoadingContainer>
+          <BarLoader color="#888" />
+        </LoadingContainer>
+      </Container>
     );
   }
 

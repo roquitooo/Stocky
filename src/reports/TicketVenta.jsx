@@ -27,7 +27,28 @@ const getNumeroTicket = () => {
 
 const getYear = () => new Date().getFullYear();
 
-const divider = {
+const estimarLineas = (texto, charsPorLinea = 26) => {
+  const limpio = String(texto || "").trim();
+  if (!limpio) return 1;
+  return Math.max(1, Math.ceil(limpio.length / charsPorLinea));
+};
+
+const estimarAlturaTicket = ({ productos = [], incluyeLogo = false }) => {
+  const alturaBase = 370 + (incluyeLogo ? 70 : 0); // Header + metadatos + totales + footer
+  const alturaEncabezadoTabla = 24;
+
+  const alturaFilas = productos.reduce((acc, item) => {
+    const nombre = item?.nombre || item?._descripcion || "Producto";
+    const lineas = estimarLineas(nombre, 26);
+    return acc + 18 + (lineas - 1) * 10;
+  }, 0);
+
+  // Margen de seguridad para evitar saltos inesperados de pdfmake.
+  const total = alturaBase + alturaEncabezadoTabla + alturaFilas + 140;
+  return Math.max(560, Math.min(5000, Math.ceil(total)));
+};
+
+const crearDivider = () => ({
   canvas: [
     {
       type: "line",
@@ -41,7 +62,7 @@ const divider = {
     },
   ],
   margin: [0, 6, 0, 6],
-};
+});
 
 const esLogoValido = (valor) => {
   if (typeof valor !== "string") return false;
@@ -89,7 +110,9 @@ const resolverLogoTicket = async (data) => {
   try {
     const candidato = await resolverDataUrlCompatible(fuente);
     if (candidato) return candidato;
-  } catch (_) {}
+  } catch (_) {
+    // Ignora errores de conversion del logo principal y prueba fallback.
+  }
 
   if (fuente === logoDefaultStocky) return null;
 
@@ -102,7 +125,9 @@ const resolverLogoTicket = async (data) => {
 
 const TicketVenta = async (output, data) => {
   const logoempresa = await resolverLogoTicket(data);
-  const productos = Array.isArray(data?.productos) ? data.productos : [];
+  const productos = Array.isArray(data?.productos)
+    ? data.productos.map((item) => ({ ...item }))
+    : [];
   const subtotal = Number(data?.subtotal || 0);
   const total = Number(data?.total || 0);
   const descuento = Number(data?.descuento || 0);
@@ -115,6 +140,10 @@ const TicketVenta = async (output, data) => {
     Number(data?.cantidad_items || 0) ||
     productos.reduce((acc, item) => acc + Number(item?._cantidad || 0), 0);
   const nroTicket = getNumeroTicket();
+  const alturaTicket = estimarAlturaTicket({
+    productos,
+    incluyeLogo: Boolean(logoempresa),
+  });
 
   const productTableBody = [
     [
@@ -161,7 +190,7 @@ const TicketVenta = async (output, data) => {
     { text: data?.nombre_empresa || "MI EMPRESA", style: "header" },
     { text: data?.direccion_empresa || "Direccion no informada", style: "subHeader" },
     { text: `ID FISCAL: ${data?.ruc_empresa || "-"}`, style: "subHeader" },
-    divider,
+    crearDivider(),
     { text: "COMPROBANTE DE VENTA", style: "ticketTitle" },
     {
       margin: [0, 4, 0, 0],
@@ -181,7 +210,7 @@ const TicketVenta = async (output, data) => {
       },
       layout: "noBorders",
     },
-    divider,
+    crearDivider(),
     {
       margin: [0, 3, 0, 4],
       table: {
@@ -199,7 +228,7 @@ const TicketVenta = async (output, data) => {
         paddingRight: () => 1,
       },
     },
-    divider,
+    crearDivider(),
     {
       table: {
         widths: ["58%", "42%"],
@@ -249,7 +278,7 @@ const TicketVenta = async (output, data) => {
       },
       layout: "noBorders",
     },
-    divider,
+    crearDivider(),
     { text: "Gracias por su compra", style: "footer" },
     { text: "Conserve este comprobante", style: "footerSub" },
     { text: "Todos los derechos reservados |", style: "brandFooter" },
@@ -280,7 +309,7 @@ const TicketVenta = async (output, data) => {
       styles,
       // 🚀 MAGIA AQUÍ: Usar height: "auto" hace que no haya saltos de página nunca. 
       // Quedará como un rollo térmico continuo perfecto de una sola tira.
-      pageSize: { width: 226, height: "auto" },
+      pageSize: { width: 226, height: alturaTicket },
       pageMargins: [8, 8, 8, 8],
     },
     output

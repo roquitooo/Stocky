@@ -38,7 +38,15 @@ export const ChartProductosTop5 = () => {
     enabled: !!dataempresa?.id,
   });
 
-  if (isLoading) return <BarLoader color="#6d6d6d" />;
+  if (isLoading) {
+    return (
+      <Container>
+        <LoaderWrap>
+          <BarLoader color="#6d6d6d" />
+        </LoaderWrap>
+      </Container>
+    );
+  }
   if (error) return <span>Error...{error.message}</span>;
 
   return (
@@ -182,6 +190,14 @@ const Container = styled.div`
   @media (max-width: 768px) {
     padding: 12px 10px;
   }
+`;
+
+const LoaderWrap = styled.div`
+  flex: 1;
+  min-height: 220px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const ChartWrap = styled.div`

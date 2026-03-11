@@ -81,13 +81,31 @@ export function FooterPos() {
     });
   };
 
+  const handleEliminarVenta = async () => {
+    if (!Array.isArray(items) || items.length === 0) return;
+
+    const confirmacion = await Swal.fire({
+      title: "Eliminar venta actual?",
+      text: "Se quitaran todos los productos cargados en el carrito.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#f44141",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Si, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!confirmacion.isConfirmed) return;
+    resetState();
+  };
+
   return (
     <Footer>
       <article className="content">
         <Btn1
           bgcolor="#f44141"
           color="#fff"
-          funcion={resetState}
+          funcion={handleEliminarVenta}
           titulo="Eliminar venta"
         />
         <Btn1

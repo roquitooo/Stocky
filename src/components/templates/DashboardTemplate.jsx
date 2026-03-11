@@ -13,17 +13,55 @@ import { useUsuariosStore } from "../../store/UsuariosStore";
 import { useDashboardStore } from "../../store/DashboardStore";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+
+const construirRangoMes = (isoMes) => {
+  if (!isoMes) return null;
+  const mes = dayjs(isoMes);
+  if (!mes.isValid()) return null;
+  return {
+    inicio: mes.startOf("month").format("YYYY-MM-DD"),
+    fin: mes.endOf("month").format("YYYY-MM-DD"),
+  };
+};
+
+const formatearMes = (isoMes) => {
+  if (!isoMes) return "-";
+  const fecha = new Date(`${isoMes}T00:00:00`);
+  if (Number.isNaN(fecha.getTime())) return "-";
+  return fecha.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+};
+
+const calcularVariacion = (actual, anterior) => {
+  const a = Number(actual || 0);
+  const b = Number(anterior || 0);
+  if (b === 0) {
+    if (a === 0) return 0;
+    return null;
+  }
+  return ((a - b) / Math.abs(b)) * 100;
+};
 
 export const DashboardTemplate = () => {
   const navigate = useNavigate();
   const { dataempresa } = useEmpresaStore();
   const { datausuarios } = useUsuariosStore();
-  const { fechaInicio, fechaFin } = useDashboardStore();
+  const {
+    fechaInicio,
+    fechaFin,
+    comparacionActiva,
+    mesCompararA,
+    mesCompararB,
+  } = useDashboardStore();
   const { contarProductosBajoStock } = useAlmacenesStore();
   const { totalVentas, totalGananciaNeta } = useVentasStore();
   const esAdmin = String(datausuarios?.roles?.nombre || "")
     .toLowerCase()
     .includes("admin");
+  const rangoMesA = construirRangoMes(mesCompararA);
+  const rangoMesB = construirRangoMes(mesCompararB);
+  const mostrarComparacion =
+    Boolean(comparacionActiva) && Boolean(rangoMesA) && Boolean(rangoMesB);
 
   const { data: cantidadBajoStock, isLoading: loadingStock } = useQuery({
     queryKey: ["contar bajo stock", { _id_empresa: dataempresa?.id }],
@@ -56,6 +94,47 @@ export const DashboardTemplate = () => {
     refetchOnWindowFocus: false,
   });
 
+  const { data: gananciaMesA, isLoading: loadingMesA } = useQuery({
+    queryKey: [
+      "sumar ganancia comparacion mes A",
+      { _id_empresa: dataempresa?.id, rangoMesA },
+    ],
+    queryFn: () =>
+      totalGananciaNeta({
+        id_empresa: dataempresa?.id,
+        fechaInicio: rangoMesA?.inicio,
+        fechaFin: rangoMesA?.fin,
+      }),
+    enabled: !!dataempresa?.id && mostrarComparacion && esAdmin,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: gananciaMesB, isLoading: loadingMesB } = useQuery({
+    queryKey: [
+      "sumar ganancia comparacion mes B",
+      { _id_empresa: dataempresa?.id, rangoMesB },
+    ],
+    queryFn: () =>
+      totalGananciaNeta({
+        id_empresa: dataempresa?.id,
+        fechaInicio: rangoMesB?.inicio,
+        fechaFin: rangoMesB?.fin,
+      }),
+    enabled: !!dataempresa?.id && mostrarComparacion && esAdmin,
+    refetchOnWindowFocus: false,
+  });
+
+  const variacionComparada =
+    mostrarComparacion && esAdmin && !loadingMesA && !loadingMesB
+      ? calcularVariacion(gananciaMesA, gananciaMesB)
+      : undefined;
+
+  const captionVentas = mostrarComparacion
+    ? esAdmin
+      ? `Ganancia neta: ${formatearMes(mesCompararA)} vs ${formatearMes(mesCompararB)}`
+      : `Comparando ${formatearMes(mesCompararA)} vs ${formatearMes(mesCompararB)}`
+    : "Ingresos generados en ventas";
+
   return (
     <Container>
       <DashboardHeader />
@@ -85,7 +164,12 @@ export const DashboardTemplate = () => {
                 : null
             }
             secondaryCaption={esAdmin ? "Ganancia neta" : null}
-            caption="Ingresos generados en ventas"
+            percentage={
+              Number.isFinite(variacionComparada)
+                ? Number(variacionComparada.toFixed(2))
+                : undefined
+            }
+            caption={captionVentas}
           />
 
           <CardTotales

@@ -2,6 +2,7 @@ import styled from "styled-components";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
+import { BarLoader } from "react-spinners";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
 import { useVentasStore } from "../../../store/VentasStore"; 
@@ -36,6 +37,20 @@ export const ChartVentas = () => {
   const data = dataGrafico && dataGrafico.length > 0 ? dataGrafico : [
     { fecha: "Sin datos", total: 0 }
   ];
+
+  if (isLoading) {
+    return (
+      <Container>
+        <Header>
+          <Title>Tendencia de Ventas</Title>
+          {fechaInicio && <SubTitle>{fechaInicio} al {fechaFin}</SubTitle>}
+        </Header>
+        <LoaderWrap>
+          <BarLoader color="#6d6d6d" />
+        </LoaderWrap>
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -100,6 +115,13 @@ const Container = styled.div`
   @media (max-width: 768px) {
     padding: 12px;
   }
+`;
+const LoaderWrap = styled.div`
+  flex: 1;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 const Header = styled.div`
   margin-bottom: 12px;
