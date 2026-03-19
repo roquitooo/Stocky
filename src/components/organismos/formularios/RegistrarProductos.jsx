@@ -538,7 +538,7 @@ export function RegistrarProductos({
                   isChecked={isChecked1}
                   onChange={() => !isCajeroEditando && handleCheckboxChange(1)}
                 />
-                <label>Gramos</label>{" "}
+                <label>GRAMOS</label>{" "}
                 <Checkbox1
                   isChecked={isChecked2}
                   onChange={() => !isCajeroEditando && handleCheckboxChange(2)}

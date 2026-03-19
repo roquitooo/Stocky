@@ -1,5 +1,6 @@
 import { Icon } from "@iconify/react/dist/iconify.js";
-import React, { useState } from "react";
+import PropTypes from "prop-types";
+import { useState } from "react";
 import styled from "styled-components";
 
 export const SelectList = ({
@@ -9,7 +10,9 @@ export const SelectList = ({
   displayField = "nombre",itemSelect
 }) => {
   const [$isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState(itemSelect?.[displayField] || "Select an option");
+  const [selected, setSelected] = useState(
+    itemSelect?.[displayField] || placeholder || "Seleccionar"
+  );
 
   const toggleDropdown = () => setIsOpen(!$isOpen);
   const handleSelect = (item) => {
@@ -44,24 +47,45 @@ export const SelectList = ({
   );
 };
 
+SelectList.propTypes = {
+  data: PropTypes.arrayOf(PropTypes.object),
+  placeholder: PropTypes.string,
+  onSelect: PropTypes.func.isRequired,
+  displayField: PropTypes.string,
+  itemSelect: PropTypes.object,
+};
+
+SelectList.defaultProps = {
+  data: [],
+  placeholder: "",
+  displayField: "nombre",
+  itemSelect: null,
+};
+
 // Estilos usando Styled Components
 const DropdownContainer = styled.div`
   position: relative;
   width: ${(props) => props.width};
-
+  min-width: 220px;
 `;
 
 const DropdownHeader = styled.div`
- background-color: ${({ theme }) => theme.body};
+  background: linear-gradient(
+    180deg,
+    rgba(${({ theme }) => theme.bodyRgba}, 0.88) 0%,
+    ${({ theme }) => theme.bg2} 100%
+  );
   color: ${({ theme }) => theme.text};
-  padding: 8px 15px;
-  border: 1px solid #333;
-  border-radius: 5px;
+  padding: 12px 15px;
+  border: 1px solid rgba(${({ theme }) => theme.textRgba}, 0.14);
+  border-radius: 10px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap:10px;
+  gap: 10px;
+  min-height: 46px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 `;
 
 const Arrow = styled.span`
@@ -73,13 +97,14 @@ const DropdownList = styled.div`
   position: absolute;
   top: 100%;
   left: 0;
-  background-color: ${({ theme }) => theme.body};
-  border: 1px solid #333;
-  border-radius: 5px;
+  background-color: ${({ theme }) => theme.bg2};
+  border: 1px solid rgba(${({ theme }) => theme.textRgba}, 0.14);
+  border-radius: 10px;
   margin-top: 5px;
   max-height: 150px;
   overflow-y: auto;
   z-index: 1000;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
 
   // Evita que se adapte al tamaño del header
   min-width: 200px; /* Ancho mínimo */
@@ -94,16 +119,16 @@ const DropdownItem = styled.div`
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  background-color: ${({ isSelected }) =>
-    isSelected ? ( theme ) => theme.bg : "transparent"};
+  background-color: ${({ $isSelected }) =>
+    $isSelected ? "rgba(255, 189, 88, 0.14)" : "transparent"};
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: ${({ theme }) => theme.bg};
+    background-color: rgba(255, 189, 88, 0.1);
   }
 `;
 
 const CheckMark = styled.span`
-  color:${({ theme }) => theme.text};
+  color: #ffbd58;
   font-size: 14px;
 `;

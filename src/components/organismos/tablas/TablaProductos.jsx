@@ -19,6 +19,21 @@ import {
 // Importamos Ã­conos para indicar el orden
 import { FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 
+function formatearSeVendePor(valor) {
+  const texto = String(valor || "").trim();
+  if (!texto) return "";
+
+  const normalizado = texto.toUpperCase() === "GRANEL" ? "GRAMOS" : texto;
+  return normalizado.charAt(0).toUpperCase() + normalizado.slice(1).toLowerCase();
+}
+
+function formatearDescripcionProducto(valor) {
+  const texto = String(valor || "").trim();
+  if (!texto) return "";
+
+  return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+}
+
 // --- Componente Checkbox fuera para rendimiento ---
 function IndeterminateCheckbox({ indeterminate, className = "", ...rest }) {
   const ref = useRef(null);
@@ -136,13 +151,13 @@ export function TablaProductos({
       },
       cell: (info) => (
         <div className="ContentCell">
-          <span>{info.getValue()}</span>
+          <span>{formatearDescripcionProducto(info.getValue())}</span>
         </div>
       ),
     },
     {
       accessorKey: "p_venta",
-      header: "P. venta",
+      header: "Precio de venta",
       cell: (info) => (
         <div className="ContentCell">
           <span>{info.getValue()}</span>
@@ -151,7 +166,7 @@ export function TablaProductos({
     },
     {
       accessorKey: "p_compra",
-      header: "P. compra",
+      header: "Precio de compra",
       cell: (info) => (
         <div className="ContentCell">
           <span>{info.getValue()}</span>
@@ -163,13 +178,13 @@ export function TablaProductos({
       header: "Se vende por",
       cell: (info) => (
         <div className="ContentCell">
-          <span>{String(info.getValue() || "").toUpperCase() === "GRANEL" ? "GRAMOS" : info.getValue()}</span>
+          <span>{formatearSeVendePor(info.getValue())}</span>
         </div>
       ),
     },
     {
       accessorKey: "maneja_inventarios",
-      header: "Inv.",
+      header: "Maneja Stock",
       cell: (info) => (
         <div className="ContentCell">
           <Checkbox1 isChecked={info.getValue()} onChange={() => { }} />

@@ -172,11 +172,62 @@ function parsearBooleanCsv(valor) {
   return ["1", "true", "si", "sí", "yes", "y", "x", "on"].includes(key);
 }
 
+function escaparValorCsv(valor) {
+  const texto = String(valor ?? "");
+  if (texto.includes('"') || texto.includes(";") || texto.includes("\n")) {
+    return `"${texto.replace(/"/g, '""')}"`;
+  }
+  return texto;
+}
+
 function normalizarSeVendePorCsv(valor) {
   const key = String(valor || "").trim().toLowerCase();
   if (!key) return "UNIDAD";
   if (key.includes("gram")) return "GRAMOS";
   return "UNIDAD";
+}
+
+function obtenerNombreCategoriaProducto(producto, categorias = []) {
+  if (!producto || typeof producto !== "object") return "";
+
+  const posiblesNombres = [
+    producto.categoria,
+    producto.nombre_categoria,
+    producto.categoria_nombre,
+    producto?.categoria?.nombre,
+    producto?.categorias?.nombre,
+  ];
+
+  for (const value of posiblesNombres) {
+    const nombre = String(value ?? "").trim();
+    if (nombre) return nombre;
+  }
+
+  const idCategoria = obtenerIdCategoriaProducto(producto);
+  if (!idCategoria || !Array.isArray(categorias)) return "";
+
+  const categoria = categorias.find(
+    (item) => String(item?.id ?? "").trim() === String(idCategoria)
+  );
+  return String(categoria?.nombre ?? "").trim();
+}
+
+function obtenerStockProducto(producto) {
+  const stock = Number(
+    producto?.stock ?? producto?._stock ?? producto?.cantidad_stock ?? 0
+  );
+  return Number.isFinite(stock) ? Math.trunc(stock) : 0;
+}
+
+function obtenerStockMinimoProducto(producto) {
+  const stockMinimo = Number(
+    producto?.stock_minimo ??
+      producto?._stock_minimo ??
+      producto?.stockminimo ??
+      producto?.cantidad_stock_minimo ??
+      0
+  );
+  return Number.isFinite(stockMinimo) ? Math.trunc(stockMinimo) : 0;
 }
 
 function generarCodigoAleatorio(sufijo = "") {
@@ -252,6 +303,7 @@ export function ProductosTemplate({
   const [csvDelimitador, setCsvDelimitador] = useState(",");
   const [csvProcesando, setCsvProcesando] = useState(false);
   const [csvImportando, setCsvImportando] = useState(false);
+  const [csvExportando, setCsvExportando] = useState(false);
   const csvInputRef = useRef(null);
   const selectedIds = Object.keys(rowSelection).map((key) => parseInt(key, 10));
   const filtroBajoStock =
@@ -448,8 +500,22 @@ export function ProductosTemplate({
         ]);
         const stockRaw = obtenerValorCsv(raw, ["stock", "stock_inicial"]);
         const stockMinimoRaw = obtenerValorCsv(raw, ["stock_minimo", "stock_min"]);
-        const codigoBarrasRaw = obtenerValorCsv(raw, ["codigo_barras", "cod_barras"]);
-        const codigoInternoRaw = obtenerValorCsv(raw, ["codigo_interno", "cod_interno"]);
+        const codigoBarrasRaw = obtenerValorCsv(raw, [
+          "codigo_barras",
+          "codigo_de_barras",
+          "codigo barras",
+          "codigo de barras",
+          "cod_barras",
+          "barcode",
+          "ean",
+          "gtin",
+        ]);
+        const codigoInternoRaw = obtenerValorCsv(raw, [
+          "codigo_interno",
+          "codigo interno",
+          "cod_interno",
+          "sku",
+        ]);
 
         const precioVenta = parsearNumeroCsv(precioVentaRaw);
         const precioCompra = parsearNumeroCsv(precioCompraRaw);
@@ -530,6 +596,10 @@ export function ProductosTemplate({
             const parsed = parsearNumeroCsv(value);
             nextValue = Number.isFinite(parsed) ? parsed : value;
           }
+        }
+
+        if (field === "codigoBarras" || field === "codigoInterno") {
+          nextValue = String(value || "").trim();
         }
 
         const filaEditada = {
@@ -619,6 +689,109 @@ export function ProductosTemplate({
     }
   }
 
+  async function exportarProductosCsv() {
+    if (!dataempresa?.id) {
+      toast.error("No se detectó la empresa activa.");
+      return;
+    }
+
+    setCsvExportando(true);
+    try {
+      const payloadSeguro = {
+        _id_empresa: dataempresa.id,
+        _id_sucursal: idSucursalActiva || 0,
+      };
+      const seguro = await supabase.rpc("mostrarproductos_seguro", payloadSeguro);
+
+      let productos = [];
+      if (!seguro.error) {
+        productos = Array.isArray(seguro.data) ? seguro.data : [];
+      } else {
+        const mensaje = String(seguro.error?.message || "").toLowerCase();
+        const esFallbackValido =
+          seguro.error?.code === "42883" ||
+          mensaje.includes("function") ||
+          mensaje.includes("no existe");
+
+        if (!esFallbackValido) throw seguro.error;
+
+        const fallback = await supabase.rpc("mostrarproductos", {
+          _id_empresa: dataempresa.id,
+        });
+        if (fallback.error) throw fallback.error;
+        productos = Array.isArray(fallback.data) ? fallback.data : [];
+      }
+
+      if (!productos.length) {
+        toast.warning("No hay productos para exportar.");
+        return;
+      }
+
+      const headers = [
+        "nombre",
+        "precio_venta",
+        "precio_compra",
+        "categoria",
+        "sevende_por",
+        "maneja_inventarios",
+        "stock",
+        "stock_minimo",
+        "codigo_barras",
+        "codigo_interno",
+      ];
+
+      const filas = productos.map((producto) => {
+        const nombre = String(
+          producto?.nombre ?? producto?._descripcion ?? producto?.descripcion ?? ""
+        ).trim();
+        const categoria = obtenerNombreCategoriaProducto(
+          producto,
+          categoriasDisponibles
+        );
+        const sevendePor = normalizarSeVendePorCsv(producto?.sevende_por);
+        const manejaInventarios =
+          producto?.maneja_inventarios === true ||
+          String(producto?.maneja_inventarios).toLowerCase() === "true";
+
+        return [
+          nombre,
+          Number(producto?.p_venta ?? producto?.precio_venta ?? 0),
+          Number(producto?.p_compra ?? producto?.precio_compra ?? 0),
+          categoria,
+          sevendePor,
+          manejaInventarios ? "true" : "false",
+          manejaInventarios ? obtenerStockProducto(producto) : 0,
+          manejaInventarios ? obtenerStockMinimoProducto(producto) : 0,
+          String(producto?.codigo_barras ?? "").trim(),
+          String(producto?.codigo_interno ?? "").trim(),
+        ]
+          .map((valor) => escaparValorCsv(valor))
+          .join(";");
+      });
+
+      const contenidoCsv = `\uFEFF${headers.join(";")}\r\n${filas.join("\r\n")}`;
+      const blob = new Blob([contenidoCsv], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const fecha = new Date().toISOString().slice(0, 10);
+
+      link.href = url;
+      link.download = `productos-export-${fecha}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success(`CSV exportado: ${productos.length} producto(s).`);
+    } catch (error) {
+      toast.error(`No se pudo exportar el CSV. ${error?.message || ""}`);
+    } finally {
+      setCsvExportando(false);
+    }
+  }
+
   return (
     <Container>
       {openRegistro && (
@@ -673,6 +846,10 @@ export function ProductosTemplate({
               <span><strong>Total filas:</strong> {csvRowsPreview.length}</span>
               <span><strong>Válidas:</strong> {csvRowsValidas.length}</span>
               <span><strong>Con error:</strong> {csvRowsConErrores.length}</span>
+              <span>
+                <strong>Headers código:</strong>{" "}
+                codigo_barras / codigo de barras / barcode / ean / gtin
+              </span>
             </div>
 
             <div className="csv-table-wrap">
@@ -681,6 +858,8 @@ export function ProductosTemplate({
                   <tr>
                     <th>Fila</th>
                     <th>Nombre</th>
+                    <th>Codigo barras</th>
+                    <th>Codigo interno</th>
                     <th>Precio venta</th>
                     <th>Precio compra</th>
                     <th>Categoría</th>
@@ -695,6 +874,36 @@ export function ProductosTemplate({
                     <tr key={`csv-row-${item.rowNumber}`}>
                       <td>{item.rowNumber}</td>
                       <td>{item.nombre || "-"}</td>
+                      <td>
+                        <input
+                          type="text"
+                          className="csv-edit-input"
+                          value={item.codigoBarras ?? ""}
+                          onChange={(e) =>
+                            editarCampoPreviewCsv(
+                              item.rowNumber,
+                              "codigoBarras",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Ej: 779..."
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="csv-edit-input"
+                          value={item.codigoInterno ?? ""}
+                          onChange={(e) =>
+                            editarCampoPreviewCsv(
+                              item.rowNumber,
+                              "codigoInterno",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Opcional"
+                        />
+                      </td>
                       <td>
                         <input
                           type="number"
@@ -795,9 +1004,17 @@ export function ProductosTemplate({
           type="button"
           className="btn-csv"
           onClick={abrirImportadorCsv}
-          disabled={csvProcesando || csvImportando}
+          disabled={csvProcesando || csvImportando || csvExportando}
         >
           {csvProcesando ? "Leyendo CSV..." : "Importar CSV"}
+        </button>
+        <button
+          type="button"
+          className="btn-csv export"
+          onClick={exportarProductosCsv}
+          disabled={csvProcesando || csvImportando || csvExportando}
+        >
+          {csvExportando ? "Exportando CSV..." : "Exportar CSV"}
         </button>
         <Btn1
           funcion={nuevoRegistro}
@@ -817,7 +1034,7 @@ export function ProductosTemplate({
           className={`chip-lowstock ${filtroBajoStock ? "active" : ""}`}
           onClick={aplicarFiltroBajoStock}
         >
-          {`Aplicar filtro bajo stock (${isLoadingLowStock ? "..." : lowStockProductIds.length})`}
+          {`Ver stock bajo (${isLoadingLowStock ? "..." : lowStockProductIds.length})`}
         </button>
 
         <button
@@ -939,6 +1156,12 @@ const Container = styled.div`
     padding: 10px 14px;
     cursor: pointer;
     min-height: 40px;
+  }
+
+  .btn-csv.export {
+    border-color: #f0c933;
+    background: linear-gradient(180deg, #ffe88a 0%, #ffdb58 100%);
+    color: #4d3b00;
   }
 
   .btn-csv:disabled {
@@ -1139,7 +1362,7 @@ const Container = styled.div`
   .csv-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 900px;
+    min-width: 1150px;
   }
 
   .csv-table th,

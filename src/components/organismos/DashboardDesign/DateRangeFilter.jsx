@@ -126,13 +126,13 @@ export const DateRangeFilter = () => {
           $isActive={activeRange === "7 d�as"}
           onClick={() => setPresetRange(7, "7 d�as")}
         >
-          Ultimos 7 dias
+          Ultimos 7 días
         </TimeRangeButton>
         <TimeRangeButton
-          $isActive={activeRange === "30 dias"}
-          onClick={() => setPresetRange(30, "30 dias")}
+          $isActive={activeRange === "30 días"}
+          onClick={() => setPresetRange(30, "30 días")}
         >
-          Ultimos 30 dias
+          Ultimos 30 días
         </TimeRangeButton>
         <TimeRangeButton
           $isActive={activeRange === "12 meses"}
@@ -168,9 +168,9 @@ export const DateRangeFilter = () => {
         </TimeRangeButton>
       </ButtonGroup>
 
-      {(activeRange === "30 dias" ||
+      {(activeRange === "30 días" ||
         activeRange === "12 meses" ||
-        activeRange === "7 dias" ||
+        activeRange === "7 días" ||
         activeRange === "Todo") && (
         <StyledRangePicker format="YYYY-MM-DD" onChange={handleDateChange} value={dates} />
       )}

@@ -247,7 +247,7 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
             </section>
 
             <section className="area2">
-              <span style={{ fontWeight: "bold", marginBottom: "10px", display: "block" }}>
+              <span className="modules-title">
                 Permisos (Módulos):
               </span>
               <PermisosUser
@@ -263,22 +263,46 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
 }
 
 const Container = styled.div`
-  transition: 0.5s; top: 0; left: 0; position: fixed; display: flex; width: 100%; min-height: 100vh; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px);
-  .loading-text { font-size: 20px; font-weight: bold; background: #fff; padding: 20px; border-radius: 10px; }
+  transition: 0.5s;
+  top: 0;
+  left: 0;
+  position: fixed;
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(7px);
+
+  .loading-text {
+    font-size: 20px;
+    font-weight: bold;
+    background: ${({ theme }) => theme.bgtotal};
+    color: ${({ theme }) => theme.text};
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid rgba(${({ theme }) => theme.textRgba}, 0.1);
+  }
 `;
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 15px;
-  background-color: ${({ theme }) => theme.body};
-  padding: 20px;
-  border-radius: 8px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 189, 88, 0.14) 0, transparent 28%),
+    linear-gradient(180deg, rgba(${({ theme }) => theme.bodyRgba}, 0.96) 0%, ${({ theme }) => theme.bg2} 100%);
+  padding: 24px;
+  border-radius: 20px;
   position: relative;
   overflow-y: auto;
   max-height: 90vh;
-  width: 100%;
-  margin: 10px;
-  border: 1px solid ${({ theme }) => theme.bg};
+  width: min(1180px, 96vw);
+  margin: 0;
+  border: 1px solid rgba(${({ theme }) => theme.textRgba}, 0.12);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
 
   /* Ajuste del campo de contraseÃ±a */
   .pass-row {
@@ -311,7 +335,7 @@ const Form = styled.form`
   .main {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 18px;
     overflow-y: auto;
     @media (min-width: 768px) {
       flex-direction: row;
@@ -319,11 +343,17 @@ const Form = styled.form`
     .area1 {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 14px;
       flex: 1;
+      padding: 18px;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.01) 100%),
+        ${({ theme }) => theme.body};
+      border: 1px solid rgba(${({ theme }) => theme.textRgba}, 0.08);
       > article {
         width: 100%;
-        max-width: 230px;
+        max-width: 280px;
       }
       > article .form__group {
         width: 100%;
@@ -331,22 +361,43 @@ const Form = styled.form`
     }
     .area2 {
       flex: 1;
-      border-left: 1px dashed #ccc;
-      padding-left: 15px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modules-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: ${({ theme }) => theme.colorSubtitle};
+      letter-spacing: 0.01em;
     }
   }
 
   .contentasignacion {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
     span {
       font-size: 14px;
       font-weight: 600;
+      color: ${({ theme }) => theme.colorSubtitle};
     }
   }
 `;
-const Header = styled.div` width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;`;
-const Title = styled.span` font-size: 24px; font-weight: bold; `;
+const Header = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  padding-right: 48px;
+`;
+const Title = styled.span`
+  font-size: 32px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.text};
+  letter-spacing: -0.02em;
+`;
 
 

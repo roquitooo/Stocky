@@ -1,6 +1,7 @@
 import styled from "styled-components";
+import PropTypes from "prop-types";
 import { SelectList } from "../../ui/lists/SelectList";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useModulosStore } from "../../../store/ModulosStore";
 import { Check } from "../../ui/toggles/Check";
 import { useRolesStore } from "../../../store/RolesStore";
@@ -15,7 +16,6 @@ export const PermisosUser = ({ accionProp, idUsuarioProp }) => {
     selectedModules,
     setSelectedModules,
     mostrarPermisosDefault,
-    actualizarPermisos,
   } = usePermisosStore();
   const { accion, selectItem: selectItemAsignaciones } =
     useAsignacionCajaSucursalStore();
@@ -43,10 +43,6 @@ export const PermisosUser = ({ accionProp, idUsuarioProp }) => {
     queryKey: ["mostrar permisos por usuario"],
     queryFn: () => mostrarPermisos({ id_usuario: idUsuarioActual }),
     enabled: !!idUsuarioActual,
-  });
-  const mutation = useMutation({
-    mutationKey: ["actualizar permisos"],
-    mutationFn: () => actualizarPermisos(),
   });
   useEffect(() => {
     if (!rolesItemSelect) return;
@@ -126,28 +122,58 @@ export const PermisosUser = ({ accionProp, idUsuarioProp }) => {
     </Container>
   );
 };
+PermisosUser.propTypes = {
+  accionProp: PropTypes.string,
+  idUsuarioProp: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+};
+
+PermisosUser.defaultProps = {
+  accionProp: undefined,
+  idUsuarioProp: undefined,
+};
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 1.5rem;
-  border-left: 1px dashed ${({ theme }) => theme.text};
+  padding: 1.25rem;
+  border: 1px solid rgba(${({ theme }) => theme.textRgba}, 0.1);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%),
+    ${({ theme }) => theme.bg2};
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+  label {
+    color: ${({ theme }) => theme.colorSubtitle};
+    margin-bottom: 8px;
+  }
 `;
 const Title = styled.span`
   font-size: 1.5rem;
   text-align: center;
+  font-weight: 700;
+  color: ${({ theme }) => theme.text};
+  margin-bottom: 0.35rem;
+  text-transform: capitalize;
 `;
 const List = styled.ul`
   list-style: none;
   padding: 0;
+  margin: 14px 0 0;
 `;
 const ListItem = styled.li`
   display: flex;
   align-items: center;
-  padding: 0.5rem 0;
+  gap: 10px;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(${({ theme }) => theme.textRgba}, 0.07);
+
+  &:last-child {
+    border-bottom: none;
+  }
 `;
 const Label = styled.span`
   font-size: 1rem;
-  color: #555;
-  margin-left: 15px;
+  color: ${({ theme }) => theme.colorSubtitle};
+  margin-left: 6px;
 `;

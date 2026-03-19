@@ -85,12 +85,12 @@ export function FooterPos() {
     if (!Array.isArray(items) || items.length === 0) return;
 
     const confirmacion = await Swal.fire({
-      title: "Eliminar venta actual?",
+      title: "Desea vaciar el carrito?",
       text: "Se quitaran todos los productos cargados en el carrito.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#f44141",
-      cancelButtonColor: "#6c757d",
+      cancelButtonColor: "#ffbd58",
       confirmButtonText: "Si, eliminar",
       cancelButtonText: "Cancelar",
     });
@@ -106,7 +106,7 @@ export function FooterPos() {
           bgcolor="#f44141"
           color="#fff"
           funcion={handleEliminarVenta}
-          titulo="Eliminar venta"
+          titulo="Vaciar Carrito"
         />
         <Btn1
           bgcolor="#fff"

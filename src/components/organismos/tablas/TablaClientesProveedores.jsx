@@ -5,6 +5,10 @@ import {
   Paginacion,ImagenContent, Icono,
   useClientesProveedoresStore
 } from "../../../index";
+import {
+  formatearIdentificadorFiscalVisual,
+  formatearIdentificadorNacionalVisual,
+} from "../../../utils/validacionesFormulario";
 import Swal from "sweetalert2";
 import { v } from "../../../styles/variables";
 import { useState } from "react";
@@ -97,7 +101,9 @@ export function TablaClientesProveedores({
     {
       accessorKey: "identificador_nacional",
       header: "Id nacional",
-      cell: (info) => <span>{info.getValue()}</span>,
+      cell: (info) => (
+        <span>{formatearIdentificadorNacionalVisual(info.getValue())}</span>
+      ),
       enableColumnFilter: true,
       filterFn: (row, columnId, filterStatuses) => {
         if (filterStatuses.length === 0) return true;
@@ -108,7 +114,9 @@ export function TablaClientesProveedores({
    {
       accessorKey: "identificador_fiscal",
       header: "Id fiscal",
-      cell: (info) => <span>{info.getValue()}</span>,
+      cell: (info) => (
+        <span>{formatearIdentificadorFiscalVisual(info.getValue())}</span>
+      ),
       enableColumnFilter: true,
       filterFn: (row, columnId, filterStatuses) => {
         if (filterStatuses.length === 0) return true;

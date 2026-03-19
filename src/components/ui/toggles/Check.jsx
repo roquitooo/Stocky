@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from "prop-types";
 import styled from 'styled-components';
 
 export const Check = ({ checked, onChange }) => {
@@ -10,12 +10,16 @@ export const Check = ({ checked, onChange }) => {
   );
 };
 
+Check.propTypes = {
+  checked: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
 const Container = styled.label`
-  --input-focus: #0f0f0f;
-  --input-out-of-focus: #ccc;
-  --bg-color: #fff;
-  --bg-color-alt: #666;
-  --main-color: #323232;
+  --input-focus: #ffbd58;
+  --input-out-of-focus: ${({ theme }) => theme.bg4};
+  --bg-color: ${({ theme }) => theme.body};
+  --main-color: ${({ theme }) => theme.color2};
   position: relative;
   cursor: pointer;
 `;
@@ -32,13 +36,15 @@ const Checkmark = styled.div`
   top: 0;
   left: 0;
   border: 2px solid var(--main-color);
-  border-radius: 5px;
-  box-shadow: 4px 4px var(--main-color);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.18);
   background-color: var(--input-out-of-focus);
   transition: all 0.3s;
 
   ${Input}:checked ~ & {
     background-color: var(--input-focus);
+    border-color: #f0c74a;
+    box-shadow: 0 0 0 4px rgba(255, 189, 88, 0.18);
   }
 
   &:after {

@@ -1,0 +1,9 @@
+nombre,categoria,precio_venta,precio_compra,maneja_inventarios,stock,stock_minimo,codigo_barras,codigo_interno,sevende_por
+Ayudin Original 2.5L,Limpieza,3500,2400,si,12,3,7790132109845,AYUDIN25,UNIDAD
+Coca-Cola 500ml,Bebidas,1500,980,si,24,6,7790895000782,COCA500,UNIDAD
+Red Point Filters 20,Tabaco,2200,1600,si,20,5,77900883,REDPOINT20,UNIDAD
+Terrabusi Tirabuzon 500g,Almacen,1900,1300,si,18,4,7790070336453,TERRA500,UNIDAD
+Vanoli Chimichurri Clasico 190g,Condimentos,2400,1650,si,10,3,7790127178141,VANOLI190,UNIDAD
+Noel Flan Dulce de Leche 50g,Almacen,850,520,si,30,8,7790580145330,NOELFLAN50,UNIDAD
+Mani King Pasta de Mani 485g,Almacen,7800,6100,si,8,2,7798151952332,MANIKING485,UNIDAD
+Chacabuco Rose Lata 269ml,Bebidas,3200,2350,si,15,4,7791843023716,CHACA269,UNIDAD
